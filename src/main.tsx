@@ -17,10 +17,10 @@ const theme = createTheme({
       main: '#009688',       // Primary
       dark: '#00796B',       // Dark Primary
       light: '#E1EBEA',      // Light Primary
-      contrastText: '#000000' // Texto sobre primary
+      contrastText: '#000' // Texto sobre primary
     },
     secondary: {
-      main: '#FF5252',       // Accent
+      main: '#E91515',       // Accent
       contrastText: '#FFFFFF'
     },
     background: {
@@ -57,6 +57,7 @@ const theme = createTheme({
             color: '#00796B', // primary.dark
             fontSize: '0.875rem',
             fontWeight: 600
+            
           },
           '& .MuiDataGrid-cell': {
             borderBottom: `1px solid #BDBDBD`, // divider

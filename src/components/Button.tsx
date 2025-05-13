@@ -2,7 +2,14 @@
 import Button from "@mui/material/Button";
 import { useTheme } from "@mui/material/styles";
 
-const BotonPersonalizado = ({
+interface BotonPersonalizadoProps {
+  children: React.ReactNode; // Tipo para el contenido del botón
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void; // Tipo para el evento onClick
+  sx?: object; // Tipo para los estilos personalizados
+  [key: string]: any; // Para permitir props adicionales
+}
+
+const BotonPersonalizado: React.FC<BotonPersonalizadoProps>= ({
   children,
   onClick,
   sx = {},
@@ -21,12 +28,12 @@ const BotonPersonalizado = ({
         borderWidth: 2,
         transition: "all 0.2s",
         "&:hover": {
-          borderColor: "red",
+          borderColor: "#009688",
           backgroundColor: "#fff",
         },
         "&:active": {
-          borderColor: "red",
-          backgroundColor: "red",
+          borderColor: "#009688",
+          backgroundColor: "#009688",
           color: "#fff",
         },
         ...sx,

@@ -17,16 +17,26 @@ import BiotechIcon from "@mui/icons-material/Biotech";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
-import BarChartIcon from "@mui/icons-material/BarChart";
 import MedicationIcon from "@mui/icons-material/Medication";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ScienceIcon from '@mui/icons-material/Science';
+import FastfoodIcon from '@mui/icons-material/Fastfood';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import AddIcon from '@mui/icons-material/Add';
+import WaterDamageIcon from '@mui/icons-material/WaterDamage';
+import Groups2Icon from '@mui/icons-material/Groups2';
 import { useState } from "react";
 
 export default function NavListDrawer() {
 
   const [open, setOpen] = useState(false);
+  const [openHi, setOpenHi] = useState(false);
   const [openC, setOpenC] = useState(false);
   const [openP, setOpenP] = useState(false);
+  const [openL, setOpenL] = useState(false);
+  const [openH, setOpenH] = useState(false);
 
   return (
     <Box sx={{ width: 250, bgcolor: "white" }}>
@@ -75,7 +85,7 @@ export default function NavListDrawer() {
           </ListItem>
 
           <ListItem disablePadding>
-            <ListItemButton
+            <ListItemButton onClick={() => setOpenHi(!openHi)}
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
@@ -95,6 +105,74 @@ export default function NavListDrawer() {
               <ListItemText primary="Historia Clínica" />
             </ListItemButton>
           </ListItem>
+
+          <Collapse in={openHi}>
+            <List disablePadding>
+              <ListItem disablePadding>
+                <ListItemButton sx={{
+
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
+                      // Apunta directamente al elemento SVG del icono
+                      color: "red !important",
+                    },
+                  },
+                  "&:active .MuiTypography-root": {
+                    // Estilo para el texto
+                    color: "red !important",
+                  },
+                }}>
+                  <ListItemIcon>
+                    <Groups2Icon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Listado de Pacientes" />
+                </ListItemButton>
+              </ListItem>
+
+
+              <ListItem disablePadding>
+                <ListItemButton sx={{
+
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
+                      // Apunta directamente al elemento SVG del icono
+                      color: "red !important",
+                    },
+                  },
+                  "&:active .MuiTypography-root": {
+                    // Estilo para el texto
+                    color: "red !important",
+                  },
+                }}>
+                  <ListItemIcon>
+                    <FastfoodIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Dietas" />
+                </ListItemButton>
+              </ListItem>
+
+              <ListItem disablePadding>
+                <ListItemButton sx={{
+
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
+                      // Apunta directamente al elemento SVG del icono
+                      color: "red !important",
+                    },
+                  },
+                  "&:active .MuiTypography-root": {
+                    // Estilo para el texto
+                    color: "red !important",
+                  },
+                }}>
+                  <ListItemIcon>
+                    <ListAltIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Donantes del CMF" />
+                </ListItemButton>
+              </ListItem>
+            </List>
+          </Collapse>
 
           <ListItem disablePadding>
             <ListItemButton onClick={() => setOpen(!open)}
@@ -254,7 +332,7 @@ export default function NavListDrawer() {
             <List disablePadding>
               <ListItem disablePadding>
                 <ListItemButton sx={{
-                 // pl: 7,
+                  // pl: 7,
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
                       // Apunta directamente al elemento SVG del icono
@@ -268,7 +346,7 @@ export default function NavListDrawer() {
                 }}
                 >
                   <ListItemIcon>
-                    <WaterDropIcon sx={{ color: "secondary.main", marginLeft:4 }} />
+                    <WaterDropIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Donaciones Diarias" />
                 </ListItemButton>
@@ -289,17 +367,16 @@ export default function NavListDrawer() {
                   },
                 }}>
                   <ListItemIcon>
-              <LocalHospitalIcon
-                sx={{ color: "secondary.main", marginLeft: 4 }}
-              />
-            </ListItemIcon>
-                  <ListItemText primary="Donaciones por entidad" />
+                    <LocalHospitalIcon
+                      sx={{ color: "secondary.main", marginLeft: 3 }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Donaciones por Entidad" />
                 </ListItemButton>
               </ListItem>
 
               <ListItem disablePadding>
                 <ListItemButton sx={{
-                  pl: 9,
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
                       // Apunta directamente al elemento SVG del icono
@@ -311,11 +388,18 @@ export default function NavListDrawer() {
                     color: "red !important",
                   },
                 }}>
-                  <ListItemText primary="Liberación de componentes" />
+                  <ListItemIcon>
+                    <ScienceIcon
+                      sx={{ color: "secondary.main", marginLeft: 3 }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Liberación de Componentes" />
                 </ListItemButton>
               </ListItem>
             </List>
           </Collapse>
+
+
 
           <ListItem disablePadding>
             <ListItemButton onClick={() => setOpenP(!openP)}
@@ -333,7 +417,7 @@ export default function NavListDrawer() {
               }}
             >
               <ListItemIcon>
-                <BarChartIcon sx={{ color: "primary.dark", marginLeft: 2 }} />
+                <WaterDamageIcon sx={{ color: "primary.dark", marginLeft: 2 }} />
               </ListItemIcon>
               <ListItemText primary="Producción" />
             </ListItemButton>
@@ -343,7 +427,7 @@ export default function NavListDrawer() {
             <List disablePadding>
               <ListItem disablePadding>
                 <ListItemButton sx={{
-                  pl: 9,
+
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
                       // Apunta directamente al elemento SVG del icono
@@ -355,32 +439,21 @@ export default function NavListDrawer() {
                     color: "red !important",
                   },
                 }}>
-                  <ListItemText primary="Recepción de componentes" />
+                  <ListItemIcon>
+                    <ScienceIcon
+                      sx={{ color: "secondary.main", marginLeft: 3 }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Recepción y Centrifugacion" />
                 </ListItemButton>
               </ListItem>
 
 
-              <ListItem disablePadding>
-                <ListItemButton sx={{
-                  pl: 9,
-                  "&:active .MuiListItemIcon-root": {
-                    "& svg": {
-                      // Apunta directamente al elemento SVG del icono
-                      color: "red !important",
-                    },
-                  },
-                  "&:active .MuiTypography-root": {
-                    // Estilo para el texto
-                    color: "red !important",
-                  },
-                }}>
-                  <ListItemText primary="Centrifugación" />
-                </ListItemButton>
-              </ListItem>
+              
 
               <ListItem disablePadding>
                 <ListItemButton sx={{
-                  pl: 9,
+    
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
                       // Apunta directamente al elemento SVG del icono
@@ -392,13 +465,17 @@ export default function NavListDrawer() {
                     color: "red !important",
                   },
                 }}>
+                  <ListItemIcon>
+                    <VaccinesIcon
+                      sx={{ color: "secondary.main", marginLeft: 3 }}
+                    />
+                  </ListItemIcon>
                   <ListItemText primary="Componentes obtenidos" />
                 </ListItemButton>
               </ListItem>
 
               <ListItem disablePadding>
                 <ListItemButton sx={{
-                  pl: 9,
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
                       // Apunta directamente al elemento SVG del icono
@@ -410,13 +487,18 @@ export default function NavListDrawer() {
                     color: "red !important",
                   },
                 }}>
+                  <ListItemIcon>
+                    <DeleteIcon
+                      sx={{ color: "secondary.main", marginLeft: 3 }}
+                    />
+                  </ListItemIcon>
                   <ListItemText primary="Gestión de bajas" />
                 </ListItemButton>
               </ListItem>
 
               <ListItem disablePadding>
                 <ListItemButton sx={{
-                  pl: 9,
+
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
                       // Apunta directamente al elemento SVG del icono
@@ -428,6 +510,11 @@ export default function NavListDrawer() {
                     color: "red !important",
                   },
                 }}>
+                  <ListItemIcon>
+                    <MedicalServicesIcon
+                      sx={{ color: "secondary.main", marginLeft: 3 }}
+                    />
+                  </ListItemIcon>
                   <ListItemText primary="Envíos a industria" />
                 </ListItemButton>
               </ListItem>
@@ -436,7 +523,7 @@ export default function NavListDrawer() {
           </Collapse>
 
           <ListItem disablePadding>
-            <ListItemButton
+            <ListItemButton onClick={() => setOpenL(!openL)}
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
@@ -456,78 +543,219 @@ export default function NavListDrawer() {
               <ListItemText primary="Laboratorio" />
             </ListItemButton>
           </ListItem>
+
+          <Collapse in={openL}>
+            <List disablePadding>
+              <ListItem disablePadding>
+                <ListItemButton sx={{
+
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
+                      // Apunta directamente al elemento SVG del icono
+                      color: "red !important",
+                    },
+                  },
+                  "&:active .MuiTypography-root": {
+                    // Estilo para el texto
+                    color: "red !important",
+                  },
+                }}>
+                  <ListItemIcon>
+                    <ScienceIcon
+                      sx={{ color: "secondary.main", marginLeft: 3 }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Recepción de Muestras" />
+                </ListItemButton>
+              </ListItem>
+
+              <ListItem disablePadding>
+                <ListItemButton
+                  sx={{
+                    "&:active .MuiListItemIcon-root": {
+                      "& svg": {
+                        // Apunta directamente al elemento SVG del icono
+                        color: "red !important",
+                      },
+                    },
+                    "&:active .MuiTypography-root": {
+                      // Estilo para el texto
+                      color: "red !important",
+                    },
+                  }}>
+                  <ListItemIcon>
+                    <AddIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Laboratorio Suma" />
+                </ListItemButton>
+              </ListItem>
+
+              <ListItem disablePadding>
+                <ListItemButton
+                  sx={{
+
+                    "&:active .MuiListItemIcon-root": {
+                      "& svg": {
+                        // Apunta directamente al elemento SVG del icono
+                        color: "red !important",
+                      },
+                    },
+                    "&:active .MuiTypography-root": {
+                      // Estilo para el texto
+                      color: "red !important",
+                    },
+                  }}>
+                  <ListItemIcon>
+                    <WaterDropIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Laboratorio Inmunohematología" />
+                </ListItemButton>
+              </ListItem>
+
+              <ListItem disablePadding>
+                <ListItemButton
+                  sx={{
+                    "&:active .MuiListItemIcon-root": {
+                      "& svg": {
+                        // Apunta directamente al elemento SVG del icono
+                        color: "red !important",
+                      },
+                    },
+                    "&:active .MuiTypography-root": {
+                      // Estilo para el texto
+                      color: "red !important",
+                    },
+                  }}>
+                  <ListItemIcon>
+                    <FactCheckIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Laboratorio Control de Calidad" />
+                </ListItemButton>
+              </ListItem>
+            </List>
+
+          </Collapse>
+
+          <ListItem disablePadding>
+            <ListItemButton
+              sx={{
+                "&:active .MuiListItemIcon-root": {
+                  "& svg": {
+                    // Apunta directamente al elemento SVG del icono
+                    color: "red !important",
+                  },
+                },
+                "&:active .MuiTypography-root": {
+                  // Estilo para el texto
+                  color: "red !important",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <LocalShippingIcon
+                  sx={{ color: "primary.dark", marginLeft: 2 }}
+                />
+              </ListItemIcon>
+              <ListItemText primary="Centro Móvil" />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => setOpenH(!openH)}
+              sx={{
+                "&:active .MuiListItemIcon-root": {
+                  "& svg": {
+                    // Apunta directamente al elemento SVG del icono
+                    color: "red !important",
+                  },
+                },
+                "&:active .MuiTypography-root": {
+                  // Estilo para el texto
+                  color: "red !important",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <LocalHospitalIcon
+                  sx={{ color: "primary.dark", marginLeft: 2 }}
+                />
+              </ListItemIcon>
+              <ListItemText primary="Hospitalización" />
+            </ListItemButton>
+          </ListItem>
+
+          <Collapse in={openH}>
+            <List disablePadding>
+              <ListItem disablePadding>
+                <ListItemButton sx={{
+                  pl: 9,
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
+                      // Apunta directamente al elemento SVG del icono
+                      color: "red !important",
+                    },
+                  },
+                  "&:active .MuiTypography-root": {
+                    // Estilo para el texto
+                    color: "red !important",
+                  },
+                }}>
+                  <ListItemText primary="Pacientes a Transfundir" />
+                </ListItemButton>
+              </ListItem>
+
+              <ListItem disablePadding>
+                <ListItemButton
+                  sx={{
+                    pl: 9,
+                    "&:active .MuiListItemIcon-root": {
+                      "& svg": {
+                        // Apunta directamente al elemento SVG del icono
+                        color: "red !important",
+                      },
+                    },
+                    "&:active .MuiTypography-root": {
+                      // Estilo para el texto
+                      color: "red !important",
+                    },
+                  }}>
+                  <ListItemText primary="Orden de Transfusión" />
+                </ListItemButton>
+              </ListItem>
+
+
+            </List>
+
+          </Collapse>
+
+
+
+          <ListItem disablePadding>
+            <ListItemButton
+              sx={{
+                "&:active .MuiListItemIcon-root": {
+                  "& svg": {
+                    // Apunta directamente al elemento SVG del icono
+                    color: "red !important",
+                  },
+                },
+                "&:active .MuiTypography-root": {
+                  // Estilo para el texto
+                  color: "red !important",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <MedicationIcon sx={{ color: "primary.dark", marginLeft: 2 }} />
+              </ListItemIcon>
+              <ListItemText primary="Transfusiones" />
+            </ListItemButton>
+          </ListItem>
+
         </List>
 
-        <ListItem disablePadding>
-          <ListItemButton
-            sx={{
-              "&:active .MuiListItemIcon-root": {
-                "& svg": {
-                  // Apunta directamente al elemento SVG del icono
-                  color: "red !important",
-                },
-              },
-              "&:active .MuiTypography-root": {
-                // Estilo para el texto
-                color: "red !important",
-              },
-            }}
-          >
-            <ListItemIcon>
-              <LocalShippingIcon
-                sx={{ color: "primary.dark", marginLeft: 2 }}
-              />
-            </ListItemIcon>
-            <ListItemText primary="Centro Movil" />
-          </ListItemButton>
-        </ListItem>
 
-        <ListItem disablePadding>
-          <ListItemButton
-            sx={{
-              "&:active .MuiListItemIcon-root": {
-                "& svg": {
-                  // Apunta directamente al elemento SVG del icono
-                  color: "red !important",
-                },
-              },
-              "&:active .MuiTypography-root": {
-                // Estilo para el texto
-                color: "red !important",
-              },
-            }}
-          >
-            <ListItemIcon>
-              <LocalHospitalIcon
-                sx={{ color: "primary.dark", marginLeft: 2 }}
-              />
-            </ListItemIcon>
-            <ListItemText primary="Hospitalizacion" />
-          </ListItemButton>
-        </ListItem>
-
-        <ListItem disablePadding>
-          <ListItemButton
-            sx={{
-              "&:active .MuiListItemIcon-root": {
-                "& svg": {
-                  // Apunta directamente al elemento SVG del icono
-                  color: "red !important",
-                },
-              },
-              "&:active .MuiTypography-root": {
-                // Estilo para el texto
-                color: "red !important",
-              },
-            }}
-          >
-            <ListItemIcon>
-              <MedicationIcon sx={{ color: "primary.dark", marginLeft: 2 }} />
-            </ListItemIcon>
-            <ListItemText primary="Transfusiones" />
-          </ListItemButton>
-        </ListItem>
-      </nav>
-    </Box>
+      </nav >
+    </Box >
   );
 }
