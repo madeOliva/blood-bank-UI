@@ -28,14 +28,12 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import AddIcon from '@mui/icons-material/Add';
 import WaterDamageIcon from '@mui/icons-material/WaterDamage';
 import Groups2Icon from '@mui/icons-material/Groups2';
-import { useState } from "react";
-import { Assignment } from "@mui/icons-material";
 import LowPriorityIcon from '@mui/icons-material/LowPriority';
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 export default function NavListDrawer() {
-
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [openHi, setOpenHi] = useState(false);
   const [openC, setOpenC] = useState(false);
@@ -45,110 +43,81 @@ export default function NavListDrawer() {
   const [openH, setOpenH] = useState(false);
   const [openCM, setOpenCM] = useState(false);
 
-
-  const navigate = useNavigate();
-
   const handlePrechequeo = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/prechequeo", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/prechequeo", { replace: true });
   };
 
   const handleDonacionesDiarias = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/vizualizar", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/vizualizar", { replace: true });
   };
 
   const handleCalidad = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/calidad", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/calidad", { replace: true });
   };
 
   const handleLiberacion = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/liberacion", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/liberacion", { replace: true });
   };
 
   const handleReanalizar = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/reanalizar", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/reanalizar", { replace: true });
   };
 
   const handleDesecho = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/desechos", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/desechos", { replace: true });
   };
 
   const handleRC = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/entrada_produccion", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/entrada_produccion", { replace: true });
   };
 
   const handleCO = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/componentes_obtenidos", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/componentes_obtenidos", { replace: true });
   };
 
   const handleGB = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/bajas", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/bajas", { replace: true });
   };
 
   const handleEI = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/plasma_industria", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/plasma_industria", { replace: true });
   };
 
   const handleFormPlan = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/formularioplan", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/formularioplan", { replace: true });
   };
 
   const handlePlanD = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/planDonaciones", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/planDonaciones", { replace: true });
   };
 
   const handleResumen = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/resumenDonaciones", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/resumenDonaciones", { replace: true });
   };
 
   const handlePedidos = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/pedidos", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/pedidos", { replace: true });
   };
 
-   const handleRM = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/principal_lab", { replace: true }); // Redirige a la vista de Prechequeo
+  const handleRM = () => {
+    navigate("/principal_lab", { replace: true });
   };
 
-   const handleLS = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/suma_lab", { replace: true }); // Redirige a la vista de Prechequeo
+  const handleLS = () => {
+    navigate("/suma_lab", { replace: true });
   };
 
   const handleLCC = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/calidad_lab", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/calidad_lab", { replace: true });
   };
 
   const handleLI = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/inmuno_lab", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate("/inmuno_lab", { replace: true });
   };
 
-
-   const handleLPacientes = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/listadop", { replace: true }); // Redirige a la vista de Prechequeo
+  const handleLPacientes = () => {
+    navigate("/listadop", { replace: true });
   };
-
-  
-
-  
-
-
 
   return (
     <Box sx={{ width: 250, bgcolor: "white" }}>
@@ -170,12 +139,10 @@ export default function NavListDrawer() {
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
@@ -186,7 +153,6 @@ export default function NavListDrawer() {
                     color: "primary.dark",
                     marginLeft: 2,
                     "&:active .MuiListItemIcon-root": {
-                      // Estilo para el icono
                       color: "red !important",
                     },
                   }}
@@ -201,12 +167,10 @@ export default function NavListDrawer() {
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
@@ -222,15 +186,12 @@ export default function NavListDrawer() {
             <List disablePadding>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => handleLPacientes()} sx={{
-
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
@@ -241,18 +202,14 @@ export default function NavListDrawer() {
                 </ListItemButton>
               </ListItem>
 
-
               <ListItem disablePadding>
                 <ListItemButton onClick={() => handleLCC()} sx={{
-
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
@@ -265,15 +222,12 @@ export default function NavListDrawer() {
 
               <ListItem disablePadding>
                 <ListItemButton onClick={() => handleLCC()} sx={{
-
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
@@ -291,12 +245,10 @@ export default function NavListDrawer() {
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
@@ -308,20 +260,17 @@ export default function NavListDrawer() {
             </ListItemButton>
           </ListItem>
 
-
           <Collapse in={open}>
             <List disablePadding>
               <ListItem disablePadding>
-                <ListItemButton sx={{
+                <ListItemButton onClick={() => navigate('/citados')} sx={{
                   pl: 9,
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
@@ -329,18 +278,15 @@ export default function NavListDrawer() {
                 </ListItemButton>
               </ListItem>
 
-
               <ListItem disablePadding>
                 <ListItemButton sx={{
                   pl: 9,
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
@@ -350,74 +296,63 @@ export default function NavListDrawer() {
             </List>
           </Collapse>
 
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => setOpenPre(!openPre)}
+              sx={{
+                "&:active .MuiListItemIcon-root": {
+                  "& svg": {
+                    color: "red !important",
+                  },
+                },
+                "&:active .MuiTypography-root": {
+                  color: "red !important",
+                },
+              }}
+            >
+              <ListItemIcon>
+                <VaccinesIcon sx={{ color: "primary.dark", marginLeft: 2 }} />
+              </ListItemIcon>
+              <ListItemText primary="Pre Chequeo" />
+            </ListItemButton>
+          </ListItem>
+
+          <Collapse in={openPre}>
+            <List disablePadding>
               <ListItem disablePadding>
-                <ListItemButton onClick={() => setOpenPre(!openPre)}
-                  sx={{
-                    "&:active .MuiListItemIcon-root": {
-                      "& svg": {
-                        // Apunta directamente al elemento SVG del icono
-                        color: "red !important",
-                      },
-                    },
-                    "&:active .MuiTypography-root": {
-                      // Estilo para el texto
+                <ListItemButton onClick={() => handlePrechequeo()} sx={{
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
                       color: "red !important",
                     },
-                  }}
-                >
+                  },
+                  "&:active .MuiTypography-root": {
+                    color: "red !important",
+                  },
+                }}>
                   <ListItemIcon>
-                    <VaccinesIcon sx={{ color: "primary.dark", marginLeft: 2 }} />
+                    <VaccinesIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
-                  <ListItemText primary="Pre Chequeo" />
+                  <ListItemText primary="Examenes de Prechequeo" />
                 </ListItemButton>
               </ListItem>
-
-              <Collapse in={openPre}>
-                <List disablePadding>
-                  <ListItem disablePadding>
-                    <ListItemButton onClick={() => handlePrechequeo()} sx={{
-
-                      "&:active .MuiListItemIcon-root": {
-                        "& svg": {
-                          // Apunta directamente al elemento SVG del icono
-                          color: "red !important",
-                        },
-                      },
-                      "&:active .MuiTypography-root": {
-                        // Estilo para el texto
-                        color: "red !important",
-                      },
-                    }}>
-                      <ListItemIcon>
-                        <VaccinesIcon
-                          sx={{ color: "secondary.main", marginLeft: 3 }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText primary="Examenes de Prechequeo" />
-                    </ListItemButton>
-                  </ListItem>
-                </List>
-              </Collapse>
+            </List>
+          </Collapse>
 
           <ListItem disablePadding>
             <ListItemButton
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
             >
               <ListItemIcon>
-                <EditDocumentIcon
-                  sx={{ color: "primary.dark", marginLeft: 2 }}
-                />
+                <EditDocumentIcon sx={{ color: "primary.dark", marginLeft: 2 }} />
               </ListItemIcon>
               <ListItemText primary="Selección" />
             </ListItemButton>
@@ -428,12 +363,10 @@ export default function NavListDrawer() {
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
@@ -450,12 +383,10 @@ export default function NavListDrawer() {
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
@@ -471,19 +402,15 @@ export default function NavListDrawer() {
             <List disablePadding>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => handleDonacionesDiarias()} sx={{
-                  // pl: 7,
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
-                }}
-                >
+                }}>
                   <ListItemIcon>
                     <WaterDropIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
@@ -491,24 +418,19 @@ export default function NavListDrawer() {
                 </ListItemButton>
               </ListItem>
 
-
               <ListItem disablePadding>
                 <ListItemButton onClick={() => handleCalidad()} sx={{
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <LocalHospitalIcon
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <LocalHospitalIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Donaciones por Entidad" />
                 </ListItemButton>
@@ -518,19 +440,15 @@ export default function NavListDrawer() {
                 <ListItemButton onClick={() => handleLiberacion()} sx={{
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <VaccinesIcon
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <VaccinesIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Liberación de Componentes" />
                 </ListItemButton>
@@ -540,19 +458,15 @@ export default function NavListDrawer() {
                 <ListItemButton onClick={() => handleReanalizar()} sx={{
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <ScienceIcon
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <ScienceIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Muestras a Reanalizar" />
                 </ListItemButton>
@@ -562,19 +476,15 @@ export default function NavListDrawer() {
                 <ListItemButton onClick={() => handleDesecho()} sx={{
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <DeleteIcon
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <DeleteIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Desechos" />
                 </ListItemButton>
@@ -582,19 +492,15 @@ export default function NavListDrawer() {
             </List>
           </Collapse>
 
-
-
           <ListItem disablePadding>
             <ListItemButton onClick={() => setOpenP(!openP)}
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
@@ -610,48 +516,35 @@ export default function NavListDrawer() {
             <List disablePadding>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => handleRC()} sx={{
-
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <ScienceIcon
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <ScienceIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Recepción y Centrifugacion" />
                 </ListItemButton>
               </ListItem>
 
-
-
-
               <ListItem disablePadding>
                 <ListItemButton onClick={() => handleCO()} sx={{
-
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <VaccinesIcon
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <VaccinesIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Componentes obtenidos" />
                 </ListItemButton>
@@ -661,47 +554,37 @@ export default function NavListDrawer() {
                 <ListItemButton onClick={() => handleGB()} sx={{
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <DeleteIcon
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <DeleteIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Gestión de bajas" />
                 </ListItemButton>
               </ListItem>
 
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleEI()}sx={{
-
+                <ListItemButton onClick={() => handleEI()} sx={{
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <MedicalServicesIcon
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <MedicalServicesIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Envíos a industria" />
                 </ListItemButton>
               </ListItem>
-
             </List>
           </Collapse>
 
@@ -710,12 +593,10 @@ export default function NavListDrawer() {
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
@@ -731,41 +612,33 @@ export default function NavListDrawer() {
             <List disablePadding>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => handleRM()} sx={{
-
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <ScienceIcon
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <ScienceIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Recepción de Muestras" />
                 </ListItemButton>
               </ListItem>
 
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleLS()}
-                  sx={{
-                    "&:active .MuiListItemIcon-root": {
-                      "& svg": {
-                        // Apunta directamente al elemento SVG del icono
-                        color: "red !important",
-                      },
-                    },
-                    "&:active .MuiTypography-root": {
-                      // Estilo para el texto
+                <ListItemButton onClick={() => handleLS()} sx={{
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
                       color: "red !important",
                     },
-                  }}>
+                  },
+                  "&:active .MuiTypography-root": {
+                    color: "red !important",
+                  },
+                }}>
                   <ListItemIcon>
                     <AddIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
@@ -774,20 +647,16 @@ export default function NavListDrawer() {
               </ListItem>
 
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleLI()}
-                  sx={{
-
-                    "&:active .MuiListItemIcon-root": {
-                      "& svg": {
-                        // Apunta directamente al elemento SVG del icono
-                        color: "red !important",
-                      },
-                    },
-                    "&:active .MuiTypography-root": {
-                      // Estilo para el texto
+                <ListItemButton onClick={() => handleLI()} sx={{
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
                       color: "red !important",
                     },
-                  }}>
+                  },
+                  "&:active .MuiTypography-root": {
+                    color: "red !important",
+                  },
+                }}>
                   <ListItemIcon>
                     <WaterDropIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
@@ -796,19 +665,16 @@ export default function NavListDrawer() {
               </ListItem>
 
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleLCC()}
-                  sx={{
-                    "&:active .MuiListItemIcon-root": {
-                      "& svg": {
-                        // Apunta directamente al elemento SVG del icono
-                        color: "red !important",
-                      },
-                    },
-                    "&:active .MuiTypography-root": {
-                      // Estilo para el texto
+                <ListItemButton onClick={() => handleLCC()} sx={{
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
                       color: "red !important",
                     },
-                  }}>
+                  },
+                  "&:active .MuiTypography-root": {
+                    color: "red !important",
+                  },
+                }}>
                   <ListItemIcon>
                     <FactCheckIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
@@ -816,7 +682,6 @@ export default function NavListDrawer() {
                 </ListItemButton>
               </ListItem>
             </List>
-
           </Collapse>
 
           <ListItem disablePadding>
@@ -824,20 +689,16 @@ export default function NavListDrawer() {
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
             >
               <ListItemIcon>
-                <LocalShippingIcon
-                  sx={{ color: "primary.dark", marginLeft: 2 }}
-                />
+                <LocalShippingIcon sx={{ color: "primary.dark", marginLeft: 2 }} />
               </ListItemIcon>
               <ListItemText primary="Centro Móvil" />
             </ListItemButton>
@@ -847,63 +708,51 @@ export default function NavListDrawer() {
             <List disablePadding>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => handlePlanD()} sx={{
-
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
                   <ListItemIcon>
-                    <Assignment
-                      sx={{ color: "secondary.main", marginLeft: 3 }}
-                    />
+                    <AssignmentIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
                   <ListItemText primary="Plan de Trabajo" />
                 </ListItemButton>
               </ListItem>
 
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleFormPlan()}
-                  sx={{
-                    "&:active .MuiListItemIcon-root": {
-                      "& svg": {
-                        // Apunta directamente al elemento SVG del icono
-                        color: "red !important",
-                      },
-                    },
-                    "&:active .MuiTypography-root": {
-                      // Estilo para el texto
+                <ListItemButton onClick={() => handleFormPlan()} sx={{
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
                       color: "red !important",
                     },
-                  }}>
+                  },
+                  "&:active .MuiTypography-root": {
+                    color: "red !important",
+                  },
+                }}>
                   <ListItemIcon>
                     <AssignmentAddIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
-                  <ListItemText primary="Fromulario Plan de Trabajo" />
+                  <ListItemText primary="Formulario Plan de Trabajo" />
                 </ListItemButton>
               </ListItem>
 
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handlePedidos()}
-                  sx={{
-
-                    "&:active .MuiListItemIcon-root": {
-                      "& svg": {
-                        // Apunta directamente al elemento SVG del icono
-                        color: "red !important",
-                      },
-                    },
-                    "&:active .MuiTypography-root": {
-                      // Estilo para el texto
+                <ListItemButton onClick={() => handlePedidos()} sx={{
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
                       color: "red !important",
                     },
-                  }}>
+                  },
+                  "&:active .MuiTypography-root": {
+                    color: "red !important",
+                  },
+                }}>
                   <ListItemIcon>
                     <LowPriorityIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
@@ -912,19 +761,16 @@ export default function NavListDrawer() {
               </ListItem>
 
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleResumen()}
-                  sx={{
-                    "&:active .MuiListItemIcon-root": {
-                      "& svg": {
-                        // Apunta directamente al elemento SVG del icono
-                        color: "red !important",
-                      },
-                    },
-                    "&:active .MuiTypography-root": {
-                      // Estilo para el texto
+                <ListItemButton onClick={() => handleResumen()} sx={{
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
                       color: "red !important",
                     },
-                  }}>
+                  },
+                  "&:active .MuiTypography-root": {
+                    color: "red !important",
+                  },
+                }}>
                   <ListItemIcon>
                     <FactCheckIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                   </ListItemIcon>
@@ -934,26 +780,21 @@ export default function NavListDrawer() {
             </List>
           </Collapse>
 
-
           <ListItem disablePadding>
             <ListItemButton onClick={() => setOpenH(!openH)}
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
             >
               <ListItemIcon>
-                <LocalHospitalIcon
-                  sx={{ color: "primary.dark", marginLeft: 2 }}
-                />
+                <LocalHospitalIcon sx={{ color: "primary.dark", marginLeft: 2 }} />
               </ListItemIcon>
               <ListItemText primary="Hospitalización" />
             </ListItemButton>
@@ -966,12 +807,10 @@ export default function NavListDrawer() {
                   pl: 9,
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
-                      // Apunta directamente al elemento SVG del icono
                       color: "red !important",
                     },
                   },
                   "&:active .MuiTypography-root": {
-                    // Estilo para el texto
                     color: "red !important",
                   },
                 }}>
@@ -980,42 +819,32 @@ export default function NavListDrawer() {
               </ListItem>
 
               <ListItem disablePadding>
-                <ListItemButton
-                  sx={{
-                    pl: 9,
-                    "&:active .MuiListItemIcon-root": {
-                      "& svg": {
-                        // Apunta directamente al elemento SVG del icono
-                        color: "red !important",
-                      },
-                    },
-                    "&:active .MuiTypography-root": {
-                      // Estilo para el texto
+                <ListItemButton sx={{
+                  pl: 9,
+                  "&:active .MuiListItemIcon-root": {
+                    "& svg": {
                       color: "red !important",
                     },
-                  }}>
+                  },
+                  "&:active .MuiTypography-root": {
+                    color: "red !important",
+                  },
+                }}>
                   <ListItemText primary="Orden de Transfusión" />
                 </ListItemButton>
               </ListItem>
-
-
             </List>
-
           </Collapse>
-
-
 
           <ListItem disablePadding>
             <ListItemButton
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
-                    // Apunta directamente al elemento SVG del icono
                     color: "red !important",
                   },
                 },
                 "&:active .MuiTypography-root": {
-                  // Estilo para el texto
                   color: "red !important",
                 },
               }}
@@ -1026,11 +855,8 @@ export default function NavListDrawer() {
               <ListItemText primary="Transfusiones" />
             </ListItemButton>
           </ListItem>
-
         </List>
-
-
-      </nav >
-    </Box >
+      </nav>
+    </Box>
   );
 }
