@@ -8,19 +8,25 @@ import InputAdornment from "@mui/material/InputAdornment";
 import FormControl from "@mui/material/FormControl";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { useNavigate } from "react-router-dom";
 import LogoApp from "../../pictures/LogoApp.png";
+import api from "../../api/client";
+import { useNavigate } from "react-router-dom";
+import { isAxiosError } from "axios";
+
+
+interface LoginResponse {
+  access_token: string;
+}
 
 
 export default function Login() {
-  const navigate = useNavigate();
-
-  const handlePrechequeo = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/prechequeo", { replace: true }); // Redirige a la vista de Prechequeo
-  };
 
   const [showPassword, setShowPassword] = React.useState(false);
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState('');
+
+  const navigate = useNavigate();
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -35,6 +41,41 @@ export default function Login() {
   ) => {
     event.preventDefault();
   };
+
+  const handleLogin = async () => {
+    setError('');
+
+    if (!email || !password) {
+      setError('Por favor ingresa email y contraseña');
+      return;
+    }
+
+    try {
+      const response = await api.post<LoginResponse>('/auth/login', {
+        email,
+        password,
+      });
+
+      const { access_token } = response.data;
+
+      if (!access_token) {
+        setError('No se recibió token de autenticación');
+        return;
+      }
+      localStorage.setItem('token', access_token);
+      navigate('/prechequeo');
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setError(err.response?.data?.message || 'Error al iniciar sesión. Intenta de nuevo.');
+      } else {
+        setError('Error al iniciar sesión. Intenta de nuevo.');
+      }
+    }
+  };
+
+
+
+
   return (
     <div>
       <Box
@@ -58,7 +99,7 @@ export default function Login() {
             backgroundColor: "white",
           }}
         >
-          
+
 
           <Typography
             variant="h3"
@@ -73,7 +114,10 @@ export default function Login() {
             id="outlined-basic"
             label="Email"
             variant="outlined"
-            sx={{ width:255,
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            sx={{
+              width: 255,
               // Cambia el color del texto
               "& .MuiOutlinedInput-root": {
                 color: "#000",
@@ -97,9 +141,10 @@ export default function Login() {
             }}
           />
 
-          <FormControl 
-            sx={{ width:255,
-             
+          <FormControl
+            sx={{
+              width: 255,
+
               // Cambia el color del texto
               "& .MuiOutlinedInput-root": {
                 color: "#000",
@@ -129,6 +174,8 @@ export default function Login() {
             <OutlinedInput
               id="outlined-adornment-password"
               type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               endAdornment={
                 <InputAdornment position="end">
                   <IconButton
@@ -150,10 +197,16 @@ export default function Login() {
             />
           </FormControl>
 
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mb: 1 }}>
+              {error}
+            </Typography>
+          )}
+
           <Button
             variant="contained"
             sx={{ color: "white", width: 255 }}
-            onClick={handlePrechequeo}
+            onClick={handleLogin}
           >
             INICIAR SESION
           </Button>
@@ -170,7 +223,7 @@ export default function Login() {
             width: "50%",
           }}
         >
-          
+
           <img
             src={LogoApp}
             alt="Logo"
