@@ -3,14 +3,12 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import BotonPersonalizado from "../../components/Button";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/navbar/Navbar"
-import { Checkbox,  FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Modal, Select, SelectChangeEvent, Typography } from "@mui/material";
+import { Button, Container, FormControl, InputLabel, MenuItem, Modal, Select, Typography } from "@mui/material";
 import { useState } from "react";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import React from "react";
 import ExclusiveCheckboxes from "../../components/Checkbox";
-
-
-
+import api from "../../api/client";
 
 const columns: GridColDef<(typeof rows)[number]>[] = [
   { field: "id", headerName: "ID", width: 90 },
@@ -40,11 +38,11 @@ const columns: GridColDef<(typeof rows)[number]>[] = [
     width: 150,
     editable: false,
   },
-  
+
 
   {
     field: "actions",
-    headerName: "",
+    headerName: "Examenes",
     width: 150,
     renderCell: (params) => <ModalWindow row={params.row} />,
   },
@@ -53,7 +51,7 @@ const columns: GridColDef<(typeof rows)[number]>[] = [
 
 const rows = [
   { id: 1, lastName: "Snow", blabla: "Jon", age: 14, phone: 444 },
-  { id: 2, lastName: "Lannister", blabla: "Cersei", age: 31, phone: 444},
+  { id: 2, lastName: "Lannister", blabla: "Cersei", age: 31, phone: 444 },
   { id: 3, lastName: "Lannister", blabla: "Jaime", age: 31, phone: 444 },
   { id: 4, lastName: "Stark", blabla: "Arya", age: 11, phone: 444 },
   {
@@ -96,17 +94,47 @@ function ModalWindow({ row }: { row: any }) {
   const [factor, setFactor] = React.useState('');
   const [hemoglobina, setHemoglobina] = React.useState('');
 
+  // Estado para los checkboxes
+  const [checked, setChecked] = useState({ apto: false, noapto: false });
+
   const handleReset = () => {
     setGrupo('');
     setFactor('');
     setHemoglobina('');
-    handleClose(); // Cierra el modal si es necesario
+    handleClose();
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        rowId: row?.id, // Si necesitas enviar el id de la fila
+        grupo,
+        factor,
+        hemoglobina,
+        apto: checked.apto,
+        noapto: checked.noapto,
+      };
+      // arreglar la ruta
+      await api.post('/api/resultados', payload);
+      handleReset();
+    } catch (error) {
+      // Maneja el error como prefieras
+      console.error('Error al enviar los datos:', error);
+      alert('Ocurrió un error al enviar los datos');
+    }
   };
 
   return (
     <div>
-      
-      <WaterDropIcon onClick={handleOpen} sx={{ color: "secondary.main" , marginLeft:10 }} />
+      <Button
+        variant="outlined"
+        size="small"
+        color="error"
+        endIcon={<WaterDropIcon sx={{ ml: -1 }} />}
+        onClick={handleOpen}
+      >
+      </Button>
+
       <Modal sx={{ borderColor: "prymary.dark" }}
         open={open}
         /*onClose={handleClose}} esta linea cierra si tocas cualquier lado de la pantalla*/
@@ -114,13 +142,13 @@ function ModalWindow({ row }: { row: any }) {
         aria-describedby="modal-modal-description"
       >
         <Box sx={style} >
-          <Typography id="modal-modal-title" variant="h6" component="h5" >
+          <Typography id="modal-modal-title" variant="h5" component="h4" >
             Resultado:
           </Typography>
           <Typography id="modal-modal-description" sx={{ mt: 2 }} variant="h6" component="h5">
             Grupo
           </Typography>
-          <Box sx={{ minWidth: 120, width: 120, minHeight: 40, position: 'revert-layer' }}>
+          <Box sx={{ minWidth: 120, width: 170, minHeight: 40, position: 'revert-layer' }}>
             <FormControl fullWidth>
               <InputLabel id="demo-simple-select-label"></InputLabel>
               <Select
@@ -128,6 +156,7 @@ function ModalWindow({ row }: { row: any }) {
                 id="demo-simple-select"
                 value={grupo}
                 label="Grupo"
+                size="small"
                 onChange={(e) => setGrupo(e.target.value)}
               >
                 <MenuItem value={10}></MenuItem>
@@ -141,7 +170,7 @@ function ModalWindow({ row }: { row: any }) {
           <Typography id="modal-modal-description" sx={{ mt: 2 }} variant="h6" component="h5">
             Factor
           </Typography>
-          <Box sx={{ minWidth: 120, width: 120, minHeight: 40, position: 'revert-layer' }}>
+          <Box sx={{ minWidth: 120, width: 170, minHeight: 40, position: 'revert-layer' }}>
             <FormControl fullWidth>
               <InputLabel id="demo-simple-select-label"></InputLabel>
               <Select
@@ -149,6 +178,7 @@ function ModalWindow({ row }: { row: any }) {
                 id="demo-simple-select"
                 value={factor}
                 label="Factor"
+                size="small"
                 onChange={(e) => setFactor(e.target.value)}
               >
                 <MenuItem value={10}></MenuItem>
@@ -160,7 +190,7 @@ function ModalWindow({ row }: { row: any }) {
           <Typography id="modal-modal-description" sx={{ mt: 2 }} variant="h6" component="h5">
             Hemoglobina
           </Typography>
-          <Box sx={{ minWidth: 120, width: 120, minHeight: 40, position: 'revert-layer' }}>
+          <Box sx={{ minWidth: 120, width: 170, minHeight: 40, position: 'revert-layer' }}>
             <FormControl fullWidth>
               <InputLabel id="demo-simple-select-label"></InputLabel>
               <Select
@@ -168,6 +198,7 @@ function ModalWindow({ row }: { row: any }) {
                 id="demo-simple-select"
                 value={hemoglobina}
                 label="Hemoglobina"
+                size="small"
                 onChange={(e) => setHemoglobina(e.target.value)}
               >
                 <MenuItem value={10}></MenuItem>
@@ -176,9 +207,9 @@ function ModalWindow({ row }: { row: any }) {
               </Select>
             </FormControl>
           </Box>
-          <ExclusiveCheckboxes/>
+          <ExclusiveCheckboxes checked={checked} onChange={setChecked} />
           <BotonPersonalizado onClick={() => {
-            handleReset();  // Resetear valores
+            handleSubmit();
             handleClose();
           }} sx={{ width: 225 }}>
             ACEPTAR
@@ -202,23 +233,26 @@ export default function Prechequeo() {
   return (
 
     <>
-    
-      <Navbar />
-      
-        <Typography
-          variant="h4"
-          component="h5"
-          mt={8}
-          sx={{ fontSize: { xs: "2rem", md: "3rem" }, textAlign: "center", backgroundColor:"#00796B", color:'white',marginTop:10 }}
-        >
-          Listado de Prechequeo
-        </Typography>
 
+      <Navbar />
+
+      <Typography
+        variant="h4"
+        component="h5"
+        padding={1}
+        mt={8}
+        sx={{ width: "100%", fontSize: { xs: "1rem", md: "2rem" }, textAlign: "center", bgcolor: "primary.dark", color: "white" }}
+      >
+        Listado de Prechequeo
+      </Typography>
+
+      <Container>
         <Box sx={{ marginTop: "20px", marginBlockEnd: 1, marginLeft: 7 }}>
 
           <DataGrid
             sx={{
-              
+              height: 400,
+
               "& .MuiDataGrid-columnHeaderTitle": {
                 fontFamily: '"Open Sans"',
                 fontWeight: 600,
@@ -233,28 +267,31 @@ export default function Prechequeo() {
             initialState={{
               pagination: {
                 paginationModel: {
-                  pageSize: 5,
+                  pageSize: 7,
                 },
               },
             }}
-            pageSizeOptions={[5]}
+            pageSizeOptions={[7]}
           />
 
 
         </Box>
+      </Container>
 
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
 
-          }}
-        >
-          <BotonPersonalizado onClick={handleResultadosPrechequeo} sx={{ width: 225 }}>
-            ACEPTAR
-          </BotonPersonalizado>
-        </Box>
+
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+
+        }}
+      >
+        <BotonPersonalizado onClick={handleResultadosPrechequeo} sx={{ width: 225 }}>
+          ACEPTAR
+        </BotonPersonalizado>
+      </Box>
 
     </>
 

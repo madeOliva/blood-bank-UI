@@ -82,14 +82,15 @@ export default function ModalWindow() {
                         Factor
                     </Typography>
                     <Box sx={{ minWidth: 120, width: 120, minHeight: 40, position: 'revert-layer' }}>
-                        <FormControl fullWidth>
-                            <InputLabel id="demo-simple-select-label"></InputLabel>
+                        <FormControl fullWidth > 
+                            <InputLabel id="demo-simple-select-label" ></InputLabel>
                             <Select
                                 labelId="demo-simple-select-label"
                                 id="demo-simple-select"
                                 value={factor}
                                 label="Factor"
                                 onChange={handleChangeF}
+                                co
                             >
                                 <MenuItem value={10}></MenuItem>
                                 <MenuItem value={20}>positivo</MenuItem>

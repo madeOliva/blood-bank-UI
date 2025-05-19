@@ -9,9 +9,9 @@ import FormControl from "@mui/material/FormControl";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import LogoApp from "../../pictures/LogoApp.png";
-import api from "../../api/client";
 import { useNavigate } from "react-router-dom";
-import { isAxiosError } from "axios";
+import axios, { isAxiosError } from "axios";
+
 
 
 interface LoginResponse {
@@ -51,12 +51,13 @@ export default function Login() {
     }
 
     try {
-      const response = await api.post<LoginResponse>('/auth/login', {
+      const response = await axios.post<LoginResponse>('http://localhost:3000/auth/login', {
         email,
         password,
       });
 
       const { access_token } = response.data;
+      console.log('eeee')
 
       if (!access_token) {
         setError('No se recibió token de autenticación');
@@ -140,7 +141,7 @@ export default function Login() {
               },
             }}
           />
-
+          
           <FormControl
             sx={{
               width: 255,

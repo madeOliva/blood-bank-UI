@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FormGroup, FormControlLabel, Checkbox } from '@mui/material';
+import { FormGroup, FormControlLabel, Checkbox, Box } from '@mui/material';
 
 type CheckboxName = 'apto' | 'noapto';
 
@@ -8,35 +8,38 @@ interface CheckedState {
   noapto: boolean;
 }
 
-export default function ExclusiveCheckboxes() {
-  const [checked, setChecked] = useState<CheckedState>({ apto: false, noapto: false });
+interface Props {
+  checked: CheckedState;
+  onChange: (checked: CheckedState) => void;
+}
 
+export default function ExclusiveCheckboxes({ checked, onChange }: Props) {
   const handleChange =
     (name: CheckboxName) =>
     (event: React.ChangeEvent<HTMLInputElement>): void => {
       if (event.target.checked) {
-        setChecked({ apto: name === 'apto', noapto: name === 'noapto' });
+        onChange({ apto: name === 'apto', noapto: name === 'noapto' });
       } else {
-        setChecked((prev) => ({ ...prev, [name]: false }));
+        onChange({ ...checked, [name]: false });
       }
     };
 
   return (
+    <Box display="flex" alignItems="center" gap={2}>
     <FormGroup row>
       <FormControlLabel
-        sx={{ mr: 5 }}
         control={
-          <Checkbox checked={checked.apto} onChange={handleChange('apto')} />
+         <Checkbox checked={checked.apto} onChange={handleChange('apto')} />
         }
         label="Apto"
       />
       <FormControlLabel
-        sx={{ mr: 5 }}
         control={
           <Checkbox checked={checked.noapto} onChange={handleChange('noapto')} />
         }
         label="No Apto"
       />
     </FormGroup>
+    </Box>
   );
 }

@@ -9,12 +9,6 @@ import api from "../../api/client";
 
 export default function Register() {
   const navigate = useNavigate();
-
-  const handlePrechequeo = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/prechequeo", { replace: true }); // Redirige a la vista de Prechequeo
-  };
-
   const [showPassword, setShowPassword] = React.useState(false);
   const [error, setError] = React.useState('');
   const [email, setEmail] = React.useState('');

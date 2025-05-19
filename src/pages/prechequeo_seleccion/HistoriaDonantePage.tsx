@@ -1,85 +1,96 @@
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, IconButton, InputLabel, MenuItem, Radio, RadioGroup, Select, TextField, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, IconButton, InputLabel, MenuItem, Modal, Radio, RadioGroup, Select, TextField, Typography } from "@mui/material";
 import Navbar from "../../components/navbar/Navbar";
 import React, { useState } from "react";
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BotonPersonalizado from "../../components/Button";
 import { useNavigate } from "react-router-dom";
-import TextFieldP from "../../components/TextField";
 
 
-interface CheckedState {
+type CheckedState = {
     a: boolean;
     b: boolean;
-}
+};
 
 function ExclusiveCheckboxes() {
     const [checked, setChecked] = useState<CheckedState>({ a: false, b: false });
+    const [open, setOpen] = useState(false);
 
     const handleChange =
         (name: keyof CheckedState) =>
             (event: React.ChangeEvent<HTMLInputElement>): void => {
                 if (event.target.checked) {
-                    setChecked({ a: name === 'a', b: name === 'b' });
+                    setChecked({ a: name === "a", b: name === "b" });
+                    if (name === "b") setOpen(true); // Abrir modal si se selecciona "No Apto"
                 } else {
                     setChecked((prev) => ({ ...prev, [name]: false }));
                 }
             };
 
+    const handleClose = () => {
+        setOpen(false);
+    };
+
     return (
         <>
             <FormGroup row>
                 <FormControlLabel
-                    sx={{ mr: 30 }}
+                    sx={{ ml: 5 }}
                     control={
-                        <Checkbox checked={checked.a} onChange={handleChange('a')} />
+                        <Checkbox checked={checked.a} onChange={handleChange("a")} />
                     }
                     label="Apto"
                 />
                 <FormControlLabel
-                    sx={{ ml: 20 }}
+                    sx={{ ml: 35 }}
                     control={
-                        <Checkbox checked={checked.b} onChange={handleChange('b')} />
+                        <Checkbox checked={checked.b} onChange={handleChange("b")} />
                     }
                     label="No Apto"
                 />
             </FormGroup>
 
-            {checked.b && (
+            <Modal
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="observacion-modal-title"
+                aria-describedby="observacion-modal-description"
+            >
                 <Box
                     sx={{
-                        mt: 2,
-                        p: 2,
-                        ml: 60,
-                        border: '1px solid',
-                        borderColor: 'primary.main',
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        width: 300,
+                        bgcolor: "background.paper",
+                        border: "1px solid",
+                        borderColor: "primary.main",
                         borderRadius: 1,
-                        backgroundColor: 'background.paper',
-                        width: 300
+                        boxShadow: 24,
+                        p: 2,
                     }}
                 >
-                    <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                        Observacion
+                    <Typography sx={{ mt: 2,  }} variant="h6" component="h5">
+                        Observación
                     </Typography>
                     <TextField
                         id="outlined-basic"
                         label=""
                         variant="outlined"
+                        size="small"
                         sx={{
-                            width: 200, ml: 3,
-                            // Cambia el color del texto
+                            width: 200,ml:3,
+                            
                             "& .MuiOutlinedInput-root": {
                                 color: "#000",
-                                // Cambia el color del borde
                                 "& .MuiOutlinedInput-notchedOutline": {
                                     borderColor: "#00796B",
                                 },
-                                // Cambia el color del borde al hacer foco
                                 "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                                     borderColor: "#00796B",
                                 },
                             },
-                            // Cambia el color del label
                             "& .MuiInputLabel-outlined": {
                                 color: "#009688",
                             },
@@ -90,12 +101,14 @@ function ExclusiveCheckboxes() {
                         }}
                     />
 
-
                 </Box>
-            )}
+
+            </Modal>
         </>
     );
 }
+
+
 
 function AccordionUsage() {
 
@@ -104,7 +117,7 @@ function AccordionUsage() {
 
     const handleHc = () => {
         // Aquí puedes poner lógica de autenticación si lo deseas
-        navigate("/historiadonante", { replace: true }); // Redirige a la vista de Prechequeo
+        navigate("/historiadonante", { replace: true }); // Redirige a la vista de ....
     };
 
     return (
@@ -144,6 +157,7 @@ function AccordionUsage() {
                                             id="outlined-basic"
                                             label=""
                                             variant="outlined"
+                                            size="small"
                                             sx={{
                                                 width: 300, ml: 3,
                                                 // Cambia el color del texto
@@ -170,7 +184,58 @@ function AccordionUsage() {
                                         />
                                     </Typography>
 
+
                                 </Box>
+
+
+
+                                <Box mt={5} mr={1}>
+                                    <RadioButtonsGroup />
+                                </Box>
+
+
+                            </Box>
+
+                            <Box display={"flex"} justifyContent={"space-between"} >
+                                <Box sx={{ width: "70%" }}>
+                                    <Typography sx={{ mt: 2 }} variant="h6" component="h5">
+                                        ¿Ha tenido o presentdo dengue recientemente?
+                                        ¿Cuándo?
+
+                                        <TextField
+                                            id="outlined-basic"
+                                            label=""
+                                            variant="outlined"
+                                            size="small"
+                                            sx={{
+                                                width: 300, ml: 3,
+                                                // Cambia el color del texto
+                                                "& .MuiOutlinedInput-root": {
+                                                    color: "#000",
+                                                    // Cambia el color del borde
+                                                    "& .MuiOutlinedInput-notchedOutline": {
+                                                        borderColor: "#00796B",
+                                                    },
+                                                    // Cambia el color del borde al hacer foco
+                                                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                                        borderColor: "#00796B",
+                                                    },
+                                                },
+                                                // Cambia el color del label
+                                                "& .MuiInputLabel-outlined": {
+                                                    color: "#009688",
+                                                },
+                                                "& .MuiOutlinedInput-notchedOutline": {
+                                                    paddingLeft: "8px",
+                                                    paddingRight: "8px",
+                                                },
+                                            }}
+                                        />
+                                    </Typography>
+
+
+                                </Box>
+
 
 
                                 <Box mt={5} mr={1}>
@@ -187,6 +252,7 @@ function AccordionUsage() {
                                             id="outlined-basic"
                                             label=""
                                             variant="outlined"
+                                            size="small"
                                             sx={{
                                                 width: 300, ml: 3,
                                                 // Cambia el color del texto
@@ -270,6 +336,7 @@ function AccordionUsage() {
                                             id="outlined-basic"
                                             label=""
                                             variant="outlined"
+                                            size="small"
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -325,6 +392,7 @@ function AccordionUsage() {
                                             id="outlined-basic"
                                             label=""
                                             variant="outlined"
+                                            size="small"
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -524,6 +592,7 @@ function AccordionUsage() {
                                             id="outlined-basic"
                                             label=""
                                             variant="outlined"
+                                            size="small"
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -565,6 +634,7 @@ function AccordionUsage() {
                                             id="outlined-basic"
                                             label=""
                                             variant="outlined"
+                                            size="small"
                                             sx={{
                                                 width: 300, ml: 5,
                                                 // Cambia el color del texto
@@ -645,6 +715,7 @@ function AccordionUsage() {
                                             id="outlined-basic"
                                             label=""
                                             variant="outlined"
+                                            size="small"
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -811,7 +882,7 @@ function AccordionUsage() {
 
                         </Box>
                     </Box>
-                    <Box sx={{ ml: 70 }}>
+                    <Box sx={{ ml: 50 }}>
                         <ExclusiveCheckboxes />
                     </Box>
 
@@ -870,21 +941,21 @@ export default function HistoriaDonante() {
         <>
             <Navbar />
 
-            <Typography sx={{ mt: 10, textAlign: "center", backgroundColor: "primary.dark" , color:"white"}} variant="h6" component="h5" >
+            <Typography sx={{ mt: 10, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5" >
                 Historia del Donante
             </Typography>
 
-            <IconButton onClick={handleClick} sx={{ color: "primary.dark", ml: 160, fontSize: 70, mt: 10 }}>
+            <IconButton onClick={handleClick} sx={{ color: "primary.dark", ml: 160, fontSize: 70, mt: 7 }}>
                 <AddIcon fontSize="inherit" />
             </IconButton>
 
             {showBox && (
-                <Box display={"flex"} justifyContent={"space-between"} padding={2} marginLeft={10} marginRight={10} border={1}>
+                <Box display={"flex"} justifyContent={"space-between"} padding={2} margin={5} border={1}>
                     <Box >
 
 
                         <Box >
-                            <Typography sx={{ mt: 2, textAlign: "center", backgroundColor: "primary.dark" }} variant="h6" component="h5" >
+                            <Typography sx={{ mt: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5" >
                                 Resultados del Prechequeo.
                             </Typography>
                             <Box display="flex" justifyContent="space-between" padding={2} width={500}>
@@ -896,6 +967,7 @@ export default function HistoriaDonante() {
                                         id="outlined-basic"
                                         label=""
                                         variant="outlined"
+                                        size="small"
                                         sx={{
                                             width: 150,
                                             // Cambia el color del texto
@@ -928,7 +1000,7 @@ export default function HistoriaDonante() {
                                         Hemoglobina
                                     </Typography>
                                     <Box sx={{ minWidth: 120, width: 150, minHeight: 40, position: 'revert-layer' }}>
-                                        <FormControl fullWidth>
+                                        <FormControl fullWidth size="small">
                                             <InputLabel id="demo-simple-select-label"></InputLabel>
                                             <Select
                                                 labelId="demo-simple-select-label"
@@ -948,7 +1020,35 @@ export default function HistoriaDonante() {
                                     <Typography sx={{ mt: 2 }} variant="h6" component="h5">
                                         Factor
                                     </Typography>
-                                    <TextFieldP />
+                                    <TextField
+                                        id="outlined-basic"
+                                        label=""
+                                        variant="outlined"
+                                        size="small"
+                                        sx={{
+                                            width: 150,
+                                            // Cambia el color del texto
+                                            "& .MuiOutlinedInput-root": {
+                                                color: "#000",
+                                                // Cambia el color del borde
+                                                "& .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                                // Cambia el color del borde al hacer foco
+                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                            },
+                                            // Cambia el color del label
+                                            "& .MuiInputLabel-outlined": {
+                                                color: "#009688",
+                                            },
+                                            "& .MuiOutlinedInput-notchedOutline": {
+                                                paddingLeft: "8px",
+                                                paddingRight: "8px",
+                                            },
+                                        }}
+                                    />
                                 </Box>
                             </Box>
                         </Box>
@@ -956,8 +1056,8 @@ export default function HistoriaDonante() {
                     </Box>
 
                     <Box>
-                        <Typography sx={{ mt: 2, textAlign: "center", backgroundColor: "primary.dark" }} variant="h6" component="h5" >
-                            Examen Físico
+                        <Typography sx={{ mt: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5" >
+                            Examen Físico.
                         </Typography>
 
                         <Box display="flex" justifyContent="space-between" padding={2} width={600}>
@@ -971,6 +1071,7 @@ export default function HistoriaDonante() {
                                     id="outlined-basic"
                                     label=""
                                     variant="outlined"
+                                    size="small"
                                     sx={{
                                         width: 150,
                                         // Cambia el color del texto
@@ -1005,6 +1106,7 @@ export default function HistoriaDonante() {
                                     id="outlined-basic"
                                     label=""
                                     variant="outlined"
+                                    size="small"
                                     sx={{
                                         width: 150,
                                         // Cambia el color del texto
@@ -1038,6 +1140,7 @@ export default function HistoriaDonante() {
                                     id="outlined-basic"
                                     label=""
                                     variant="outlined"
+                                    size="small"
                                     sx={{
                                         width: 150,
                                         // Cambia el color del texto
@@ -1069,6 +1172,7 @@ export default function HistoriaDonante() {
                                     id="outlined-basic"
                                     label=""
                                     variant="outlined"
+                                    size="small"
                                     sx={{
                                         width: 150,
                                         // Cambia el color del texto
@@ -1099,7 +1203,7 @@ export default function HistoriaDonante() {
                                     Hemoglobina
                                 </Typography>
                                 <Box sx={{ minWidth: 120, width: 150, minHeight: 40, position: 'revert-layer' }}>
-                                    <FormControl fullWidth>
+                                    <FormControl fullWidth size="small">
                                         <InputLabel id="demo-simple-select-label"></InputLabel>
                                         <Select
                                             labelId="demo-simple-select-label"
