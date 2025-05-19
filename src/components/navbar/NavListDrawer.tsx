@@ -21,9 +21,11 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import MedicationIcon from "@mui/icons-material/Medication";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 export default function NavListDrawer() {
-
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [openC, setOpenC] = useState(false);
   const [openP, setOpenP] = useState(false);
@@ -97,7 +99,7 @@ export default function NavListDrawer() {
           </ListItem>
 
           <ListItem disablePadding>
-            <ListItemButton onClick={() => setOpen(!open)}
+            <ListItemButton  onClick={() => setOpen(!open)}
               sx={{
                 "&:active .MuiListItemIcon-root": {
                   "& svg": {
@@ -122,7 +124,7 @@ export default function NavListDrawer() {
           <Collapse in={open}>
             <List disablePadding>
               <ListItem disablePadding>
-                <ListItemButton sx={{
+                <ListItemButton onClick={()=>navigate('/citados')} sx={{
                   pl: 9,
                   "&:active .MuiListItemIcon-root": {
                     "& svg": {
