@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Box,
-  Grid,
   TextField,
   Typography,
   FormControl,
@@ -10,6 +9,7 @@ import {
   MenuItem,
   Checkbox,
   FormControlLabel,
+  Grid,
 } from "@mui/material";
 import Navbar from "../../components/navbar/Navbar"; // Componente Navbar
 import BotonPersonalizado from "../../components/Button";
@@ -38,8 +38,12 @@ const FormularioInscripcion: React.FC = () => {
       </Typography>
 
       {/* Contenido principal */}
-      <Box sx={{ padding: 4, marginTop: 8 }}>
-        <Grid container spacing={30}>
+      <Box sx={{ padding: 2, marginTop: 2 }}>
+        <Grid
+          container
+          spacing={30}
+          sx={{ display: "flex", justifyContent: "center" }}
+        >
           {/* Columna Izquierda: Información Personal */}
           <Grid item xs={12} md={6}>
             <Box sx={{ border: "1px solid #ccc", padding: 2, borderRadius: 2 }}>
@@ -145,7 +149,7 @@ const FormularioInscripcion: React.FC = () => {
         </Grid>
 
         {/* Botón Aceptar */}
-        <Grid container justifyContent="center" sx={{ marginTop: 4 }}>
+        <Grid container justifyContent="center" sx={{ marginTop: 8 }}>
           <BotonPersonalizado onClick={() => navigate("/citados")}>
             Registrar
           </BotonPersonalizado>

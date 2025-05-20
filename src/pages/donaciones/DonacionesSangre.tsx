@@ -39,7 +39,14 @@ const DonacionesSangre: React.FC = () => {
       </Typography>
 
       {/* Contenido principal */}
-      <Box sx={{ padding: { xs: 2, md: 4 }, marginTop: 2 }}>
+      <Box
+        sx={{
+          padding: { xs: 2, md: 4 },
+          marginTop: 2,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         <Grid container spacing={30}>
           {/* Columna Izquierda: Información Personal */}
           <Grid item xs={12} md={4}>
@@ -59,12 +66,9 @@ const DonacionesSangre: React.FC = () => {
           {/* Columna Derecha: Formulario */}
           <Grid
             item
-            xs={12}
+            xs={16}
             md={8}
-            sx={{
-              display: "flex",
-              justifyContent: { xs: "center", md: "flex-end" } // Centrado en pantallas pequeñas, alineado a la derecha en grandes
-            }}
+           
           >
             <Grid
               container
@@ -153,14 +157,13 @@ const DonacionesSangre: React.FC = () => {
             </Grid>
           </Grid>
         </Grid>
-
-        {/* Botón Aceptar */}
-        <Grid container justifyContent="center" sx={{ marginTop: 8 }}>
-          <BotonPersonalizado onClick={() => navigate("/citados")}>
-            Registrar
-          </BotonPersonalizado>
-        </Grid>
       </Box>
+      {/* Botón Aceptar */}
+      <Grid container justifyContent="center" sx={{ marginTop: 8 }}>
+        <BotonPersonalizado onClick={() => navigate("/lista-espera")}>
+          Registrar
+        </BotonPersonalizado>
+      </Grid>
     </>
   );
 };
