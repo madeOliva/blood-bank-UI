@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import {
   DataGrid,
   GridColDef,
@@ -14,11 +14,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Checkbox,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Snackbar,
   IconButton,
   CircularProgress,
@@ -29,8 +24,37 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import Navbar from "../../components/navbar/Navbar";
 import dayjs from "dayjs";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import Checkbox from "@mui/material/Checkbox";
+import ListItemText from "@mui/material/ListItemText";
 
-const initialPlanDonaciones = [
+// --- Tipos ---
+type PlanDonacion = {
+  id: number;
+  fechaHora: string;
+  areaSalud: string;
+  consejoPopular: string;
+  consultoriosAfectados: number;
+  lugarDonacion: string;
+  compromiso: number;
+  responsableSalud: string;
+  cdr: string;
+};
+
+type AlmacenItem = {
+  id: number;
+  nombre: string;
+  unidad?: string;
+};
+
+type Quantities = Record<number, number>;
+type PedidosPorFila = Record<number, Quantities>;
+type BooleanMap = Record<number, boolean>;
+
+// --- Datos iniciales ---
+const initialPlanDonaciones: PlanDonacion[] = [
   {
     id: 1,
     fechaHora: "2025-05-01 14:30",
@@ -38,7 +62,7 @@ const initialPlanDonaciones = [
     consejoPopular: "CP1",
     consultoriosAfectados: 3,
     lugarDonacion: "Policlínico Central",
-    compromiso: "10 donaciones",
+    compromiso: 10,
     responsableSalud: "Dr. Pérez",
     cdr: "CDR 1",
   },
@@ -49,7 +73,7 @@ const initialPlanDonaciones = [
     consejoPopular: "CP2",
     consultoriosAfectados: 2,
     lugarDonacion: "Consultorio 5",
-    compromiso: "8 donaciones",
+    compromiso: 8,
     responsableSalud: "Dra. Gómez",
     cdr: "CDR 2",
   },
@@ -60,18 +84,81 @@ const initialPlanDonaciones = [
     consejoPopular: "CP3",
     consultoriosAfectados: 1,
     lugarDonacion: "Policlínico Sur",
-    compromiso: "5 donaciones",
+    compromiso: 5,
     responsableSalud: "Dr. Ruiz",
     cdr: "CDR 3",
   },
 ];
 
-const almacenItems = [
-  { id: 101, nombre: "Guantes", cantidadDisponible: 100 },
-  { id: 102, nombre: "Mascarillas", cantidadDisponible: 200 },
-  { id: 103, nombre: "Alcohol en gel", cantidadDisponible: 50 },
-  { id: 104, nombre: "Jeringuillas", cantidadDisponible: 150 },
+// Elementos para cada tipo de pedido
+const almacenMensualItems: AlmacenItem[] = [
+  { id: 401, nombre: "Tohallas" },
+  { id: 402, nombre: "Jabón" },
+  { id: 403, nombre: "Detergente" },
+  { id: 404, nombre: "Vasos" },
+  { id: 405, nombre: "Cubiertos" },
+  { id: 406, nombre: "Platos" },
+  { id: 407, nombre: "Termos" },
+  { id: 408, nombre: "Jarras" },
+  { id: 409, nombre: "Bandejas pesas" },
 ];
+
+// Junta los elementos de farmacia y central
+const almacenFarmaciaCentralItems: AlmacenItem[] = [
+  // Farmacia
+  { id: 201, nombre: "Bolsas colectoras", unidad: "unidades" },
+  { id: 202, nombre: "Alcohol", unidad: "litros" },
+  { id: 203, nombre: "Hemoclasificadores", unidad: "unidades" },
+  { id: 204, nombre: "Hipoclorito de sodio", unidad: "litros" },
+  { id: 205, nombre: "Tubos de ensayo", unidad: "unidades" },
+  { id: 206, nombre: "Gradillas", unidad: "unidades" },
+  { id: 207, nombre: "Sulfato de cobre", unidad: "frasco" },
+  { id: 208, nombre: "Ligaduras", unidad: "unidades" },
+  { id: 209, nombre: "Lancetas", unidad: "unidades" },
+  { id: 210, nombre: "Laminas portaobjeto", unidad: "unidades" },
+  { id: 211, nombre: "Cloruro de sodio", unidad: "unidades" },
+  { id: 212, nombre: "Ringer lactato", unidad: "unidades" },
+  { id: 213, nombre: "Equipos de suero", unidad: "unidades" },
+  // Central
+  { id: 301, nombre: "Torundas de algodón", unidad: "paquete" },
+  { id: 302, nombre: "Torundas de gaza", unidad: "paquete" },
+  { id: 303, nombre: "Apositos", unidad: "unidades" },
+  { id: 304, nombre: "Guantes", unidad: "paquete" },
+  { id: 305, nombre: "Equipos de pinza", unidad: "unidades" },
+  { id: 306, nombre: "Frascos estériles", unidad: "unidades" },
+];
+
+// Elementos para Pedido Viveres
+const almacenViveresItems: AlmacenItem[] = [
+  { id: 501, nombre: "Sirope", unidad: "gramos" },
+  { id: 502, nombre: "Pan", unidad: "gramos" },
+  { id: 503, nombre: "Embutido", unidad: "gramos" },
+  { id: 504, nombre: "Queso", unidad: "gramos" },
+  { id: 505, nombre: "Leche", unidad: "gramos" },
+  { id: 506, nombre: "Yogurt", unidad: "gramos" },
+  { id: 507, nombre: "Azucar", unidad: "gramos" },
+  { id: 508, nombre: "Cafe", unidad: "gramos" },
+  { id: 509, nombre: "Helado", unidad: "gramos" },
+];
+
+// --- Modal de selección de elementos ---
+type SeleccionElementosModalConCantidadProps = {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  items: AlmacenItem[];
+  selectedItems: number[];
+  quantities: Quantities;
+  onToggleItem: (id: number) => void;
+  onQuantityChange: (id: number, cantidad: number) => void;
+  onConfirm: () => void;
+  icon: React.ReactNode;
+  iconColor: string;
+  readOnlyQuantities?: boolean;
+  maxQuantities?: Quantities;
+  unidadesLabel?: boolean;
+  customUnidad?: (item: AlmacenItem) => string | undefined;
+};
 
 function SeleccionElementosModalConCantidad({
   open,
@@ -86,12 +173,12 @@ function SeleccionElementosModalConCantidad({
   icon,
   iconColor,
   readOnlyQuantities = false,
-}) {
-  const isCantidadValida = (id) => {
+  unidadesLabel = false,
+  customUnidad,
+}: SeleccionElementosModalConCantidadProps) {
+  const isCantidadValida = (id: number) => {
     const cantidad = quantities[id];
-    const item = items.find((i) => i.id === id);
-    if (!item) return false;
-    return cantidad > 0 && cantidad <= item.cantidadDisponible;
+    return cantidad > 0;
   };
 
   const canConfirm = selectedItems.length > 0 && selectedItems.every(isCantidadValida);
@@ -140,66 +227,77 @@ function SeleccionElementosModalConCantidad({
             </Button>
           </Box>
         )}
-        <List dense>
-          {items.map((item) => {
-            const isSelected = selectedItems.includes(item.id);
-            const cantidad = quantities[item.id] || 0;
-            const cantidadValida = cantidad > 0 && cantidad <= item.cantidadDisponible;
-            return (
-              <ListItem
-                key={item.id}
-                sx={{ borderBottom: "1px solid #eee", flexWrap: "wrap" }}
-              >
-                {!readOnlyQuantities && (
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <Checkbox
-                      edge="start"
-                      checked={isSelected}
-                      tabIndex={-1}
-                      disableRipple
-                      onChange={() => onToggleItem(item.id)}
-                      inputProps={{ "aria-labelledby": `checkbox-list-label-${item.id}` }}
-                    />
-                  </ListItemIcon>
-                )}
-                <ListItemText
-                  id={`checkbox-list-label-${item.id}`}
-                  primary={item.nombre}
-                  secondary={`Disponible: ${item.cantidadDisponible}`}
-                  sx={{ flexBasis: "40%", flexShrink: 0 }}
-                />
-                {isSelected && (
-                  <TextField
-                    label={readOnlyQuantities ? "Cantidad a devolver" : "Cantidad"}
-                    type="number"
-                    size="small"
-                    value={cantidad}
-                    onChange={(e) => {
-                      if (readOnlyQuantities) return;
-                      let val = parseInt(e.target.value, 10);
-                      if (isNaN(val)) val = 0;
-                      if (val < 0) val = 0;
-                      if (val > item.cantidadDisponible) val = item.cantidadDisponible;
-                      onQuantityChange(item.id, val);
-                    }}
-                    error={!cantidadValida}
-                    helperText={
-                      !cantidadValida
-                        ? `Debe ser entre 1 y ${item.cantidadDisponible}`
-                        : " "
-                    }
-                    sx={{ width: 130, ml: 2 }}
-                    inputProps={{
-                      min: 1,
-                      max: item.cantidadDisponible,
-                      readOnly: readOnlyQuantities,
-                    }}
+        <Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Seleccione los elementos y cantidades para el pedido.
+          </Typography>
+        </Box>
+        <Box>
+          <List dense>
+            {items.map((item) => {
+              const isSelected = selectedItems.includes(item.id);
+              const cantidad = quantities[item.id] || 0;
+              const cantidadValida = cantidad > 0;
+              const unidad = customUnidad ? customUnidad(item) : unidadesLabel ? "unidades" : undefined;
+              return (
+                <ListItem
+                  key={item.id}
+                  sx={{ borderBottom: "1px solid #eee", flexWrap: "wrap" }}
+                >
+                  {!readOnlyQuantities && (
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      <Checkbox
+                        edge="start"
+                        checked={isSelected}
+                        tabIndex={-1}
+                        disableRipple
+                        onChange={() => onToggleItem(item.id)}
+                        inputProps={{ "aria-labelledby": `checkbox-list-label-${item.id}` }}
+                      />
+                    </ListItemIcon>
+                  )}
+                  <ListItemText
+                    id={`checkbox-list-label-${item.id}`}
+                    primary={item.nombre}
+                    sx={{ flexBasis: "40%", flexShrink: 0 }}
                   />
-                )}
-              </ListItem>
-            );
-          })}
-        </List>
+                  {isSelected && (
+                    <TextField
+                      label={
+                        readOnlyQuantities
+                          ? "Cantidad a devolver"
+                          : unidad
+                          ? `Cantidad (${unidad})`
+                          : "Cantidad"
+                      }
+                      type="number"
+                      size="small"
+                      value={cantidad}
+                      onChange={(e) => {
+                        if (readOnlyQuantities) return;
+                        let val = parseInt(e.target.value, 10);
+                        if (isNaN(val)) val = 0;
+                        if (val < 0) val = 0;
+                        onQuantityChange(item.id, val);
+                      }}
+                      error={!cantidadValida}
+                      helperText={
+                        !cantidadValida
+                          ? `Debe ser mayor que 0`
+                          : " "
+                      }
+                      sx={{ width: 170, ml: 2 }}
+                      inputProps={{
+                        min: 1,
+                        readOnly: readOnlyQuantities,
+                      }}
+                    />
+                  )}
+                </ListItem>
+              );
+            })}
+          </List>
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
@@ -211,35 +309,119 @@ function SeleccionElementosModalConCantidad({
   );
 }
 
+// --- Modal de devolución solo cantidad ---
+type DevolucionCantidadModalProps = {
+  open: boolean;
+  onClose: () => void;
+  maxCantidad: number;
+  cantidad: number;
+  onCantidadChange: (cantidad: number) => void;
+  onConfirm: () => void;
+  icon: React.ReactNode;
+  iconColor: string;
+};
+
+function DevolucionCantidadModal({
+  open,
+  onClose,
+  maxCantidad,
+  cantidad,
+  onCantidadChange,
+  onConfirm,
+  icon,
+  iconColor,
+}: DevolucionCantidadModalProps) {
+  const cantidadValida = cantidad > 0 && cantidad <= maxCantidad;
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      aria-labelledby="devolucion-cantidad-dialog-title"
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          padding: 3,
+          minWidth: 320,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+        },
+      }}
+      fullWidth
+      maxWidth="xs"
+    >
+      <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="devolucion-cantidad-dialog-title">
+        <Box display="flex" flexDirection="column" alignItems="center" gap={1} color={iconColor}>
+          {icon}
+          <Typography variant="h5" fontWeight="bold" color={iconColor}>
+            Devolución
+          </Typography>
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body1" textAlign="center" sx={{ mb: 2 }}>
+          Ingrese la cantidad total a devolver:
+        </Typography>
+        <TextField
+          label="Cantidad a devolver"
+          type="number"
+          fullWidth
+          value={cantidad}
+          onChange={(e) => {
+            let val = parseInt(e.target.value, 10);
+            if (isNaN(val)) val = 0;
+            if (val < 0) val = 0;
+            if (val > maxCantidad) val = maxCantidad;
+            onCantidadChange(val);
+          }}
+          error={!cantidadValida}
+          helperText={
+            !cantidadValida
+              ? `Debe ser entre 1 y ${maxCantidad}`
+              : " "
+          }
+          inputProps={{
+            min: 1,
+            max: maxCantidad,
+          }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button variant="contained" onClick={onConfirm} disabled={!cantidadValida}>
+          Confirmar
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// --- Componente principal ---
 export default function PedidosPage() {
-  const [planDonaciones, setPlanDonaciones] = useState(initialPlanDonaciones);
+  const [planDonaciones, setPlanDonaciones] = useState<PlanDonacion[]>(initialPlanDonaciones);
 
-  const [pedidoHechoEsteMes, setPedidoHechoEsteMes] = useState(null);
-  const [alertPedidoMensualOpen, setAlertPedidoMensualOpen] = useState(false);
-  const [pedidoMensualModalOpen, setPedidoMensualModalOpen] = useState(false);
-  const [pedidoMensualSelectedItems, setPedidoMensualSelectedItems] = useState([]);
-  const [pedidoMensualQuantities, setPedidoMensualQuantities] = useState({});
+  const [pedidoMensualModalOpen, setPedidoMensualModalOpen] = useState<boolean>(false);
+  const [pedidoMensualSelectedItems, setPedidoMensualSelectedItems] = useState<number[]>([]);
+  const [pedidoMensualQuantities, setPedidoMensualQuantities] = useState<Quantities>({});
 
-  const [pedidoModalOpen, setPedidoModalOpen] = useState(false);
-  const [pedidoSelectedItems, setPedidoSelectedItems] = useState([]);
-  const [pedidoQuantities, setPedidoQuantities] = useState({});
+  const [pedidoModalOpen, setPedidoModalOpen] = useState<boolean>(false);
+  const [pedidoSelectedItems, setPedidoSelectedItems] = useState<number[]>([]);
+  const [pedidoQuantities, setPedidoQuantities] = useState<Quantities>({});
 
-  const [devolucionModalOpen, setDevolucionModalOpen] = useState(false);
-  const [devolucionSelectedItems, setDevolucionSelectedItems] = useState([]);
-  const [devolucionQuantities, setDevolucionQuantities] = useState({});
+  const [pedidoCentralModalOpen, setPedidoCentralModalOpen] = useState<boolean>(false);
 
-  const [devolucionResumenOpen, setDevolucionResumenOpen] = useState(false);
-  const [devolucionRowId, setDevolucionRowId] = useState(null);
+  const [devolucionCantidadModalOpen, setDevolucionCantidadModalOpen] = useState<boolean>(false);
+  const [devolucionCantidad, setDevolucionCantidad] = useState<number>(1);
+  const [devolucionMaxCantidad, setDevolucionMaxCantidad] = useState<number>(1);
 
-  const [exitoModalOpen, setExitoModalOpen] = useState(false);
-  const [exitoMensaje, setExitoMensaje] = useState("");
+  const [exitoModalOpen, setExitoModalOpen] = useState<boolean>(false);
+  const [exitoMensaje, setExitoMensaje] = useState<string>("");
 
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState("");
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMsg, setSnackbarMsg] = useState<string>("");
 
-  const [currentOrderId, setCurrentOrderId] = useState(null);
+  const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
 
-  const [pedidosConfirmados, setPedidosConfirmados] = useState({});
+  const [pedidosConfirmados, setPedidosConfirmados] = useState<BooleanMap>({});
+  const [pedidosPorFila, setPedidosPorFila] = useState<PedidosPorFila>({});
 
   const sortedRows = useMemo(() => {
     return [...planDonaciones].sort((a, b) => {
@@ -250,12 +432,12 @@ export default function PedidosPage() {
     });
   }, [planDonaciones]);
 
-  const columns = [
+  const columns: GridColDef[] = [
     {
       field: "fechaHora",
       headerName: "Fecha y Hora",
       width: 160,
-      valueFormatter: (params) => dayjs(params.value).format("DD/MM/YYYY HH:mm"),
+      valueFormatter: (params: { value: any }) => dayjs(params.value as string).format("DD/MM/YYYY HH:mm"),
     },
     { field: "areaSalud", headerName: "Área de salud", width: 130 },
     { field: "consejoPopular", headerName: "Consejo popular", width: 130 },
@@ -265,12 +447,12 @@ export default function PedidosPage() {
     { field: "responsableSalud", headerName: "Responsable de salud", width: 150 },
     { field: "cdr", headerName: "CDR", width: 90 },
     {
-      field: "acciones",
-      headerName: "Acciones",
-      width: 240,
+      field: "pedidos",
+      headerName: "Pedidos y Devolucion",
+      width: 350,
       sortable: false,
       filterable: false,
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="contained"
@@ -283,7 +465,20 @@ export default function PedidosPage() {
               setPedidoModalOpen(true);
             }}
           >
-            Pedido
+            Farmacia y Central
+          </Button>
+          <Button
+            variant="contained"
+            color="info"
+            size="small"
+            onClick={() => {
+              setCurrentOrderId(params.row.id);
+              setPedidoSelectedItems([]);
+              setPedidoQuantities({});
+              setPedidoCentralModalOpen(true);
+            }}
+          >
+             Viveres
           </Button>
           <Button
             variant="contained"
@@ -296,9 +491,10 @@ export default function PedidosPage() {
                 return;
               }
               setCurrentOrderId(params.row.id);
-              setDevolucionSelectedItems([...pedidoSelectedItems]);
-              setDevolucionQuantities({ ...pedidoQuantities });
-              setDevolucionResumenOpen(true);
+              const fila = planDonaciones.find((row) => row.id === params.row.id);
+              setDevolucionCantidad(1);
+              setDevolucionMaxCantidad(fila ? fila.compromiso : 1);
+              setDevolucionCantidadModalOpen(true);
             }}
             disabled={!pedidosConfirmados[params.row.id]}
           >
@@ -309,43 +505,18 @@ export default function PedidosPage() {
     },
   ];
 
-  useEffect(() => {
-    const lastPedido = localStorage.getItem("ultimoPedidoMensual");
-    if (lastPedido) {
-      const lastDate = dayjs(lastPedido);
-      const now = dayjs();
-      if (lastDate.year() === now.year() && lastDate.month() === now.month()) {
-        setPedidoHechoEsteMes(true);
-      } else {
-        localStorage.removeItem("ultimoPedidoMensual");
-        setPedidoHechoEsteMes(false);
-      }
-    } else {
-      setPedidoHechoEsteMes(false);
-    }
-  }, []);
-
-  const mostrarExito = (mensaje) => {
+  const mostrarExito = (mensaje: string) => {
     setExitoMensaje(mensaje);
     setExitoModalOpen(true);
   };
 
   const handlePedidoMensualClick = () => {
-    if (pedidoHechoEsteMes === null) {
-      setSnackbarMsg("Cargando estado, por favor espere...");
-      setSnackbarOpen(true);
-      return;
-    }
-    if (pedidoHechoEsteMes) {
-      setAlertPedidoMensualOpen(true);
-    } else {
-      setPedidoMensualSelectedItems([]);
-      setPedidoMensualQuantities({});
-      setPedidoMensualModalOpen(true);
-    }
+    setPedidoMensualSelectedItems([]);
+    setPedidoMensualQuantities({});
+    setPedidoMensualModalOpen(true);
   };
 
-  const togglePedidoMensualItem = (id) => {
+  const togglePedidoMensualItem = (id: number) => {
     setPedidoMensualSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
@@ -360,7 +531,7 @@ export default function PedidosPage() {
     }
   };
 
-  const onPedidoMensualQuantityChange = (id, cantidad) => {
+  const onPedidoMensualQuantityChange = (id: number, cantidad: number) => {
     setPedidoMensualQuantities((prev) => ({ ...prev, [id]: cantidad }));
   };
 
@@ -372,27 +543,17 @@ export default function PedidosPage() {
     }
     for (const id of pedidoMensualSelectedItems) {
       const cantidad = pedidoMensualQuantities[id];
-      const item = almacenItems.find((i) => i.id === id);
-      if (!cantidad || cantidad < 1 || cantidad > (item?.cantidadDisponible ?? 0)) {
-        setSnackbarMsg(`Cantidad inválida para ${item?.nombre}`);
+      if (!cantidad || cantidad < 1) {
+        setSnackbarMsg(`Cantidad inválida`);
         setSnackbarOpen(true);
         return;
       }
     }
-    localStorage.setItem("ultimoPedidoMensual", dayjs().toISOString());
-    setPedidoHechoEsteMes(true);
     setPedidoMensualModalOpen(false);
     mostrarExito("Pedido mensual realizado con éxito.");
   };
 
-  const resetPedidoMensual = () => {
-    localStorage.removeItem("ultimoPedidoMensual");
-    setPedidoHechoEsteMes(false);
-    setSnackbarMsg("Pedido mensual reseteado. Ahora puedes hacer un nuevo pedido.");
-    setSnackbarOpen(true);
-  };
-
-  const togglePedidoItem = (id) => {
+  const togglePedidoItem = (id: number) => {
     setPedidoSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
@@ -407,7 +568,7 @@ export default function PedidosPage() {
     }
   };
 
-  const onPedidoQuantityChange = (id, cantidad) => {
+  const onPedidoQuantityChange = (id: number, cantidad: number) => {
     setPedidoQuantities((prev) => ({ ...prev, [id]: cantidad }));
   };
 
@@ -419,9 +580,8 @@ export default function PedidosPage() {
     }
     for (const id of pedidoSelectedItems) {
       const cantidad = pedidoQuantities[id];
-      const item = almacenItems.find((i) => i.id === id);
-      if (!cantidad || cantidad < 1 || cantidad > (item?.cantidadDisponible ?? 0)) {
-        setSnackbarMsg(`Cantidad inválida para ${item?.nombre}`);
+      if (!cantidad || cantidad < 1) {
+        setSnackbarMsg(`Cantidad inválida`);
         setSnackbarOpen(true);
         return;
       }
@@ -430,72 +590,61 @@ export default function PedidosPage() {
     mostrarExito(`Pedido confirmado para ${pedidoSelectedItems.length} elemento(s).`);
     setPedidosConfirmados((prev) => ({
       ...prev,
-      [currentOrderId]: true,
+      [currentOrderId as number]: true,
+    }));
+    setPedidosPorFila((prev) => ({
+      ...prev,
+      [currentOrderId as number]: { ...pedidoQuantities },
     }));
     setPedidoSelectedItems([]);
     setPedidoQuantities({});
   };
 
-  const toggleDevolucionItem = (id) => {
-    setDevolucionSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-    if (devolucionSelectedItems.includes(id)) {
-      setDevolucionQuantities((prev) => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
-    } else {
-      setDevolucionQuantities((prev) => ({ ...prev, [id]: 1 }));
-    }
-  };
-
-  const onDevolucionQuantityChange = (id, cantidad) => {
-    setDevolucionQuantities((prev) => ({ ...prev, [id]: cantidad }));
-  };
-
-  const confirmDevolucion = () => {
-    if (devolucionSelectedItems.length === 0) {
-      setSnackbarMsg("Seleccione al menos un elemento para hacer la devolución.");
+  const confirmPedidoCentral = () => {
+    if (pedidoSelectedItems.length === 0) {
+      setSnackbarMsg("Seleccione al menos un elemento para hacer el pedido central.");
       setSnackbarOpen(true);
       return;
     }
-    for (const id of devolucionSelectedItems) {
-      const cantidad = devolucionQuantities[id];
-      const maxCantidad = pedidoQuantities[id] || 0;
-      if (!cantidad || cantidad < 1 || cantidad > maxCantidad) {
-        setSnackbarMsg(`Cantidad inválida para ${almacenItems.find(i => i.id === id)?.nombre}`);
+    for (const id of pedidoSelectedItems) {
+      const cantidad = pedidoQuantities[id];
+      if (!cantidad || cantidad < 1) {
+        setSnackbarMsg(`Cantidad inválida`);
         setSnackbarOpen(true);
         return;
       }
     }
-    setDevolucionModalOpen(false);
-    setSnackbarMsg(`Devolución confirmada para ${devolucionSelectedItems.length} elemento(s).`);
-    setSnackbarOpen(true);
+    setPedidoCentralModalOpen(false);
+    mostrarExito(`Pedido central confirmado para ${pedidoSelectedItems.length} elemento(s).`);
+    setPedidoSelectedItems([]);
+    setPedidoQuantities({});
+  };
+
+  const confirmDevolucionCantidad = () => {
+    if (devolucionCantidad < 1 || devolucionCantidad > devolucionMaxCantidad) {
+      setSnackbarMsg(`Cantidad inválida. Debe ser entre 1 y ${devolucionMaxCantidad}`);
+      setSnackbarOpen(true);
+      return;
+    }
+    setDevolucionCantidadModalOpen(false);
+    mostrarExito(`Devolución confirmada de ${devolucionCantidad} elemento(s).`);
     if (currentOrderId !== null) {
       setPlanDonaciones(prev => prev.filter(row => row.id !== currentOrderId));
       setPedidosConfirmados((prev) => {
         const copy = { ...prev };
-        delete copy[currentOrderId];
+        delete copy[currentOrderId as number];
+        return copy;
+      });
+      setPedidosPorFila((prev) => {
+        const copy = { ...prev };
+        delete copy[currentOrderId as number];
         return copy;
       });
     }
   };
 
-  if (pedidoHechoEsteMes === null) {
-    return (
-      <>
-        <Navbar />
-        <Container maxWidth={false} sx={{ mt: 10, textAlign: "center" }}>
-          <CircularProgress />
-          <Typography variant="h6" sx={{ mt: 2 }}>
-            Cargando estado de pedido mensual...
-          </Typography>
-        </Container>
-      </>
-    );
-  }
+  // --- Función para mostrar la unidad personalizada en Farmacia y Central ---
+  const getUnidadFarmaciaCentral = (item: AlmacenItem) => item.unidad || "unidades";
 
   return (
     <>
@@ -521,9 +670,6 @@ export default function PedidosPage() {
           <Button variant="contained" color="success" onClick={handlePedidoMensualClick}>
             Pedido Mensual
           </Button>
-          <Button variant="outlined" color="warning" onClick={resetPedidoMensual}>
-            Resetear Pedido Mensual
-          </Button>
         </Stack>
 
         <Box sx={{ height: 500, width: "100%" }}>
@@ -541,7 +687,7 @@ export default function PedidosPage() {
           open={pedidoMensualModalOpen}
           onClose={() => setPedidoMensualModalOpen(false)}
           title="Seleccione elementos para el pedido mensual"
-          items={almacenItems}
+          items={almacenMensualItems}
           selectedItems={pedidoMensualSelectedItems}
           quantities={pedidoMensualQuantities}
           onToggleItem={togglePedidoMensualItem}
@@ -549,13 +695,14 @@ export default function PedidosPage() {
           onConfirm={confirmPedidoMensual}
           icon={<CheckCircleOutlineIcon sx={{ fontSize: 60 }} />}
           iconColor="success.main"
+          unidadesLabel={true}
         />
 
         <SeleccionElementosModalConCantidad
           open={pedidoModalOpen}
           onClose={() => setPedidoModalOpen(false)}
-          title="Seleccione elementos para el pedido"
-          items={almacenItems}
+          title="Seleccione elementos para el pedido farmacia y central"
+          items={almacenFarmaciaCentralItems}
           selectedItems={pedidoSelectedItems}
           quantities={pedidoQuantities}
           onToggleItem={togglePedidoItem}
@@ -563,57 +710,34 @@ export default function PedidosPage() {
           onConfirm={confirmPedido}
           icon={<CheckCircleOutlineIcon sx={{ fontSize: 60 }} />}
           iconColor="primary.main"
+          customUnidad={getUnidadFarmaciaCentral}
         />
 
         <SeleccionElementosModalConCantidad
-          open={devolucionModalOpen}
-          onClose={() => setDevolucionModalOpen(false)}
-          title="Seleccione elementos para la devolución"
-          items={almacenItems}
-          selectedItems={devolucionSelectedItems}
-          quantities={devolucionQuantities}
-          onToggleItem={toggleDevolucionItem}
-          onQuantityChange={onDevolucionQuantityChange}
-          onConfirm={confirmDevolucion}
-          icon={<WarningAmberIcon sx={{ fontSize: 60 }} />}
-          iconColor="secondary.main"
-          readOnlyQuantities={false}
+          open={pedidoCentralModalOpen}
+          onClose={() => setPedidoCentralModalOpen(false)}
+          title="Seleccione elementos para el pedido víveres"
+          items={almacenViveresItems}
+          selectedItems={pedidoSelectedItems}
+          quantities={pedidoQuantities}
+          onToggleItem={togglePedidoItem}
+          onQuantityChange={onPedidoQuantityChange}
+          onConfirm={confirmPedidoCentral}
+          icon={<CheckCircleOutlineIcon sx={{ fontSize: 60 }} />}
+          iconColor="info.main"
+          customUnidad={(item) => item.unidad || "gramos"}
         />
 
-        <Dialog
-          open={alertPedidoMensualOpen}
-          onClose={() => setAlertPedidoMensualOpen(false)}
-          aria-labelledby="pedido-hecho-dialog-title"
-          PaperProps={{
-            sx: {
-              borderRadius: 3,
-              padding: 3,
-              minWidth: 320,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-            },
-          }}
-          fullWidth
-          maxWidth="xs"
-        >
-          <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="pedido-hecho-dialog-title">
-            <Box display="flex" flexDirection="column" alignItems="center" gap={1} color="warning.main">
-              <WarningAmberIcon sx={{ fontSize: 60 }} />
-              <Typography variant="h5" fontWeight="bold" color="warning.main">
-                Pedido Mensual
-              </Typography>
-            </Box>
-          </DialogTitle>
-          <DialogContent>
-            <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
-              Ya ha realizado el pedido mensual de este mes. No puede hacer más pedidos hasta el próximo mes.
-            </Typography>
-          </DialogContent>
-          <DialogActions sx={{ justifyContent: "center" }}>
-            <Button onClick={() => setAlertPedidoMensualOpen(false)} variant="contained" color="warning">
-              Cerrar
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <DevolucionCantidadModal
+          open={devolucionCantidadModalOpen}
+          onClose={() => setDevolucionCantidadModalOpen(false)}
+          maxCantidad={devolucionMaxCantidad}
+          cantidad={devolucionCantidad}
+          onCantidadChange={setDevolucionCantidad}
+          onConfirm={confirmDevolucionCantidad}
+          icon={<WarningAmberIcon sx={{ fontSize: 60 }} />}
+          iconColor="secondary.main"
+        />
 
         <Dialog
           open={exitoModalOpen}

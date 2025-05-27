@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Box from "@mui/material/Box";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import BotonPersonalizado from "../../components/Button";
@@ -15,9 +15,26 @@ import {
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-import dayjs from "dayjs";
 
-const initialRows = [
+// Tipos
+export type PlanDonacion = {
+  id: number;
+  fechaHora: string;
+  areaSalud: string;
+  consejoPopular: string;
+  consultoriosAfectados: number;
+  lugarDonacion: string;
+  compromiso: string;
+  responsableSalud: string;
+  cdr: string;
+};
+
+type LocationState = {
+  updatedRow?: PlanDonacion;
+  newRow?: PlanDonacion;
+};
+
+const initialRows: PlanDonacion[] = [
   {
     id: 1,
     fechaHora: "2025-05-01 14:30",
@@ -57,30 +74,29 @@ const initialRows = [
 export default function PlanDonaciones() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [rows, setRows] = useState<PlanDonacion[]>(initialRows);
 
-  const [rows, setRows] = useState(initialRows);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [openConfirm, setOpenConfirm] = useState<boolean>(false);
+  const [openSuccess, setOpenSuccess] = useState<boolean>(false);
+  const [openDeleteSuccess, setOpenDeleteSuccess] = useState<boolean>(false);
+  const [openError, setOpenError] = useState<boolean>(false);
 
-  const [openConfirm, setOpenConfirm] = useState(false);
-  const [openSuccess, setOpenSuccess] = useState(false);
-  const [openDeleteSuccess, setOpenDeleteSuccess] = useState(false);
-  const [openError, setOpenError] = useState(false);
-
-  const [rowToDelete, setRowToDelete] = useState(null);
-  const [openModifyConfirm, setOpenModifyConfirm] = useState(false);
-  const [rowToModify, setRowToModify] = useState(null);
+  const [rowToDelete, setRowToDelete] = useState<PlanDonacion | null>(null);
+  const [openModifyConfirm, setOpenModifyConfirm] = useState<boolean>(false);
+  const [rowToModify, setRowToModify] = useState<PlanDonacion | null>(null);
 
   // Detectar fila actualizada o nueva al volver de FormularioPlan
   useEffect(() => {
-    if (location.state?.updatedRow) {
-      const updatedRow = location.state.updatedRow;
+    const state = location.state as LocationState | undefined;
+    if (state?.updatedRow) {
+      const updatedRow = state.updatedRow;
       setRows((prevRows) =>
         prevRows.map((row) => (row.id === updatedRow.id ? updatedRow : row))
       );
       navigate(location.pathname, { replace: true, state: {} });
     }
-    if (location.state?.newRow) {
-      const newRow = location.state.newRow;
+    if (state?.newRow) {
+      const newRow = state.newRow;
       setRows((prevRows) => {
         const exists = prevRows.some((row) => row.id === newRow.id);
         if (exists) return prevRows;
@@ -88,23 +104,12 @@ export default function PlanDonaciones() {
       });
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, navigate]);
-
-  // Extraer fechas únicas (YYYY-MM-DD)
-  const uniqueDates = useMemo(() => {
-    const datesSet = new Set(
-      rows.map((row) => dayjs(row.fechaHora).format("YYYY-MM-DD"))
-    );
-    return Array.from(datesSet).sort();
-  }, [rows]);
+  }, [location.state, navigate, location.pathname]);
 
   // Filtrar filas según fecha seleccionada
   const filteredRows = useMemo(() => {
-    if (!selectedDate) return rows;
-    return rows.filter(
-      (row) => dayjs(row.fechaHora).format("YYYY-MM-DD") === selectedDate
-    );
-  }, [selectedDate, rows]);
+    return rows;
+  }, [rows]);
 
   const handleEnviarClick = () => {
     if (rows.length === 0) {
@@ -114,7 +119,7 @@ export default function PlanDonaciones() {
     }
   };
 
-  const handleEliminarClick = (row) => {
+  const handleEliminarClick = (row: PlanDonacion) => {
     setRowToDelete(row);
     setOpenConfirm(true);
   };
@@ -132,7 +137,7 @@ export default function PlanDonaciones() {
     setOpenDeleteSuccess(true);
   };
 
-  const handleModificarClick = (row) => {
+  const handleModificarClick = (row: PlanDonacion) => {
     setRowToModify(row);
     setOpenModifyConfirm(true);
   };
@@ -143,7 +148,7 @@ export default function PlanDonaciones() {
   };
 
   useEffect(() => {
-    let timer;
+    let timer: ReturnType<typeof setTimeout>;
     if (openSuccess) {
       timer = setTimeout(() => {
         setOpenSuccess(false);
@@ -153,7 +158,7 @@ export default function PlanDonaciones() {
   }, [openSuccess]);
 
   useEffect(() => {
-    let timer;
+    let timer: ReturnType<typeof setTimeout>;
     if (openDeleteSuccess && rowToDelete) {
       timer = setTimeout(() => {
         setRows((prev) => prev.filter((r) => r.id !== rowToDelete.id));
@@ -165,7 +170,7 @@ export default function PlanDonaciones() {
   }, [openDeleteSuccess, rowToDelete]);
 
   useEffect(() => {
-    let timer;
+    let timer: ReturnType<typeof setTimeout>;
     if (openError) {
       timer = setTimeout(() => {
         setOpenError(false);
@@ -190,7 +195,7 @@ export default function PlanDonaciones() {
       sortable: false,
       filterable: false,
       disableExport: true,
-      renderCell: (params: GridRenderCellParams) => (
+      renderCell: (params: GridRenderCellParams<PlanDonacion>) => (
         <>
           <Button
             variant="contained"
@@ -234,7 +239,7 @@ export default function PlanDonaciones() {
 
       <Container maxWidth={false}>
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-     
+          {/* Aquí podrías agregar filtros por fecha si lo deseas */}
         </Box>
 
         <Box
@@ -257,7 +262,7 @@ export default function PlanDonaciones() {
                 color: "#000",
               },
             }}
-            rows={rows}
+            rows={filteredRows}
             columns={columns}
             initialState={{
               pagination: {
