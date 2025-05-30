@@ -21,6 +21,10 @@ import Navbar from "../../components/navbar/Navbar";
 import BotonPersonalizado from "../../components/Button";
 import dayjs, { Dayjs } from "dayjs";
 import { useLocation, useNavigate, Location } from "react-router-dom";
+import axios from "axios"; // <-- Agregado para conexión backend
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+
+
 
 type PlanData = {
   id?: number;
@@ -36,6 +40,9 @@ type PlanData = {
 
 type ModalType = "success" | "error";
 
+// Cambia la URL si tu backend está en otro puerto o ruta
+const API_URL = "http://localhost:3000/plan-trabajo";
+
 export default function Plan() {
   const location = useLocation() as Location & { state?: { data?: PlanData } };
   const navigate = useNavigate();
@@ -50,13 +57,22 @@ export default function Plan() {
   const [consultoriosAfectados, setConsultoriosAfectados] = React.useState<string>(
     data?.consultoriosAfectados?.toString() || ""
   );
-  const [selectedDateTime, setSelectedDateTime] = React.useState<Dayjs>(
-    data?.fechaHora ? dayjs(data.fechaHora) : dayjs()
-  );
-  const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDonacion || "");
+const [selectedDateTime, setSelectedDateTime] = React.useState<Dayjs | null>(
+  data?.fechaHora ? dayjs(data.fechaHora) : null
+);
+const fechaForzada =
+  selectedDateTime &&
+  selectedDateTime
+    .hour(8)
+    .minute(0)
+    .second(0)
+    .millisecond(0)
+    .toISOString();
+const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDonacion || "");
   const [compromiso, setCompromiso] = React.useState<string>(data?.compromiso || "");
   const [responsableSalud, setResponsableSalud] = React.useState<string>(data?.responsableSalud || "");
   const [cdr, setCdr] = React.useState<string>(data?.cdr || "");
+  const [loading, setLoading] = React.useState<boolean>(false);
 
   const areasSaludOptions: string[] = [
     "Turcios Lima",
@@ -114,7 +130,8 @@ export default function Plan() {
     setCompromiso(event.target.value);
   };
 
-  const handleAceptar = () => {
+  // --- Nueva función para enviar datos al backend ---
+  const handleAceptar = async () => {
     if (hayCamposVacios()) {
       setErrorMsg("Hay campos vacíos, por favor complete todos los campos.");
       setModalType("error");
@@ -128,70 +145,54 @@ export default function Plan() {
       setModalType("error");
       setOpenModal(true);
     } else {
-      setModalType("success");
-      setOpenModal(true);
+      setLoading(true);
+      try {
+   const payload = {
+  fecha: fechaForzada,
+  responsableDeSalud: responsableSalud,
+  areasalud: areaSalud,
+  consejopopular: consejoPopular,
+  consultoriosafectados: consultoriosAfectados
+    .toString()
+    .split(",")
+    .map((c) => c.trim()),
+  lugarDonacion,
+  compromiso,
+  cdr,
+};
+
+        if (data && data.id) {
+          // Modificar plan existente (PATCH)
+          await axios.patch(`${API_URL}/${data.id}`, payload);
+        } else {
+          // Crear nuevo plan (POST)
+          await axios.post(API_URL, payload);
+        }
+
+        setModalType("success");
+        setOpenModal(true);
+      } catch (error: any) {
+        setErrorMsg(
+          error?.response?.data?.message ||
+            "Error al guardar el plan. Intente nuevamente."
+        );
+        setModalType("error");
+        setOpenModal(true);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   React.useEffect(() => {
-    if (openModal) {
-      const timeoutDuration = modalType === "success" ? 1000 : 2000;
+    if (openModal && modalType === "success") {
       const timer = setTimeout(() => {
         setOpenModal(false);
-        if (modalType === "success") {
-          if (data) {
-            // Modificación
-            navigate("/planDonaciones", {
-              state: {
-                updatedRow: {
-                  ...data,
-                  areaSalud,
-                  consejoPopular,
-                  consultoriosAfectados,
-                  fechaHora: selectedDateTime.format("YYYY-MM-DD HH:mm"),
-                  lugarDonacion,
-                  compromiso,
-                  responsableSalud,
-                  cdr,
-                },
-              },
-            });
-          } else {
-            // Alta
-            navigate("/planDonaciones", {
-              state: {
-                newRow: {
-                  id: Date.now(),
-                  areaSalud,
-                  consejoPopular,
-                  consultoriosAfectados,
-                  fechaHora: selectedDateTime.format("YYYY-MM-DD HH:mm"),
-                  lugarDonacion,
-                  compromiso,
-                  responsableSalud,
-                  cdr,
-                },
-              },
-            });
-          }
-        }
-      }, timeoutDuration);
+        navigate("/planDonaciones");
+      }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [
-    openModal,
-    modalType,
-    data,
-    areaSalud,
-    consejoPopular,
-    consultoriosAfectados,
-    selectedDateTime,
-    lugarDonacion,
-    compromiso,
-    responsableSalud,
-    cdr,
-    navigate,
-  ]);
+  }, [openModal, modalType, navigate]);
 
   const inputStyle = { width: 255 };
 
@@ -226,20 +227,13 @@ export default function Plan() {
           >
             {/* Columna 1: Fecha y hora primero, luego Consejo Popular y Consultorios */}
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <DateTimePicker
-                label="Fecha y Hora de Donación"
-                value={selectedDateTime}
-                onChange={(newValue) => {
-                  if (newValue) setSelectedDateTime(newValue);
-                }}
-                minDateTime={dayjs().add(1, "day").startOf("day")}
-                slotProps={{
-                  textField: {
-                    sx: inputStyle,
-                    variant: "outlined",
-                  },
-                }}
-              />
+          <DatePicker
+  label="Fecha"
+  value={selectedDateTime}
+  onChange={(newValue) => setSelectedDateTime(newValue as Dayjs)}
+  format="DD/MM/YYYY"
+    minDate={dayjs().add(1, 'day').startOf('day')}
+/>
 
               <FormControl sx={inputStyle}>
                 <InputLabel id="consejo-popular-label">Consejo Popular</InputLabel>
@@ -323,8 +317,12 @@ export default function Plan() {
         </Box>
 
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-          <BotonPersonalizado onClick={handleAceptar} sx={{ width: 225 }}>
-            {data ? "GUARDAR CAMBIOS" : "ACEPTAR"}
+          <BotonPersonalizado onClick={handleAceptar} sx={{ width: 225 }} disabled={loading}>
+            {loading
+              ? "Enviando..."
+              : data
+              ? "GUARDAR CAMBIOS"
+              : "ACEPTAR"}
           </BotonPersonalizado>
         </Box>
 

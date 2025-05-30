@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   DataGrid,
   GridColDef,
@@ -16,7 +16,6 @@ import {
   DialogActions,
   Snackbar,
   IconButton,
-  CircularProgress,
   TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
@@ -29,14 +28,15 @@ import ListItem from "@mui/material/ListItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Checkbox from "@mui/material/Checkbox";
 import ListItemText from "@mui/material/ListItemText";
+import axios from "axios";
 
 // --- Tipos ---
 type PlanDonacion = {
-  id: number;
+  id: string;
   fechaHora: string;
   areaSalud: string;
   consejoPopular: string;
-  consultoriosAfectados: number;
+  consultoriosAfectados: string[] | string | number;
   lugarDonacion: string;
   compromiso: number;
   responsableSalud: string;
@@ -50,45 +50,8 @@ type AlmacenItem = {
 };
 
 type Quantities = Record<number, number>;
-type PedidosPorFila = Record<number, Quantities>;
-type BooleanMap = Record<number, boolean>;
-
-// --- Datos iniciales ---
-const initialPlanDonaciones: PlanDonacion[] = [
-  {
-    id: 1,
-    fechaHora: "2025-05-01 14:30",
-    areaSalud: "Centro",
-    consejoPopular: "CP1",
-    consultoriosAfectados: 3,
-    lugarDonacion: "Policlínico Central",
-    compromiso: 10,
-    responsableSalud: "Dr. Pérez",
-    cdr: "CDR 1",
-  },
-  {
-    id: 2,
-    fechaHora: "2025-05-01 09:15",
-    areaSalud: "Norte",
-    consejoPopular: "CP2",
-    consultoriosAfectados: 2,
-    lugarDonacion: "Consultorio 5",
-    compromiso: 8,
-    responsableSalud: "Dra. Gómez",
-    cdr: "CDR 2",
-  },
-  {
-    id: 3,
-    fechaHora: "2025-05-02 10:00",
-    areaSalud: "Centro",
-    consejoPopular: "CP3",
-    consultoriosAfectados: 1,
-    lugarDonacion: "Policlínico Sur",
-    compromiso: 5,
-    responsableSalud: "Dr. Ruiz",
-    cdr: "CDR 3",
-  },
-];
+type PedidosPorFila = Record<string, Quantities>;
+type BooleanMap = Record<string, boolean>;
 
 // Elementos para cada tipo de pedido
 const almacenMensualItems: AlmacenItem[] = [
@@ -140,6 +103,32 @@ const almacenViveresItems: AlmacenItem[] = [
   { id: 508, nombre: "Cafe", unidad: "gramos" },
   { id: 509, nombre: "Helado", unidad: "gramos" },
 ];
+
+// --- Mapeo de campos para central y farmacia ---
+const FIELD_MAP_CENTRAL: Record<string, string> = {
+  "Torundas de algodón": "torundas_algodon",
+  "Torundas de gaza": "torundas_gaza",
+  "Apositos": "apósitos",
+  "Guantes": "guantes",
+  "Equipos de pinza": "equipos_pinza",
+  "Frascos estériles": "frascos_estériles",
+};
+
+const FIELD_MAP_FARMACIA: Record<string, string> = {
+  "Bolsas colectoras": "bolsas_colectoras",
+  "Alcohol": "alcohol",
+  "Hemoclasificadores": "hemoclasificadores",
+  "Hipoclorito de sodio": "hipoclorito_sodio",
+  "Tubos de ensayo": "tubos_ensayo",
+  "Gradillas": "gradillas",
+  "Sulfato de cobre": "sulfato_cobre",
+  "Ligaduras": "ligaduras",
+  "Lancetas": "lancetas",
+  "Laminas portaobjeto": "laminas_portaobjeto",
+  "Cloruro de sodio": "cloruro_sodio",
+  "Ringer lactato": "ringer_lactato",
+  "Equipos de suero": "equipos_suero",
+};
 
 // --- Modal de selección de elementos ---
 type SeleccionElementosModalConCantidadProps = {
@@ -331,7 +320,7 @@ function DevolucionCantidadModal({
   icon,
   iconColor,
 }: DevolucionCantidadModalProps) {
-  const cantidadValida = cantidad > 0 && cantidad <= maxCantidad;
+  const cantidadValida = cantidad >= 0 && cantidad <= maxCantidad;
   return (
     <Dialog
       open={open}
@@ -360,31 +349,31 @@ function DevolucionCantidadModal({
         <Typography variant="body1" textAlign="center" sx={{ mb: 2 }}>
           Ingrese la cantidad total a devolver:
         </Typography>
-        <TextField
-          label="Cantidad a devolver"
-          type="number"
-          fullWidth
-          value={cantidad}
-          onChange={(e) => {
-            let val = parseInt(e.target.value, 10);
-            if (isNaN(val)) val = 0;
-            if (val < 0) val = 0;
-            if (val > maxCantidad) val = maxCantidad;
-            onCantidadChange(val);
-          }}
-          error={!cantidadValida}
-          helperText={
-            !cantidadValida
-              ? `Debe ser entre 1 y ${maxCantidad}`
-              : " "
-          }
-          inputProps={{
-            min: 1,
-            max: maxCantidad,
-          }}
-        />
+       <TextField
+        label="Cantidad a devolver"
+        type="number"
+        fullWidth
+        value={cantidad}
+        onChange={(e) => {
+          let val = parseInt(e.target.value, 10);
+          if (isNaN(val)) val = 0;
+          if (val < 0) val = 0;
+          if (val > maxCantidad) val = maxCantidad;
+          onCantidadChange(val);
+        }}
+        error={!cantidadValida}
+        helperText={
+          !cantidadValida
+            ? `Debe ser entre 0 y ${maxCantidad}`
+            : " "
+        }
+        inputProps={{
+          min: 0,
+          max: maxCantidad,
+        }}
+      />
       </DialogContent>
-      <DialogActions>
+  <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
         <Button variant="contained" onClick={onConfirm} disabled={!cantidadValida}>
           Confirmar
@@ -396,52 +385,97 @@ function DevolucionCantidadModal({
 
 // --- Componente principal ---
 export default function PedidosPage() {
-  const [planDonaciones, setPlanDonaciones] = useState<PlanDonacion[]>(initialPlanDonaciones);
-
+  const [planDonaciones, setPlanDonaciones] = useState<PlanDonacion[]>([]);
   const [pedidoMensualModalOpen, setPedidoMensualModalOpen] = useState<boolean>(false);
   const [pedidoMensualSelectedItems, setPedidoMensualSelectedItems] = useState<number[]>([]);
   const [pedidoMensualQuantities, setPedidoMensualQuantities] = useState<Quantities>({});
-
   const [pedidoModalOpen, setPedidoModalOpen] = useState<boolean>(false);
   const [pedidoSelectedItems, setPedidoSelectedItems] = useState<number[]>([]);
   const [pedidoQuantities, setPedidoQuantities] = useState<Quantities>({});
-
   const [pedidoCentralModalOpen, setPedidoCentralModalOpen] = useState<boolean>(false);
-
   const [devolucionCantidadModalOpen, setDevolucionCantidadModalOpen] = useState<boolean>(false);
   const [devolucionCantidad, setDevolucionCantidad] = useState<number>(1);
   const [devolucionMaxCantidad, setDevolucionMaxCantidad] = useState<number>(1);
-
   const [exitoModalOpen, setExitoModalOpen] = useState<boolean>(false);
   const [exitoMensaje, setExitoMensaje] = useState<string>("");
-
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMsg, setSnackbarMsg] = useState<string>("");
-
-  const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
-
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [pedidosConfirmados, setPedidosConfirmados] = useState<BooleanMap>({});
   const [pedidosPorFila, setPedidosPorFila] = useState<PedidosPorFila>({});
 
-  const sortedRows = useMemo(() => {
-    return [...planDonaciones].sort((a, b) => {
-      const dateA = dayjs(a.fechaHora).startOf("day").valueOf();
-      const dateB = dayjs(b.fechaHora).startOf("day").valueOf();
-      if (dateA !== dateB) return dateA - dateB;
-      return dayjs(a.fechaHora).valueOf() - dayjs(b.fechaHora).valueOf();
-    });
-  }, [planDonaciones]);
+  // Cargar los planes desde el backend
+  useEffect(() => {
+    axios.get("http://localhost:3000/plan-trabajo")
+      .then(res => {
+        const data = res.data.map((item: any) => ({
+          id: item._id || item.id,
+          fechaHora: item.fecha || item.fechaHora,
+          areaSalud: item.areasalud || item.areaSalud,
+          consejoPopular: item.consejopopular || item.consejoPopular,
+          consultoriosAfectados: item.consultoriosafectados || item.consultoriosAfectados,
+          lugarDonacion: item.lugarDonacion,
+          compromiso: item.compromiso,
+          responsableSalud: item.responsableDeSalud || item.responsableSalud,
+          cdr: item.cdr,
+        }));
+        setPlanDonaciones(data);
+      })
+      .catch(() => setPlanDonaciones([]));
+  }, []);
+
+
+const [devoluciones, setDevoluciones] = useState<{ planId: string }[]>([]);
+
+useEffect(() => {
+  const fetchDevoluciones = async () => {
+    try {
+      const res = await axios.get("http://localhost:3000/pedidos/devolucion");
+      setDevoluciones(res.data);
+    } catch (error) {
+      // Puedes manejar el error si lo deseas
+    }
+  };
+  fetchDevoluciones();
+}, []);
+
+
+// ...existing code...
+const planesSinDevolucion = planDonaciones.filter(
+  (plan) => !devoluciones.some((dev) => dev.planId === plan.id)
+);
+
+const sortedRows = useMemo(() => {
+  return [...planesSinDevolucion].sort((a, b) => {
+    const dateA = dayjs(a.fechaHora).startOf("day").valueOf();
+    const dateB = dayjs(b.fechaHora).startOf("day").valueOf();
+    if (dateA !== dateB) return dateA - dateB;
+    return dayjs(a.fechaHora).valueOf() - dayjs(b.fechaHora).valueOf();
+  });
+}, [planesSinDevolucion]);
+// ...existing code...
 
   const columns: GridColDef[] = [
     {
       field: "fechaHora",
       headerName: "Fecha y Hora",
       width: 160,
-      valueFormatter: (params: { value: any }) => dayjs(params.value as string).format("DD/MM/YYYY HH:mm"),
+      renderCell: (params) =>
+        params.value ? dayjs(params.value).format("DD/MM/YYYY 08:00 A") : "",
     },
     { field: "areaSalud", headerName: "Área de salud", width: 130 },
     { field: "consejoPopular", headerName: "Consejo popular", width: 130 },
-    { field: "consultoriosAfectados", headerName: "Consultorios afectados", width: 170 },
+    {
+      field: "consultoriosAfectados",
+      headerName: "Consultorios afectados",
+      width: 170,
+      renderCell: (params) => {
+        if (Array.isArray(params.value)) {
+          return params.value.join(", ");
+        }
+        return params.value || "";
+      }
+    },
     { field: "lugarDonacion", headerName: "Lugar donación", width: 150 },
     { field: "compromiso", headerName: "Compromiso", width: 120 },
     { field: "responsableSalud", headerName: "Responsable de salud", width: 150 },
@@ -516,6 +550,77 @@ export default function PedidosPage() {
     setPedidoMensualModalOpen(true);
   };
 
+const FIELD_MAP_MENSUAL: Record<string, string> = {
+  "Tohallas": "tohallas",
+  "Jabón": "jabon",
+  "Detergente": "detergente",
+  "Vasos": "vasos",
+  "Cubiertos": "cubiertos",
+  "Platos": "platos",
+  "Termos": "termos",
+  "Jarras": "jarras",
+  "Bandejas pesas": "bandejas_pesas",
+};
+
+// Para pedido víveres
+const FIELD_MAP_VIVERES: Record<string, string> = {
+  "Sirope": "sirope",
+  "Pan": "pan",
+  "Embutido": "embutido",
+  "Queso": "queso",
+  "Leche": "leche",
+  "Yogurt": "yogurt",
+  "Azucar": "azucar",
+  "Cafe": "cafe",
+  "Helado": "helado",
+};
+
+
+
+  // --- Confirmar Pedido Mensual ---
+ const confirmPedidoMensual = async () => {
+  if (pedidoMensualSelectedItems.length === 0) {
+    setSnackbarMsg("Seleccione al menos un elemento para hacer el pedido mensual.");
+    setSnackbarOpen(true);
+    return;
+  }
+  for (const id of pedidoMensualSelectedItems) {
+    const cantidad = pedidoMensualQuantities[id];
+    if (!cantidad || cantidad < 1) {
+      setSnackbarMsg(`Cantidad inválida`);
+      setSnackbarOpen(true);
+      return;
+    }
+  }
+  try {
+    const mensualItems = pedidoMensualSelectedItems
+      .map((id) => ({
+        id,
+        nombre: almacenMensualItems.find((item) => item.id === id)?.nombre,
+        cantidad: pedidoMensualQuantities[id],
+      }));
+
+    const mensualPayload: any = { planId: currentOrderId };
+    Object.entries(FIELD_MAP_MENSUAL).forEach(([nombre, field]) => {
+      mensualPayload[field] = 0;
+    });
+    mensualItems.forEach(item => {
+      const field = FIELD_MAP_MENSUAL[item.nombre ?? ""];
+      if (field) mensualPayload[field] = item.cantidad;
+    });
+
+    await axios.post("http://localhost:3000/pedidos/mensual", mensualPayload);
+    setPedidoMensualModalOpen(false);
+    mostrarExito(`Pedido mensual confirmado para ${pedidoMensualSelectedItems.length} elemento(s).`);
+    setPedidoMensualSelectedItems([]);
+    setPedidoMensualQuantities({});
+  } catch (error) {
+    setSnackbarMsg("Error al guardar el pedido mensual en la base de datos.");
+    setSnackbarOpen(true);
+  }
+};
+
+
   const togglePedidoMensualItem = (id: number) => {
     setPedidoMensualSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -535,24 +640,126 @@ export default function PedidosPage() {
     setPedidoMensualQuantities((prev) => ({ ...prev, [id]: cantidad }));
   };
 
-  const confirmPedidoMensual = () => {
-    if (pedidoMensualSelectedItems.length === 0) {
-      setSnackbarMsg("Seleccione al menos un elemento para hacer el pedido.");
+  // --- INTEGRACIÓN CON BACKEND PARA GUARDAR PEDIDOS ---
+
+
+const FIELD_MAP_CENTRAL: Record<string, string> = {
+  "Torundas de algodón": "torundas_algodon",
+  "Torundas de gaza": "torundas_gaza",
+  "Apositos": "apositos",
+  "Guantes": "guantes",
+  "Equipos de pinza": "equipos_pinza",
+  "Frascos estériles": "frascos_esteriles",
+};
+
+const FIELD_MAP_FARMACIA: Record<string, string> = {
+  "Bolsas colectoras": "bolsas_colectoras",
+  "Alcohol": "alcohol",
+  "Hemoclasificadores": "hemoclasificadores",
+  "Hipoclorito de sodio": "hipoclorito_sodio",
+  "Tubos de ensayo": "tubos_ensayo",
+  "Gradillas": "gradillas",
+  "Sulfato de cobre": "sulfato_cobre",
+  "Ligaduras": "ligaduras",
+  "Lancetas": "lancetas",
+  "Laminas portaobjeto": "laminas_portaobjeto",
+  "Cloruro de sodio": "cloruro_sodio",
+  "Ringer lactato": "ringer_lactato",
+  "Equipos de suero": "equipos_suero",
+};
+
+
+
+  const confirmPedido = async () => {
+  if (pedidoSelectedItems.length === 0) {
+    setSnackbarMsg("Seleccione al menos un elemento para hacer el pedido.");
+    setSnackbarOpen(true);
+    return;
+  }
+  for (const id of pedidoSelectedItems) {
+    const cantidad = pedidoQuantities[id];
+    if (!cantidad || cantidad < 1) {
+      setSnackbarMsg(`Cantidad inválida`);
       setSnackbarOpen(true);
       return;
     }
-    for (const id of pedidoMensualSelectedItems) {
-      const cantidad = pedidoMensualQuantities[id];
-      if (!cantidad || cantidad < 1) {
-        setSnackbarMsg(`Cantidad inválida`);
-        setSnackbarOpen(true);
-        return;
-      }
-    }
-    setPedidoMensualModalOpen(false);
-    mostrarExito("Pedido mensual realizado con éxito.");
-  };
+  }
+  try {
+    // Separa farmacia y central
+    const farmaciaIds = almacenFarmaciaCentralItems
+      .filter((item) => item.id < 300)
+      .map((item) => item.id);
+    const centralIds = almacenFarmaciaCentralItems
+      .filter((item) => item.id >= 300)
+      .map((item) => item.id);
 
+    // --- FARMACIA ---
+    const farmaciaItems = pedidoSelectedItems
+      .filter((id) => farmaciaIds.includes(id))
+      .map((id) => ({
+        id,
+        nombre: almacenFarmaciaCentralItems.find((item) => item.id === id)?.nombre,
+        cantidad: pedidoQuantities[id],
+        unidad: almacenFarmaciaCentralItems.find((item) => item.id === id)?.unidad,
+      }));
+
+    if (farmaciaIds.length > 0) {
+      const farmaciaPayload: any = { planId: currentOrderId };
+      // Inicializa todos los campos requeridos en 0
+      Object.entries(FIELD_MAP_FARMACIA).forEach(([nombre, field]) => {
+        farmaciaPayload[field] = 0;
+      });
+      // Asigna los valores seleccionados
+      farmaciaItems.forEach(item => {
+        const field = FIELD_MAP_FARMACIA[item.nombre ?? ""];
+        if (field) farmaciaPayload[field] = item.cantidad;
+      });
+      await axios.post("http://localhost:3000/pedidos/farmacia", farmaciaPayload);
+    }
+
+    // --- CENTRAL ---
+    const centralItems = pedidoSelectedItems
+      .filter((id) => centralIds.includes(id))
+      .map((id) => ({
+        id,
+        nombre: almacenFarmaciaCentralItems.find((item) => item.id === id)?.nombre,
+        cantidad: pedidoQuantities[id],
+        unidad: almacenFarmaciaCentralItems.find((item) => item.id === id)?.unidad,
+      }));
+
+    if (centralIds.length > 0) {
+      const centralPayload: any = { planId: currentOrderId };
+      // Inicializa todos los campos requeridos en 0
+      Object.entries(FIELD_MAP_CENTRAL).forEach(([nombre, field]) => {
+        centralPayload[field] = 0;
+      });
+      // Asigna los valores seleccionados
+      centralItems.forEach(item => {
+        const field = FIELD_MAP_CENTRAL[item.nombre ?? ""];
+        if (field) centralPayload[field] = item.cantidad;
+      });
+      await axios.post("http://localhost:3000/pedidos/central", centralPayload);
+    }
+
+    setPedidoModalOpen(false);
+    mostrarExito(`Pedido confirmado para ${pedidoSelectedItems.length} elemento(s).`);
+    setPedidosConfirmados((prev) => ({
+      ...prev,
+      [currentOrderId as string]: true,
+    }));
+    setPedidosPorFila((prev) => ({
+      ...prev,
+      [currentOrderId as string]: { ...pedidoQuantities },
+    }));
+    setPedidoSelectedItems([]);
+    setPedidoQuantities({});
+  } catch (error) {
+    setSnackbarMsg("Error al guardar el pedido en la base de datos.");
+    setSnackbarOpen(true);
+  }
+};
+
+  // --- Toggle para pedidos de farmacia, central y víveres ---
   const togglePedidoItem = (id: number) => {
     setPedidoSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -568,84 +775,82 @@ export default function PedidosPage() {
     }
   };
 
+  // --- Cambio de cantidad para pedidos de farmacia, central y víveres ---
   const onPedidoQuantityChange = (id: number, cantidad: number) => {
     setPedidoQuantities((prev) => ({ ...prev, [id]: cantidad }));
   };
 
-  const confirmPedido = () => {
-    if (pedidoSelectedItems.length === 0) {
-      setSnackbarMsg("Seleccione al menos un elemento para hacer el pedido.");
+ const confirmPedidoCentral = async () => {
+  if (pedidoSelectedItems.length === 0) {
+    setSnackbarMsg("Seleccione al menos un elemento para hacer el pedido de víveres.");
+    setSnackbarOpen(true);
+    return;
+  }
+  for (const id of pedidoSelectedItems) {
+    const cantidad = pedidoQuantities[id];
+    if (!cantidad || cantidad < 1) {
+      setSnackbarMsg(`Cantidad inválida`);
       setSnackbarOpen(true);
       return;
     }
-    for (const id of pedidoSelectedItems) {
-      const cantidad = pedidoQuantities[id];
-      if (!cantidad || cantidad < 1) {
-        setSnackbarMsg(`Cantidad inválida`);
-        setSnackbarOpen(true);
-        return;
-      }
-    }
-    setPedidoModalOpen(false);
-    mostrarExito(`Pedido confirmado para ${pedidoSelectedItems.length} elemento(s).`);
-    setPedidosConfirmados((prev) => ({
-      ...prev,
-      [currentOrderId as number]: true,
-    }));
-    setPedidosPorFila((prev) => ({
-      ...prev,
-      [currentOrderId as number]: { ...pedidoQuantities },
-    }));
-    setPedidoSelectedItems([]);
-    setPedidoQuantities({});
-  };
+  }
+  try {
+    const viveresItems = pedidoSelectedItems
+      .map((id) => ({
+        id,
+        nombre: almacenViveresItems.find((item) => item.id === id)?.nombre,
+        cantidad: pedidoQuantities[id],
+      }));
 
-  const confirmPedidoCentral = () => {
-    if (pedidoSelectedItems.length === 0) {
-      setSnackbarMsg("Seleccione al menos un elemento para hacer el pedido central.");
-      setSnackbarOpen(true);
-      return;
-    }
-    for (const id of pedidoSelectedItems) {
-      const cantidad = pedidoQuantities[id];
-      if (!cantidad || cantidad < 1) {
-        setSnackbarMsg(`Cantidad inválida`);
-        setSnackbarOpen(true);
-        return;
-      }
-    }
+    const viveresPayload: any = { planId: currentOrderId };
+    Object.entries(FIELD_MAP_VIVERES).forEach(([nombre, field]) => {
+      viveresPayload[field] = 0;
+    });
+    viveresItems.forEach(item => {
+      const field = FIELD_MAP_VIVERES[item.nombre ?? ""];
+      if (field) viveresPayload[field] = item.cantidad;
+    });
+
+    await axios.post("http://localhost:3000/pedidos/viveres", viveresPayload);
     setPedidoCentralModalOpen(false);
-    mostrarExito(`Pedido central confirmado para ${pedidoSelectedItems.length} elemento(s).`);
+    mostrarExito(`Pedido de víveres confirmado para ${pedidoSelectedItems.length} elemento(s).`);
     setPedidoSelectedItems([]);
     setPedidoQuantities({});
-  };
-
-  const confirmDevolucionCantidad = () => {
-    if (devolucionCantidad < 1 || devolucionCantidad > devolucionMaxCantidad) {
-      setSnackbarMsg(`Cantidad inválida. Debe ser entre 1 y ${devolucionMaxCantidad}`);
-      setSnackbarOpen(true);
-      return;
-    }
-    setDevolucionCantidadModalOpen(false);
-    mostrarExito(`Devolución confirmada de ${devolucionCantidad} elemento(s).`);
-    if (currentOrderId !== null) {
-      setPlanDonaciones(prev => prev.filter(row => row.id !== currentOrderId));
-      setPedidosConfirmados((prev) => {
-        const copy = { ...prev };
-        delete copy[currentOrderId as number];
-        return copy;
-      });
-      setPedidosPorFila((prev) => {
-        const copy = { ...prev };
-        delete copy[currentOrderId as number];
-        return copy;
-      });
-    }
-  };
+  } catch (error) {
+    setSnackbarMsg("Error al guardar el pedido de víveres en la base de datos.");
+    setSnackbarOpen(true);
+  }
+};
 
   // --- Función para mostrar la unidad personalizada en Farmacia y Central ---
   const getUnidadFarmaciaCentral = (item: AlmacenItem) => item.unidad || "unidades";
 
+const confirmDevolucionCantidad = async () => {
+  if (!currentOrderId) {
+    setSnackbarMsg("No hay pedido seleccionado para devolución.");
+    setSnackbarOpen(true);
+    return;
+  }
+  // Cambia la validación aquí:
+  if (devolucionCantidad < 0 || devolucionCantidad > devolucionMaxCantidad) {
+    setSnackbarMsg(`Cantidad inválida para devolución.`);
+    setSnackbarOpen(true);
+    return;
+  }
+  try {
+    await axios.post("http://localhost:3000/pedidos/devolucion", {
+      planId: currentOrderId,
+      cantidad: devolucionCantidad,
+    });
+    setDevoluciones((prev) => [...prev, { planId: currentOrderId }]);
+    setDevolucionCantidadModalOpen(false);
+    mostrarExito(`Devolución confirmada de ${devolucionCantidad} elemento(s).`);
+    setDevolucionCantidad(1);
+  } catch (error) {
+    setSnackbarMsg("Error al guardar la devolución en la base de datos.");
+    setSnackbarOpen(true);
+  }
+};
   return (
     <>
       <Navbar />
