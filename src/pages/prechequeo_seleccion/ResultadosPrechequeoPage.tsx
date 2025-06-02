@@ -10,13 +10,21 @@ const columns: GridColDef<(typeof rows)[number]>[] = [
   { field: "id", headerName: "No", width: 90 },
   {
     field: "nombre",
-    headerName: "Nombre Completo",
+    headerName: "Nombre",
     width: 150,
     editable: false,
   },
+
+   {
+    field: "primer_apellido",
+    headerName: "Primer Apellido",
+    width: 150,
+    editable: false,
+  },
+
   {
-    field: "lastName",
-    headerName: "Last name",
+    field: "segundo_apellido",
+    headerName: "Segundo Apellido",
     width: 150,
     editable: false,
   },
@@ -149,10 +157,6 @@ export default function ResultadosPrechequeo() {
             ACEPTAR
           </BotonPersonalizado>
         </Box>
-
-      
-
-
     </>
 
 

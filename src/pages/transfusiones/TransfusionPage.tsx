@@ -1,10 +1,10 @@
 import Box from "@mui/material/Box";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar"
-import { Button, Checkbox, Container, FormControl, InputLabel, ListItemText, MenuItem, Modal, OutlinedInput, Select, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
+import { Button, Checkbox, Container, FormControl, InputLabel, MenuItem, Modal, Select, SelectChangeEvent, Tab, Tabs, Typography } from "@mui/material";
 import { useState } from "react";
 import React from "react";
-import AssignmentIcon from "@mui/icons-material/Assignment";
+import DataGridDemo from "../../components/DataGridStock";
 
 const columns: GridColDef<(typeof rows)[number]>[] = [
   { field: "id", headerName: "#", width: 70 },
@@ -28,143 +28,13 @@ const rows = [
   { id: 1, lastName: "Snow", blabla: "Jon", age: 14, phone: 444 },
 ];
 
-const columns2: GridColDef<(typeof rows)[number]>[] = [
-  { field: "id", headerName: "#", width: 70 },
-  { field: "ci", headerName: "CI", width: 120 },
-  { field: "Nombre", headerName: "Nombre", width: 120, editable: false, },
-  { field: "PApellido", headerName: "Primer Apellido", width: 150, editable: false, },
-  { field: "SApellido", headerName: "Segundo Apellido", width: 150, editable: false, },
-  { field: "Sexo", headerName: "Sexo", width: 100, editable: false, },
-  { field: "Edad", headerName: "Edad", type: "number", width: 100, editable: false, },
-  { field: "peso", headerName: "Peso", type: "number", width: 100, editable: false, },
-  { field: "talla", headerName: "Talla", type: "number", width: 100, editable: false, },
-  { field: "Sala", headerName: "Sala", width: 100, editable: false, },
-  { field: "Cama", headerName: "Cama", width: 100, editable: false, },
-  { field: "grupo", headerName: "Grupo", width: 100, editable: false, },
-  { field: "factor", headerName: "Factor", width: 100, editable: false, },
-  { field: "NoHClinica", headerName: "No.HC", width: 120, editable: false, },
-  { field: "lugar", headerName: "Lugar", width: 170, editable: false, },
-];
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
 
-const rows2 = [
-  { id: 1, lastName: "Snow", blabla: "Jon", age: 14, phone: 444 },
-];
-
-const columnstockneo: GridColDef<(typeof rows)[number]>[] = [
-  { field: "id", headerName: "Codigo de Bolsa", width: 150 },
-  { field: "tipoC", headerName: "Tipo Componente", width: 180 },
-  { field: "tipoCH", headerName: "Tipo Componente Habitual", width: 200 },
-  { field: "grupo", headerName: "Grupo", width: 120, editable: false, },
-  { field: "factor", headerName: "Factor", width: 150, editable: false, },
-  { field: "FechaE", headerName: "Fecha de Extraccion", width: 200, editable: false, },
-  { field: "FechaV", headerName: "Fecha de Vencimiento", width: 200, editable: false, },
-  { field: "VolI", headerName: "Volumen Inicial", width: 150, editable: false, },
-  { field: "VolF", headerName: "Volumen Final", width: 150, editable: false, },
-  {
-    field: "Acciones",
-    headerName: "Acciones",
-    width: 120,
-    renderCell: (params) => {
-      const [open, setOpen] = useState(false);
-      const handleOpen = () => setOpen(true);
-      const handleClose = () => setOpen(false);
-      const [personName, setPersonName] = React.useState<string[]>([]);
-
-      const handleChange = (event: SelectChangeEvent<typeof personName>) => {
-        const {
-          target: { value },
-        } = event;
-        setPersonName(
-          // On autofill we get a stringified value.
-          typeof value === 'string' ? value.split(',') : value,
-        );
-      };
-      const ITEM_HEIGHT = 48;
-      const ITEM_PADDING_TOP = 8;
-      const MenuProps = {
-        PaperProps: {
-          style: {
-            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-            width: 250,
-          },
-        },
-      };
-
-      const names = [
-        'Globulos Rojos',
-        'Concentrado de Plaquetas',
-        'Plasma Fresco Congelado',
-        'Crio Precipitado',
-      ];
-      const columns: GridColDef<(typeof rows)[number]>[] = [
-        { field: "id", headerName: "ID", width: 90 },
-        { field: "NoOrden", headerName: "No.Orden", width: 120 },
-      ];
-      const rows = [
-        { id: 1234, NoOrden: 45678 },
-      ];
-      return (
-        <>
-          <Button
-            variant="contained"
-            size="small"
-            color="error"
-            endIcon={<AssignmentIcon sx={{ marginLeft: -1 }} />}
-            sx={{ mr: 1 }}
-            onClick={handleOpen}
-          >
-            Solicitar
-          </Button>
-          <Modal
-            open={open}
-            onClose={handleClose}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-          >
-            <Container sx={{
-              width: "80%", height: "75%", display: 'flex',
-              background: "white",
-              mt: "65px",
-              borderRadius: "10px",
-            }}>
-              <Box sx={{ marginTop: "20px", mb: "20px", width: "100%", height: "45%"}}>
-                <FormControl sx={{ width: 300}}>
-                  <InputLabel id="demo-multiple-checkbox-label">Seleccionar</InputLabel>
-                  <Select
-                    labelId="demo-multiple-checkbox-label"
-                    id="demo-multiple-checkbox"
-                    multiple
-                    value={personName}
-                    onChange={handleChange}
-                    input={<OutlinedInput label="Seleccionar" />}
-                    renderValue={(selected) => selected.join(', ')}
-                    MenuProps={MenuProps}
-                  >
-                    {names.map((name) => (
-                      <MenuItem key={name} value={name}>
-                        <Checkbox checked={personName.includes(name)} />
-                        <ListItemText primary={name} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            </Container>
-          </Modal>
-        </>
-      );
-    },
-    sortable: false,
-    filterable: false,
-    editable: false,
-  },
-];
-
-const rowsstockneo = [
-  { id: 1, lastName: "Snow", blabla: "Jon", age: 14, phone: 444 },
-];
-
-function TabPanel(props) {
+function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
   return (
     <Box
@@ -422,31 +292,7 @@ export default function TransfusionPage() {
                 >
                   Stock de Neonato
                 </Typography>
-                <DataGrid
-                  sx={{
-                    "& .MuiDataGrid-columnHeaderTitle": {
-                      fontFamily: '"Open Sans"',
-                      fontWeight: 600,
-                    },
-                    "& .MuiDataGrid-cellContent": {
-                      fontFamily: '"Open Sans"',
-                      color: "#000",
-                    },
-                    width: "100%",
-                  }}
-                  rows={rowsstockneo}
-                  columns={columnstockneo}
-                  initialState={{
-                    pagination: {
-                      paginationModel: {
-                        pageSize: 5,
-                      },
-                    },
-                  }}
-                  pageSizeOptions={[5]}
-                  checkboxSelection
-                  disableRowSelectionOnClick
-                />
+                <DataGridDemo/>
               </Box>
             </TabPanel>
             <TabPanel value={tab} index={1}>
@@ -463,6 +309,7 @@ export default function TransfusionPage() {
                 >
                   Stock de Materna
                 </Typography>
+                <DataGridDemo/>
               </Box>
             </TabPanel>
             <TabPanel value={tab} index={2}>
@@ -479,31 +326,7 @@ export default function TransfusionPage() {
                 >
                   Stock de Urgencia
                 </Typography>
-                <DataGrid
-                  sx={{
-                    "& .MuiDataGrid-columnHeaderTitle": {
-                      fontFamily: '"Open Sans"',
-                      fontWeight: 600,
-                    },
-                    "& .MuiDataGrid-cellContent": {
-                      fontFamily: '"Open Sans"',
-                      color: "#000",
-                    },
-                    width: "100%",
-                  }}
-                  rows={rows2}
-                  columns={columns2}
-                  initialState={{
-                    pagination: {
-                      paginationModel: {
-                        pageSize: 1,
-                      },
-                    },
-                  }}
-                  pageSizeOptions={[1]}
-                  checkboxSelection
-                  disableRowSelectionOnClick
-                />
+                <DataGridDemo/>
               </Box>
             </TabPanel>
             <TabPanel value={tab} index={3}>
@@ -520,31 +343,7 @@ export default function TransfusionPage() {
                 >
                   Stock de Servicio
                 </Typography>
-                <DataGrid
-                  sx={{
-                    "& .MuiDataGrid-columnHeaderTitle": {
-                      fontFamily: '"Open Sans"',
-                      fontWeight: 600,
-                    },
-                    "& .MuiDataGrid-cellContent": {
-                      fontFamily: '"Open Sans"',
-                      color: "#000",
-                    },
-                    width: "100%",
-                  }}
-                  rows={rows2}
-                  columns={columns2}
-                  initialState={{
-                    pagination: {
-                      paginationModel: {
-                        pageSize: 1,
-                      },
-                    },
-                  }}
-                  pageSizeOptions={[1]}
-                  checkboxSelection
-                  disableRowSelectionOnClick
-                />
+                <DataGridDemo/>
               </Box>
             </TabPanel>
           </Box>
