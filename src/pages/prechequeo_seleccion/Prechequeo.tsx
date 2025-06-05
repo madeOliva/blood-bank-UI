@@ -18,23 +18,24 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import React from "react";
 import ExclusiveCheckboxes from "../../components/Checkbox";
 import api from "../../api/client";
+import axios from "axios";
 
-function ModalWindow({ row }: { row: any }) {
+function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => void }) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   // Para selects
-  const [grupo, setGrupo] = useState('');
-  const [factor, setFactor] = useState('');
-  const [hemoglobina, setHemoglobina] = useState('');
+  const [examenP_grupo, setGrupo] = useState('');
+  const [examenP_factor, setFactor] = useState('');
+  const [examenP_hemoglobina, setHemoglobina] = useState('');
 
   // Estado para los checkboxes
   const [checked, setChecked] = useState({ apto: false, noapto: false });
@@ -54,7 +55,7 @@ function ModalWindow({ row }: { row: any }) {
 
   // Validación simple
   const hayCamposVacios = () => {
-    return !grupo || !factor || !hemoglobina || (!checked.apto && !checked.noapto);
+    return !examenP_grupo || !examenP_factor || !examenP_hemoglobina || (!checked.apto && !checked.noapto);
   };
 
   const handleSubmit = async () => {
@@ -66,17 +67,16 @@ function ModalWindow({ row }: { row: any }) {
     }
     try {
       const payload = {
-        rowId: row?.id,
-        grupo,
-        factor,
-        hemoglobina,
-        apto: checked.apto,
-        noapto: checked.noapto,
+        examenP_grupo,
+        examenP_factor,
+        examenP_hemoglobina,
+        apto_prechequeo: checked.apto ? true : checked.noapto ? false : undefined,
       };
       await api.put(`/registro-donacion/${row.id}`, payload);
       setModalType("success");
       setOpenModal(true);
       handleReset();
+      onRemove(row.id);
     } catch (error) {
       setErrorMsg("Ocurrió un error al enviar los datos.");
       setModalType("error");
@@ -121,7 +121,7 @@ function ModalWindow({ row }: { row: any }) {
               <Select
                 labelId="grupo-label"
                 id="grupo-select"
-                value={grupo}
+                value={examenP_grupo}
                 label="Grupo"
                 size="small"
                 onChange={(e) => setGrupo(e.target.value)}
@@ -140,7 +140,7 @@ function ModalWindow({ row }: { row: any }) {
               <Select
                 labelId="factor-label"
                 id="factor-select"
-                value={factor}
+                value={examenP_factor}
                 label="Factor"
                 size="small"
                 onChange={(e) => setFactor(e.target.value)}
@@ -155,7 +155,7 @@ function ModalWindow({ row }: { row: any }) {
             id="hemoglobina"
             label="Hemoglobina"
             variant="outlined"
-            value={hemoglobina}
+            value={examenP_hemoglobina}
             onChange={(e) => setHemoglobina(e.target.value)}
             size="small"
             sx={{
@@ -235,38 +235,7 @@ function ModalWindow({ row }: { row: any }) {
   );
 }
 
-const columns: GridColDef<(typeof rows)[number]>[] = [
-  { field: "ci", headerName: "CI", width: 150 },
-  { field: "nombre", headerName: "Nombre", width: 100 },
-  { field: "primer_apellido", headerName: "Primer Apellido", width: 100 },
-  { field: "segundo_apellido", headerName: "Segundo Apellido", width: 100 },
-  { field: "edad", headerName: "Edad", width: 100 },
-  { field: "sexo", headerName: "Sexo", width: 100 },
-  { field: "grupo", headerName: "Grupo", width: 100 },
-  { field: "factor", headerName: "Factor", width: 100 },
-  { field: "donante de", headerName: "Donante de", width: 100 },
-  {
-    field: "actions",
-    headerName: "Examenes",
-    width: 150,
-    renderCell: (params) => <ModalWindow row={params.row} />,
-  },
-];
-
-const rows = [
-  {
-    id: "664f1b2c3a4d5e6f7a8b9c0d",
-    ci: "12345678",
-    nombre: "Juan",
-    primer_apellido: "Pérez",
-    segundo_apellido: "García",
-    edad: 35,
-    sexo: "M",
-    grupo: "A",
-    factor: "positivo",
-    "donante de": "CMF",
-  },
-];
+ 
 
 const style = {
   position: 'absolute',
@@ -279,14 +248,68 @@ const style = {
   p: 4,
 };
 
-
-
 export default function Prechequeo() {
   const navigate = useNavigate();
+
+  // Estado para los registros
+  const [rows, setRows] = useState<any[]>([]);
+
+  const removeRow = (id: string) => {
+    setRows((prev) => prev.filter((row) => row.id !== id));
+  };
+
+// Las columnas deben ir fuera del componente para evitar redefinición
+const columns: GridColDef<any>[] = [
+  { field: "ci", headerName: "CI", width: 150 },
+  { field: "nombre", headerName: "Nombre", width: 100 },
+  { field: "primer_apellido", headerName: "Primer Apellido", width: 100 },
+  { field: "segundo_apellido", headerName: "Segundo Apellido", width: 100 },
+  { field: "edad", headerName: "Edad", width: 100 },
+  { field: "sexo", headerName: "Sexo", width: 100 },
+  { field: "grupo_sanguine", headerName: "Grupo", width: 100 },
+  { field: "factor", headerName: "Factor", width: 100 },
+  { field: "donante de", headerName: "Donante de", width: 100 },
+  {
+    field: "actions",
+    headerName: "Examenes",
+    width: 150,
+    renderCell: (params) => <ModalWindow row={params.row} onRemove={removeRow}/>,
+  },
+];
 
   const handleResultadosPrechequeo = () => {
     navigate("/resultadosprechequeo", { replace: true });
   };
+
+  useEffect(() => {
+    const fetchRows = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/registro-donacion/find");
+        // Mapea los datos para la tabla
+        const mappedRows = res.data.map((reg: any) => ({
+          id: reg._id,
+          ci: reg.persona?.ci,
+          nombre: reg.persona?.nombre,
+          primer_apellido: reg.persona?.primer_apellido,
+          segundo_apellido: reg.persona?.segundo_apellido,
+          edad: reg.persona?.edad,
+          sexo: reg.persona?.sexo,
+          grupo_sanguine: reg.historiaClinica?.grupo_sanguine,
+          factor: reg.historiaClinica?.factor,
+          "donante de":
+            reg.historiaClinica?.es_donanteControlado
+              ? "Controlado"
+              : reg.historiaClinica?.es_posibleDonante
+                ? "Posible"
+                : "No",
+        })); // ver lo del donante con Barby
+        setRows(mappedRows);
+      } catch (error) {
+        console.error("Error al cargar los registros:", error);
+      }
+    };
+    fetchRows();
+  }, []);
 
   return (
     <>
@@ -319,11 +342,12 @@ export default function Prechequeo() {
             initialState={{
               pagination: {
                 paginationModel: {
-                  pageSize: 7,
+                  pageSize: 5,
                 },
               },
             }}
             pageSizeOptions={[7]}
+            getRowId={(row) => row.id}
           />
         </Box>
       </Container>

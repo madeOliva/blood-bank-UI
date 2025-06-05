@@ -110,26 +110,6 @@ function ExclusiveCheckboxes() {
 
 
 
-
-
-
-
-function RadioButtonsGroup({ value, onChange }: { value: boolean | null, onChange: (val: boolean) => void }) {
-    return (
-        <FormControl sx={{ marginTop: 1 }}>
-            <RadioGroup
-                row
-                value={value === null ? "" : value ? "SI" : "NO"}
-                onChange={e => onChange(e.target.value === "SI")}
-            >
-                <FormControlLabel value="SI" control={<Radio />} label="SI" />
-                <FormControlLabel value="NO" control={<Radio />} label="NO" />
-            </RadioGroup>
-        </FormControl>
-    );
-}
-
-
 export default function HistoriaDonante() {
     const [grupo, setGrupo] = useState('');
     const [factor, setFactor] = useState('');
@@ -1628,7 +1608,7 @@ export default function HistoriaDonante() {
 
                         }}
                     >
-                        <BotonPersonalizado onClick={handleHc} sx={{ width: 225 }}>
+                        <BotonPersonalizado onClick={handleSubmit} sx={{ width: 225 }}>
                             ACEPTAR
                         </BotonPersonalizado>
                     </Box>
