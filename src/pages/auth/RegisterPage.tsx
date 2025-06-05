@@ -3,23 +3,28 @@ import { Box, Button, FormControl, IconButton, InputAdornment, InputLabel, Outli
 import LogoApp from "../../pictures/LogoApp.png";
 import { useNavigate } from "react-router-dom";
 import React from "react";
-import { isAxiosError } from "axios";
-import api from "../../api/client";
+import axios, { isAxiosError } from "axios";
+import { jwtDecode } from "jwt-decode";
+
+interface RegisterResponse {
+  access_token: string;
+}
+
+interface JwtPayload {
+  email: string;
+  password: string;
+  role: string;
+}
 
 
 export default function Register() {
   const navigate = useNavigate();
-
-  const handlePrechequeo = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/prechequeo", { replace: true }); // Redirige a la vista de Prechequeo
-  };
-
   const [showPassword, setShowPassword] = React.useState(false);
   const [error, setError] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [name, setName] = React.useState('');
+  const [role, setRole] = React.useState('');
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
@@ -34,23 +39,59 @@ export default function Register() {
   ) => {
     event.preventDefault();
   };
-
-  const handleRegister = async () => {
+const handleRegister = async () => {
     setError('');
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !role) {
       setError('Por favor completa todos los campos');
       return;
     }
 
     try {
-      const response = await api.post('/auth/register', {
+      const response = await axios.post<RegisterResponse>('http://localhost:3000/auth/register', {
         name,
         email,
         password,
+        role,
       });
-      // Navegar a prechequeo tras registro exitoso
-      navigate('/prechequeo');
+
+      const { access_token } = response.data;
+
+      if (!access_token) {
+        setError('No se recibió token de autenticación');
+        return;
+      }
+
+      // Decodifica el token y guarda el rol
+            const decoded = jwtDecode<JwtPayload>(access_token);
+            localStorage.setItem('token', access_token);
+            localStorage.setItem('userRole', decoded.role);
+            if (decoded.role === 'medico') {
+              navigate('/resultadosprechequeo');
+            } else if (decoded.role === 'tecnico_aseguramiento_calidad') {
+              navigate('/vizualizar');
+            } else if(decoded.role === 'medico_hospital') {
+              navigate('/');
+            }else if(decoded.role === 'medico_consultorio') {
+              navigate('/listadop');
+            }else if(decoded.role === 'tecnico_prechequeo'){
+              navigate('/prechequeo');
+            }else if (decoded.role === 'jefe_extraccion_movil'|| decoded.role === 'tecnico_movil' ){
+              navigate('/planDonaciones')
+            }else if (decoded.role === 'tecnico_inscripcion'){
+              navigate('/citados')
+            }else if (decoded.role === 'tecnico_transfusion'){
+              navigate('/pageone')
+            }else if (decoded.role === 'tecnico_donacion'){
+              navigate('/lista-espera')
+            }else if (decoded.role === 'tecnico_laboratorio_suma' || decoded.role === 'tecnico_laboratorio_inmuno' || decoded.role === 'tecnico_laboratorio_calidad'){
+              navigate('/principal_lab')
+            }else if (decoded.role === 'tecnico_produccion'){
+              navigate('/entrada_produccion')
+            }
+             else {
+              setError('No tienes permiso para acceder a esta sección.');
+            }
     } catch (err) {
       if (isAxiosError(err)) {
         setError(err.response?.data?.message || 'Error al registrarse. Intenta de nuevo.');
@@ -211,6 +252,38 @@ export default function Register() {
               label="Password"
             />
           </FormControl>
+
+          <TextField
+            id="outlined-basicc"
+            label="Role"
+            variant="outlined"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            sx={{
+              width: 255,
+
+              // Cambia el color del texto
+              "& .MuiOutlinedInput-root": {
+                color: "#000",
+                // Cambia el color del borde
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#00796B",
+                },
+                // Cambia el color del borde al hacer foco
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#00796B",
+                },
+              },
+              // Cambia el color del label
+              "& .MuiInputLabel-outlined": {
+                color: "#009688",
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                paddingLeft: "8px",
+                paddingRight: "8px",
+              },
+            }}
+          />
 
           <Button
             variant="contained"

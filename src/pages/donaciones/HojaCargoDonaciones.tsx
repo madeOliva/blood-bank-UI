@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import * as React from "react";
 import { DataGrid, GridRowsProp, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
@@ -174,4 +175,13 @@ export default function HojaCargoDonaciones() {
       </Box>
     </>
   );
+=======
+export default function HojaCargoDonaciones(){
+    return (
+        <div>
+        <p>
+        hoja de cargo</p>
+        </div>)
+
+>>>>>>> 4811e2ccb5b13a93a711a64dd20cd9f16b9f0f5d
 }

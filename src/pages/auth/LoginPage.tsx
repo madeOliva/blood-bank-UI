@@ -9,15 +9,21 @@ import FormControl from "@mui/material/FormControl";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import LogoApp from "../../pictures/LogoApp.png";
-import api from "../../api/client";
 import { useNavigate } from "react-router-dom";
-import { isAxiosError } from "axios";
+import axios, { isAxiosError } from "axios";
+import { jwtDecode } from "jwt-decode";
+
 
 
 interface LoginResponse {
   access_token: string;
 }
 
+interface JwtPayload {
+  email: string;
+  password: string;
+  role: string;
+}
 
 export default function Login() {
 
@@ -51,7 +57,7 @@ export default function Login() {
     }
 
     try {
-      const response = await api.post<LoginResponse>('/auth/login', {
+      const response = await axios.post<LoginResponse>('http://localhost:3000/auth/login', {
         email,
         password,
       });
@@ -62,8 +68,38 @@ export default function Login() {
         setError('No se recibió token de autenticación');
         return;
       }
+      // Decodifica el token y guarda el rol
+      const decoded = jwtDecode<JwtPayload>(access_token);
       localStorage.setItem('token', access_token);
-      navigate('/prechequeo');
+      localStorage.setItem('userRole', decoded.role);
+      if (decoded.role === 'medico') {
+        navigate('/resultadosprechequeo');
+      } else if (decoded.role === 'tecnico_aseguramiento_calidad') {
+        navigate('/vizualizar');
+      } else if(decoded.role === 'medico_hospital') {
+        navigate('/');
+      }else if(decoded.role === 'medico_consultorio') {
+        navigate('/listadop');
+      }else if(decoded.role === 'tecnico_prechequeo'){
+        navigate('/prechequeo');
+      }else if (decoded.role === 'jefe_extraccion_movil'){
+        navigate('/planDonaciones')
+      }else if (decoded.role === 'tecnico_movil'){
+        navigate('/planDonaciones')
+      }else if (decoded.role === 'tecnico_inscripcion'){
+        navigate('/citados')
+      }else if (decoded.role === 'tecnico_transfusion'){
+        navigate('/pageone')
+      }else if (decoded.role === 'tecnico_donacion'){
+        navigate('/lista-espera')
+      }else if (decoded.role === 'tecnico_laboratorio_suma' || decoded.role === 'tecnico_laboratorio_inmuno' || decoded.role === 'tecnico_laboratorio_calidad'){
+        navigate('/principal_lab')
+      }else if (decoded.role === 'tecnico_produccion'){
+        navigate('/entrada_produccion')
+      }
+       else {
+        setError('No tienes permiso para acceder a esta sección.');
+      }
     } catch (err) {
       if (isAxiosError(err)) {
         setError(err.response?.data?.message || 'Error al iniciar sesión. Intenta de nuevo.');
@@ -72,9 +108,6 @@ export default function Login() {
       }
     }
   };
-
-
-
 
   return (
     <div>

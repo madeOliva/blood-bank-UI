@@ -1,104 +1,134 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import { GridColDef, DataGrid } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
+import api from "../../api/client";
+import { useEffect, useState } from "react";
 
-const columns: GridColDef<(typeof rows)[number]>[] = [
-    { field: "id", headerName: "ID", width: 90 },
-    {
-        field: "blabla",
-        headerName: "BlaBLa",
-        width: 150,
-        editable: false,
-    },
-    {
-        field: "lastName",
-        headerName: "Last name",
-        width: 150,
-        editable: false,
-    },
-    {
-        field: "age",
-        headerName: "Age",
-        type: "number",
-        width: 150,
-        editable: false,
-    },
-    {
-        field: "phone",
-        headerName: "Phone",
-        type: "number",
-        width: 150,
-        editable: false,
-    },
+type DonanteNoApto = {
+  ci: string;
+  observacion: string;
+};
 
+type DatosPersonales = {
+  ci: string;
+  "nombres y apellidos": string;
+};
 
+type RowData = {
+  id: number;
+  ci: string;
+  "nombres y apellidos": string;
+  observacion: string;
+};
 
-];
-
-const rows = [
-    { id: 1, lastName: "Snow", blabla: "Jon", age: 14, phone: 444 },
-    { id: 2, lastName: "Lannister", blabla: "Cersei", age: 31, phone: 444 },
-    { id: 3, lastName: "Lannister", blabla: "Jaime", age: 31, phone: 444 },
-    { id: 4, lastName: "Stark", blabla: "Arya", age: 11, phone: 444 },
-    {
-        id: 5,
-        blabla: "Targaryen",
-        firstName: "Daenerys",
-        age: null,
-        phone: 444,
-    },
-    { id: 1, lastName: "Snow", blabla: "Jon", age: 14, phone: 444 },
-    { id: 2, lastName: "Lannister", blabla: "Cersei", age: 31, phone: 444 },
-    { id: 3, lastName: "Lannister", blabla: "Jaime", age: 31, phone: 444 },
-    { id: 4, lastName: "Stark", blabla: "Arya", age: 11, phone: 444 },
-    { id: 1, lastName: "Snow", blabla: "Jon", age: 14, phone: 444 },
-    { id: 2, lastName: "Lannister", blabla: "Cersei", age: 31, phone: 444 },
-    { id: 3, lastName: "Lannister", blabla: "Jaime", age: 31, phone: 444 },
-    { id: 4, lastName: "Stark", blabla: "Arya", age: 11, phone: 444 },
+const columns: GridColDef<RowData>[] = [
+  { field: "ci", headerName: "CI", width: 200, editable: false },
+  {
+    field: "nombres y apellidos",
+    headerName: "Nombres y Apellidos",
+    width: 300,
+    editable: false,
+  },
+  {
+    field: "observacion",
+    headerName: "Observación",
+    width: 200,
+    editable: false,
+  },
 ];
 
 export default function DonantesNoAptos() {
+  const [rows, setRows] = useState<RowData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    return (
-        <>
+  useEffect(() => {
+    setLoading(true);
+    api
+      .get<DonanteNoApto[]>("/registrodonacion/observacion")
+      .then(async (response) => {
+        // 1. Obtener los datos personales para cada CI
+        const rowsWithNames = await Promise.all(
+          response.data.map(async (donante, index) => {
+            try {
+              const { data: datosPersonales } = await api.get<DatosPersonales>(
+                `/persona/nombrecompleto/${donante.ci}`
+              );
+              return {
+                id: index + 1,
+                ci: donante.ci,
+                "nombres y apellidos": datosPersonales["nombres y apellidos"],
+                observacion: donante.observacion,
+              };
+            } catch (err) {
+              // Si falla, ponemos un nombre por defecto o lo dejamos vacío
+              return {
+                id: index + 1,
+                ci: donante.ci,
+                "nombres y apellidos": "No disponible",
+                observacion: donante.observacion,
+              };
+            }
+          })
+        );
+        setRows(rowsWithNames);
+      })
+      .catch((err) => {
+        setError("No se pudieron cargar los donantes no aptos.");
+        console.error(err);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-            <Navbar />
-
-            <Typography
-                variant="h4"
-                component="h5"
-                mt={8}
-                sx={{ fontSize: { xs: "2rem", md: "3rem" }, textAlign: "center", backgroundColor: "#00796B", color: 'white', marginTop: 10 }}
-            >
-                Donantes no Aptos
+  return (
+    <>
+      <Navbar />
+      <Typography
+        variant="h4"
+        component="h5"
+        mt={8}
+        sx={{
+          fontSize: { xs: "2rem", md: "3rem" },
+          textAlign: "center",
+          backgroundColor: "#00796B",
+          color: "white",
+          marginTop: 10,
+        }}
+      >
+        Listado de Donantes no Aptos
+      </Typography>
+      <Container>
+        <Box sx={{ marginTop: "20px", marginBlockEnd: 1, marginLeft: 7 }}>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              {error}
             </Typography>
-            <Box sx={{ marginTop: "20px", marginBlockEnd: 1, marginLeft: 7 }}>
-
-                <DataGrid
-                    sx={{
-
-                        "& .MuiDataGrid-columnHeaderTitle": {
-                            fontFamily: '"Open Sans"',
-                            fontWeight: 600,
-                        },
-                        "& .MuiDataGrid-cellContent": {
-                            fontFamily: '"Open Sans"',
-                            color: "#000",
-                        },
-                    }}
-                    rows={rows}
-                    columns={columns}
-                    initialState={{
-                        pagination: {
-                            paginationModel: {
-                                pageSize: 5,
-                            },
-                        },
-                    }}
-                    pageSizeOptions={[5]}
-                />
-
-
-            </Box></>
-    )
+          )}
+          <DataGrid
+            sx={{
+              "& .MuiDataGrid-columnHeaderTitle": {
+                fontFamily: '"Open Sans"',
+                fontWeight: 600,
+              },
+              "& .MuiDataGrid-cellContent": {
+                fontFamily: '"Open Sans"',
+                color: "#000",
+              },
+            }}
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 5,
+                },
+              },
+            }}
+            pageSizeOptions={[5]}
+          />
+        </Box>
+      </Container>
+    </>
+  );
 }
