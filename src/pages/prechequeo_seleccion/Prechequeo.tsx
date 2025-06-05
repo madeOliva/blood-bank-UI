@@ -296,13 +296,13 @@ const columns: GridColDef<any>[] = [
           sexo: reg.persona?.sexo,
           grupo_sanguine: reg.historiaClinica?.grupo_sanguine,
           factor: reg.historiaClinica?.factor,
-          "donante de":
+          "donante de": // cargar el componente
             reg.historiaClinica?.es_donanteControlado
               ? "Controlado"
               : reg.historiaClinica?.es_posibleDonante
                 ? "Posible"
                 : "No",
-        })); // ver lo del donante con Barby
+        })); // cargar el componente
         setRows(mappedRows);
       } catch (error) {
         console.error("Error al cargar los registros:", error);

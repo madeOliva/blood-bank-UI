@@ -6,7 +6,6 @@ import Navbar from "../../components/navbar/Navbar"
 import { Button, Typography } from "@mui/material";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import { useEffect, useState } from "react";
-import api from "../../api/client";
 import axios from "axios";
 
 

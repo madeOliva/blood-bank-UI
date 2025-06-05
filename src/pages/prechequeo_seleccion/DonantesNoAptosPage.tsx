@@ -3,34 +3,35 @@ import { GridColDef, DataGrid } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
 import api from "../../api/client";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
-type DonanteNoApto = {
-  ci: string;
-  observacion: string;
-};
 
-type DatosPersonales = {
-  ci: string;
-  "nombres y apellidos": string;
-};
-
-type RowData = {
-  id: number;
-  ci: string;
-  "nombres y apellidos": string;
-  observacion: string;
-};
-
-const columns: GridColDef<RowData>[] = [
+const columns: GridColDef[] = [
+  { field: "id", headerName: "No", width: 90 },
   { field: "ci", headerName: "CI", width: 200, editable: false },
+  
   {
-    field: "nombres y apellidos",
-    headerName: "Nombres y Apellidos",
-    width: 300,
+    field: "nombre",
+    headerName: "Nombre",
+    width: 150,
+    editable: false,
+  },
+
+  {
+    field: "primer_apellido",
+    headerName: "Primer Apellido",
+    width: 150,
+    editable: false,
+  },
+
+  {
+    field: "segundo_apellido",
+    headerName: "Segundo Apellido",
+    width: 150,
     editable: false,
   },
   {
-    field: "observacion",
+    field: "observacion_interrogatorio",
     headerName: "Observación",
     width: 200,
     editable: false,
@@ -38,46 +39,29 @@ const columns: GridColDef<RowData>[] = [
 ];
 
 export default function DonantesNoAptos() {
-  const [rows, setRows] = useState<RowData[]>([]);
+  const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    api
-      .get<DonanteNoApto[]>("/registrodonacion/observacion")
-      .then(async (response) => {
-        // 1. Obtener los datos personales para cada CI
-        const rowsWithNames = await Promise.all(
-          response.data.map(async (donante, index) => {
-            try {
-              const { data: datosPersonales } = await api.get<DatosPersonales>(
-                `/persona/nombrecompleto/${donante.ci}`
-              );
-              return {
-                id: index + 1,
-                ci: donante.ci,
-                "nombres y apellidos": datosPersonales["nombres y apellidos"],
-                observacion: donante.observacion,
-              };
-            } catch (err) {
-              // Si falla, ponemos un nombre por defecto o lo dejamos vacío
-              return {
-                id: index + 1,
-                ci: donante.ci,
-                "nombres y apellidos": "No disponible",
-                observacion: donante.observacion,
-              };
-            }
-          })
-        );
-        setRows(rowsWithNames);
-      })
-      .catch((err) => {
-        setError("No se pudieron cargar los donantes no aptos.");
-        console.error(err);
-      })
-      .finally(() => setLoading(false));
+    const fetchRows = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/registro-donacion/observacion");
+        // Mapea los datos para la tabla
+        const mappedRows = res.data.map((reg: any, idx: number) => ({
+          id: idx + 1,
+          ci: reg.ci,
+          nombre: reg.nombre,
+          primer_apellido: reg.primer_apellido,
+          segundo_apellido: reg.segundo_apellido,
+          observacion_interrogatorio: reg.observacion_interrogatorio || "No Observación",
+        }));
+        setRows(mappedRows);
+      } catch (error) {
+        console.error("Error al cargar los registros:", error);
+      }
+    };
+    fetchRows();
   }, []);
 
   return (

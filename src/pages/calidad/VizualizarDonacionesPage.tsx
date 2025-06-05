@@ -4,13 +4,13 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 //import ModalWindow from "../../components/ModalWindow";
 
 import Navbar from "../../components/navbar/Navbar";
-import { Box, Container,  SelectChangeEvent, Typography } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import axios from "axios";
  
-const columns: GridColDef<(typeof rows)[number]>[] = [
+const columns: GridColDef[] = [
   { field: "no", headerName: "NO", width: 90 },
   {
-    field: "hc",
+    field: "no_hc",
     headerName: "HC-donación",
     width: 150,
     editable: false,
@@ -36,13 +36,13 @@ const columns: GridColDef<(typeof rows)[number]>[] = [
     editable: false,
   },
   {
-    field: "grupo",
+    field: "examenP_grupo",
     headerName: "Grupo",
     width: 70,
     editable: false,
   },
   {
-    field: "factor",
+    field: "examenP_factor",
     headerName: "Factor",
     width: 70,
     editable: false,
@@ -63,68 +63,26 @@ const columns: GridColDef<(typeof rows)[number]>[] = [
 
 ];
 
-const rows = [
-  { id: 1, sexo: "F", hc: "02022562246", edad: 14, volumen: 444, grupo:"A", factor:"+", entidad:"02-Mantua",estado:"En Proceso", no:"1" },
-  { id: 2, sexo: "F", hc: "02022562246", edad: 31, volumen: 444, grupo:"A", factor:"+", entidad:"01-Sandino", estado:"Traslado", no:"2"},
-  { id: 3, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo:"A", factor:"+", entidad:"01-Sandino", estado:"Traslado", no:"3"  },
-  { id: 3, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo:"A", factor:"+", entidad:"01-Sandino",estado:"En Proceso", no:"4"  },
-  { id: 4, sexo: "F", hc: "02022562246", edad: 11, volumen: 444, grupo:"A", factor:"+", entidad:"01-Sandino",estado:"En Proceso", no:"5" },
-  {
-    id: 5,
-    hc: "02022562246",
-    sexo: "F",
-    edad: 23,
-    volumen: 444,
-     grupo:"A", factor:"+",
-      entidad:"01-Sandino",
-       estado:"Traslado", no:"6"
-  },
-  { id: 6, hc: "02022562246", sexo: "F", edad: 150, volumen: 444, grupo:"A", factor:"+", entidad:"01-Sandino", estado:"Traslado", no:"7"},
-  { id: 7, hc: "02022562246", sexo: "M", edad: 44, volumen: 444, grupo:"A", factor:"+", entidad:"01-Sandino", estado:"Traslado", no:"8" },
-  { id: 8, hc: "02022562246", sexo: "M", edad: 36, volumen: 444, grupo:"A", factor:"+", entidad:"01-Sandino", estado:"Traslado", no:"9" },
-  { id: 9, hc: "02022562246", sexo: "F", edad: 65, volumen: 444, grupo:"A", factor:"+", entidad:"01-Sandino",estado:"En Proceso", no:"10" },
-  { id: 10, hc: "02022562246", sexo: "F", edad: 65, volumen: 444, grupo:"A", factor:"+", entidad:"01-Sandino",estado:"En Proceso", no:"11" },
-];
 
 export default function VizualizarDonaciones() {
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/register", { replace: true }); // Redirige a la vista de Prechequeo
-  };
 
-   const [entidad, setEntidad] = React.useState('');
-
-   const handleChangeE = (event: SelectChangeEvent) => {
-           setEntidad(event.target.value as string);
-       };
-       const [selectedActions, setSelectedActions] = React.useState<{ [key: number]: string }>({});
-
-const handleActionChange = (id: number, value: string) => {
-  setSelectedActions((prev) => ({
-    ...prev,
-    [id]: value,
-  }));
-};
 const [rows, setRows] = useState([]);
 
   useEffect(() => {
-    axios.get('http://your-backend-api-url/donations')
-      .then(response => {
-        // Si tu backend ya retorna un array de objetos con 'id', puedes usarlo directamente.
-        // Si no, asigna un id y el campo 'no' para la numeración.
-        setRows(response.data.map((item, index) => ({
-          ...item,
-          id: item.id ?? index + 1,
-          no: (index + 1).toString()
-        })));
-      })
-      .catch(error => {
-        console.error('Error fetching data:', error);
-      });
-  }, []);
-
+  axios.get('http://localhost:3000/registro-donacion/donaciones-diarias')
+    .then(response => {
+      setRows(response.data.map((item: any, index: number) => ({
+        ...item,
+        id: item.id ?? index + 1,
+        no: (index + 1).toString()
+      })));
+    })
+    .catch(error => {
+      console.error('Error fetching data:', error);
+    });
+}, []);
 
 
   return (
