@@ -11,6 +11,8 @@ import DonacionesPlasma from "./pages/donaciones/DonacionesPlasma";
 import ResultadosPrechequeo from "./pages/prechequeo_seleccion/ResultadosPrechequeoPage";
 import HistoriaDonante from "./pages/prechequeo_seleccion/HistoriaDonantePage";
 import DonantesNoAptos from "./pages/prechequeo_seleccion/DonantesNoAptosPage";
+<<<<<<< HEAD
+=======
 import PageOne from "./pages/transfusiones/PageOne";
 import TransfusionPage from "./pages/transfusiones/TransfusionPage";
 import Plan from "./pages/movil/FormularioPlanPage";
@@ -34,6 +36,7 @@ import VisualizarHC from "./pages/historia_clinica/VisualizarHC";
 import ListadoPacientes from "./pages/historia_clinica/ListadoPaciente";
 import NuevaHistoriaClinica from "./pages/historia_clinica/CreaHC";
 import ProtectedRoute from "./components/ProtectedRoute";
+>>>>>>> 4811e2ccb5b13a93a711a64dd20cd9f16b9f0f5d
 import HojaCargoDonaciones from "./pages/donaciones/HojaCargoDonaciones";
 
 export default function App() {
@@ -88,6 +91,11 @@ export default function App() {
       } />
 
       <Route path="/historiadonante" element={<HistoriaDonante />} />
+<<<<<<< HEAD
+      <Route path="/registronoaptos" element={<DonantesNoAptos />} />
+      <Route path="/hoja-cargo-donaciones" element={< HojaCargoDonaciones/>} />
+      
+=======
 
       {/*Transfusiones*/}
       <Route path="/pageone" element={<PageOne />} />
@@ -186,6 +194,7 @@ export default function App() {
         <VisualizarHC />
       </ProtectedRoute>
       } />
+>>>>>>> 4811e2ccb5b13a93a711a64dd20cd9f16b9f0f5d
     </Routes>
   );
 }
