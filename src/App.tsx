@@ -11,33 +11,31 @@ import DonacionesPlasma from "./pages/donaciones/DonacionesPlasma";
 import ResultadosPrechequeo from "./pages/prechequeo_seleccion/ResultadosPrechequeoPage";
 import HistoriaDonante from "./pages/prechequeo_seleccion/HistoriaDonantePage";
 import DonantesNoAptos from "./pages/prechequeo_seleccion/DonantesNoAptosPage";
-<<<<<<< HEAD
-=======
-import PageOne from "./pages/transfusiones/PageOne";
-import TransfusionPage from "./pages/transfusiones/TransfusionPage";
-import Plan from "./pages/movil/FormularioPlanPage";
-import PlanDonaciones from "./pages/movil/PlanDonacionesPage";
-import ResumenPlanDonaciones from "./pages/movil/ResumenPlanDonacionesPage";
-import PedidosPage from "./pages/movil/PedidosPage";
+import HojaCargoDonaciones from "./pages/donaciones/HojaCargoDonaciones";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Desechos from "./pages/calidad/DesechoPage";
+import LiberacionComponentes from "./pages/calidad/LiberacionComponentesPage";
 import PruebasReanalizar from "./pages/calidad/PruebasReanalizarPage";
 import RecepciondiariasEntidad from "./pages/calidad/ResepciondiariasEntidadPage";
 import VizualizarDonaciones from "./pages/calidad/VizualizarDonacionesPage";
-import LiberacionComponentes from "./pages/calidad/LiberacionComponentesPage";
+import NuevaHistoriaClinica from "./pages/historia_clinica/CreaHC";
+import ListadoPacientes from "./pages/historia_clinica/ListadoPaciente";
+import VisualizarHC from "./pages/historia_clinica/VisualizarHC";
+import LabCCalidad from "./pages/laboratorio/LabCCalidad";
+import LabInmuno from "./pages/laboratorio/LabInmuno";
+import LabSuma from "./pages/laboratorio/LabSuma";
+import PrincipalLab from "./pages/laboratorio/PrincipalLab";
+import Plan from "./pages/movil/FormularioPlanPage";
+import PedidosPage from "./pages/movil/PedidosPage";
+import PlanDonaciones from "./pages/movil/PlanDonacionesPage";
+import ResumenPlanDonaciones from "./pages/movil/ResumenPlanDonacionesPage";
 import Bajas from "./pages/produccion/Bajas";
 import ComponentesObtenidos from "./pages/produccion/ComponentesObtenidos";
-import PlasmaIndustria from "./pages/produccion/PlasmaIndustria";
 import EntradaProduccion from "./pages/produccion/EntradaProducción";
-import LabSuma from "./pages/laboratorio/LabSuma";
-import LabInmuno from "./pages/laboratorio/LabInmuno";
-import LabCCalidad from "./pages/laboratorio/LabCCalidad";
-import PrincipalLab from "./pages/laboratorio/PrincipalLab";
-import VisualizarHC from "./pages/historia_clinica/VisualizarHC";
-import ListadoPacientes from "./pages/historia_clinica/ListadoPaciente";
-import NuevaHistoriaClinica from "./pages/historia_clinica/CreaHC";
-import ProtectedRoute from "./components/ProtectedRoute";
->>>>>>> 4811e2ccb5b13a93a711a64dd20cd9f16b9f0f5d
-import HojaCargoDonaciones from "./pages/donaciones/HojaCargoDonaciones";
+import PlasmaIndustria from "./pages/produccion/PlasmaIndustria";
+import PageOne from "./pages/transfusiones/PageOne";
+import TransfusionPage from "./pages/transfusiones/TransfusionPage";
+// ...importa aquí el resto de tus componentes de páginas...
 
 export default function App() {
   return (
@@ -51,51 +49,37 @@ export default function App() {
       </ProtectedRoute>} />
       <Route path="/resultadosprechequeo" element={<ProtectedRoute allowedRoles={['medico']}>
         <ResultadosPrechequeo />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/registronoaptos" element={<ProtectedRoute allowedRoles={['medico']}>
         <DonantesNoAptos />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
 
       {/*Inscripcion*/}
       <Route path="/inscripcion" element={<ProtectedRoute allowedRoles={['tecnico_inscripcion']}>
         <FormularioInscripcion />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/citados" element={<ProtectedRoute allowedRoles={['tecnico_inscripcion']}>
         <Citados />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/hoja-cargo" element={<ProtectedRoute allowedRoles={['tecnico_inscripcion']}>
         <HojaCargo />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
 
       {/*Donacion*/}
       <Route path="/lista-espera" element={<ProtectedRoute allowedRoles={['tecnico_donacion']}>
         <ListaEspera />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/donaciones-sangre" element={<ProtectedRoute allowedRoles={['tecnico_donacion']}>
         <DonacionesSangre />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/donaciones-plasma" element={<ProtectedRoute allowedRoles={['tecnico_donacion']}>
         <DonacionesPlasma />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/hoja-cargo-donaciones" element={<ProtectedRoute allowedRoles={['tecnico_donacion']}>
         <HojaCargoDonaciones />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
 
       <Route path="/historiadonante" element={<HistoriaDonante />} />
-<<<<<<< HEAD
-      <Route path="/registronoaptos" element={<DonantesNoAptos />} />
-      <Route path="/hoja-cargo-donaciones" element={< HojaCargoDonaciones/>} />
-      
-=======
 
       {/*Transfusiones*/}
       <Route path="/pageone" element={<PageOne />} />
@@ -104,97 +88,75 @@ export default function App() {
       {/*Centro Movil*/}
       <Route path="/formularioplan" element={<ProtectedRoute allowedRoles={['jefe_extraccion_movil', 'tecnico_movil']}>
         <Plan />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/planDonaciones" element={<ProtectedRoute allowedRoles={['jefe_extraccion_movil', 'tecnico_movil']}>
         <PlanDonaciones />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/resumenDonaciones" element={<ProtectedRoute allowedRoles={['jefe_extraccion_movil', 'tecnico_movil']}>
         <ResumenPlanDonaciones />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/pedidos" element={<ProtectedRoute allowedRoles={['jefe_extraccion_movil', 'tecnico_movil']}>
         <PedidosPage />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
 
       {/*Calidad*/}
       <Route path="/calidad" element={<ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
         <RecepciondiariasEntidad />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/vizualizar" element={<ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
         <VizualizarDonaciones />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/reanalizar" element={<ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
         <PruebasReanalizar />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/liberacion" element={<ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
         <LiberacionComponentes />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/desechos" element={<ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
         <Desechos />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
 
       {/*Produccion*/}
       <Route path="/bajas" element={<ProtectedRoute allowedRoles={['tecnico_produccion']}>
         <Bajas />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/plasma_industria" element={<ProtectedRoute allowedRoles={['tecnico_produccion']}>
         <PlasmaIndustria />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/componentes_obtenidos" element={<ProtectedRoute allowedRoles={['tecnico_produccion']}>
         <ComponentesObtenidos />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/entrada_produccion" element={<ProtectedRoute allowedRoles={['tecnico_produccion']}>
         <EntradaProduccion />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
 
       {/*Laboratorio*/}
       <Route path="/suma_lab" element={<ProtectedRoute allowedRoles={['tecnico_laboratorio_suma']}>
         <LabSuma />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/inmuno_lab" element={<ProtectedRoute allowedRoles={['tecnico_laboratorio_inmuno']}>
         <LabInmuno />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/calidad_lab" element={<ProtectedRoute allowedRoles={['tecnico_laboratorio_calidad']}>
         <LabCCalidad />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/principal_lab" element={<ProtectedRoute allowedRoles={['tecnico_laboratorio_suma', 'tecnico_laboratorio_inmuno', 'tecnico_laboratorio_calidad']}>
         <PrincipalLab />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
 
       {/*Historia Clinica*/}
       <Route path="/listadop" element={<ProtectedRoute allowedRoles={['medico_consultorio']}>
         <ListadoPacientes />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/visualizarhc" element={<ProtectedRoute allowedRoles={['medico_consultorio']}>
         <VisualizarHC />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/crearhc" element={<ProtectedRoute allowedRoles={['medico_consultorio']}>
         <NuevaHistoriaClinica />
-      </ProtectedRoute>
-      } />
+      </ProtectedRoute>} />
       <Route path="/visualizarhc/:id" element={<ProtectedRoute allowedRoles={['medico_consultorio']}>
         <VisualizarHC />
-      </ProtectedRoute>
-      } />
->>>>>>> 4811e2ccb5b13a93a711a64dd20cd9f16b9f0f5d
+      </ProtectedRoute>} />
     </Routes>
   );
 }
