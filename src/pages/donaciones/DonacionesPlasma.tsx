@@ -29,7 +29,9 @@ export default function DonacionesPlasma() {
         sx={{
           fontSize: { xs: "2rem", md: "3rem" },
           textAlign: "center",
-          paddingTop: 2,
+          backgroundColor: "#00796B",
+          color: "white",
+          marginTop: 10,
           fontFamily: '"Open Sans"',
         }}
       >

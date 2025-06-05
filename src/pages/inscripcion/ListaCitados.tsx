@@ -140,7 +140,9 @@ export default function ListaCitados() {
         sx={{
           fontSize: { xs: "2rem", md: "3rem" },
           textAlign: "center",
-          paddingTop: 2,
+          backgroundColor: "#00796B",
+          color: "white",
+          marginTop: 10,
           fontFamily: '"Open Sans"',
         }}
       >
@@ -148,7 +150,13 @@ export default function ListaCitados() {
       </Typography>
       {/* Contenedor para centrar el DataGrid */}
       <Box
-        style={{ display: "flex", justifyContent: "center", marginTop: "20px",flexDirection:"column",alignItems:"center" }}
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "20px",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
       >
         <Box
           style={{
@@ -175,7 +183,7 @@ export default function ListaCitados() {
                 fontFamily: '"Open Sans"',
                 color: "#000",
               },
-              
+
               // border: 1,
               // borderRadius: 2,
             }}
@@ -189,7 +197,7 @@ export default function ListaCitados() {
             pageSizeOptions={[10]}
           />
         </Box>
-        <Box sx={ { marginTop: 2 } }>
+        <Box sx={{ marginTop: 2 }}>
           <BotonPersonalizado onClick={() => navigate("/inscripcion/")}>
             Agregar Nuevo
           </BotonPersonalizado>

@@ -31,7 +31,9 @@ const DonacionesSangre: React.FC = () => {
         sx={{
           fontSize: { xs: "2rem", md: "3rem" },
           textAlign: "center",
-          paddingTop: 2,
+          backgroundColor: "#00796B",
+          color: "white",
+          marginTop: 10,
           fontFamily: '"Open Sans"',
         }}
       >
@@ -64,12 +66,7 @@ const DonacionesSangre: React.FC = () => {
           </Grid>
 
           {/* Columna Derecha: Formulario */}
-          <Grid
-            item
-            xs={16}
-            md={8}
-           
-          >
+          <Grid item xs={16} md={8}>
             <Grid
               container
               spacing={2}

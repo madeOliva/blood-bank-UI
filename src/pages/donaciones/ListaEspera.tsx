@@ -3,7 +3,6 @@ import Navbar from "../../components/navbar/Navbar";
 import { Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-
 const rows: GridRowsProp = [
   {
     id: 1,
@@ -124,9 +123,7 @@ const columns: GridColDef[] = [
 export default function ListaEspera() {
   const navigate = useNavigate(); // Hook para navegar entre páginas
 
-  const handleRowClick = () => {
-    
-  };
+  const handleRowClick = () => {};
 
   return (
     <>
@@ -138,7 +135,9 @@ export default function ListaEspera() {
         sx={{
           fontSize: { xs: "2rem", md: "3rem" },
           textAlign: "center",
-          paddingTop: 2,
+          backgroundColor: "#00796B",
+          color: "white",
+          marginTop: 10,
           fontFamily: '"Open Sans"',
         }}
       >
@@ -146,7 +145,13 @@ export default function ListaEspera() {
       </Typography>
       {/* Contenedor para centrar el DataGrid */}
       <Box
-        style={{ display: "flex", justifyContent: "center", marginTop: "20px",flexDirection:"column",alignItems:"center" }}
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "20px",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
       >
         <Box
           style={{
@@ -173,7 +178,7 @@ export default function ListaEspera() {
                 fontFamily: '"Open Sans"',
                 color: "#000",
               },
-              
+
               // border: 1,
               // borderRadius: 2,
             }}

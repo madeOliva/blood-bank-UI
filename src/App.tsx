@@ -53,6 +53,7 @@ import DonacionesPlasma from "./pages/donaciones/DonacionesPlasma";
 import ResultadosPrechequeo from "./pages/prechequeo_seleccion/ResultadosPrechequeoPage";
 import HistoriaDonante from "./pages/prechequeo_seleccion/HistoriaDonantePage";
 import DonantesNoAptos from "./pages/prechequeo_seleccion/DonantesNoAptosPage";
+import HojaCargoDonaciones from "./pages/donaciones/HojaCargoDonaciones";
 
 export default function App() {
   return (
@@ -69,6 +70,8 @@ export default function App() {
       <Route path="/donaciones-plasma" element={<DonacionesPlasma />} />
       <Route path="/historiadonante" element={<HistoriaDonante />} />
       <Route path="/registronoaptos" element={<DonantesNoAptos />} />
+      <Route path="/hoja-cargo-donaciones" element={< HojaCargoDonaciones/>} />
+      
     </Routes>
   );
 }
