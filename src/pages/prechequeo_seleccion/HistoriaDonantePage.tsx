@@ -1,129 +1,59 @@
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, IconButton, InputLabel, MenuItem, Modal, Radio, RadioGroup, Select, TextField, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, IconButton, InputLabel, MenuItem, Modal, Radio, RadioGroup, Select, Stack, TextField, Typography } from "@mui/material";
 import Navbar from "../../components/navbar/Navbar";
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BotonPersonalizado from "../../components/Button";
-import { useNavigate } from "react-router-dom";
-import React, { useState } from "react";
-
-
-type CheckedState = {
-    a: boolean;
-    b: boolean;
-};
-
-function ExclusiveCheckboxes() {
-    const [checked, setChecked] = useState<CheckedState>({ a: false, b: false });
-    const [open, setOpen] = useState(false);
-
-    const handleChange =
-        (name: keyof CheckedState) =>
-            (event: React.ChangeEvent<HTMLInputElement>): void => {
-                if (event.target.checked) {
-                    setChecked({ a: name === "a", b: name === "b" });
-                    if (name === "b") setOpen(true); // Abrir modal si se selecciona "No Apto"
-                } else {
-                    setChecked((prev) => ({ ...prev, [name]: false }));
-                }
-            };
-
-    const handleClose = () => {
-        setOpen(false);
-    };
-
-    return (
-        <>
-            <FormGroup row>
-                <FormControlLabel
-                    sx={{ ml: 5 }}
-                    control={
-                        <Checkbox checked={checked.a} onChange={handleChange("a")} />
-                    }
-                    label="Apto"
-                />
-                <FormControlLabel
-                    sx={{ ml: 35 }}
-                    control={
-                        <Checkbox checked={checked.b} onChange={handleChange("b")} />
-                    }
-                    label="No Apto"
-                />
-            </FormGroup>
-
-            <Modal
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="observacion-modal-title"
-                aria-describedby="observacion-modal-description"
-            >
-                <Box
-                    sx={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        width: 300,
-                        bgcolor: "background.paper",
-                        border: "1px solid",
-                        borderColor: "primary.main",
-                        borderRadius: 1,
-                        boxShadow: 24,
-                        p: 2,
-                    }}
-                >
-                    <Typography sx={{ mt: 2, }} variant="h6" component="h5">
-                        Observación
-                    </Typography>
-                    <TextField
-                        id="outlined-basic"
-                        label=""
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                            width: 200, ml: 3,
-
-                            "& .MuiOutlinedInput-root": {
-                                color: "#000",
-                                "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: "#00796B",
-                                },
-                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: "#00796B",
-                                },
-                            },
-                            "& .MuiInputLabel-outlined": {
-                                color: "#009688",
-                            },
-                            "& .MuiOutlinedInput-notchedOutline": {
-                                paddingLeft: "8px",
-                                paddingRight: "8px",
-                            },
-                        }}
-                    />
-
-                </Box>
-
-            </Modal>
-        </>
-    );
-}
-
+import { useNavigate, useParams } from "react-router-dom";
+import  { useEffect, useState } from "react";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import axios from "axios";
 
 
 export default function HistoriaDonante() {
-    const [grupo, setGrupo] = useState('');
-    const [factor, setFactor] = useState('');
-    const [hemoglobina, setHemoglobina] = useState('');
-    const [peso, setPeso] = useState('');
-    const [pulso, setPulso] = useState('');
-    const [tempSublingual, setTempSublingual] = useState('');
-    const [tempAxilar, setTempAxilar] = useState('');
+    const [ examenP_grupo, setExamenP_grupo] = useState('');
+    const [examenP_factor, setExamenP_factor] = useState('');
+    const [examenP_hemoglobina, setExamenP_hemoglobina] = useState('');
+    const [examenF_hemoglobina, setExamenF_hemoglobina] = useState('');
+    const [examenF_peso, setExamenF_peso] = useState('');
+    const [examenF_pulso, setExamenF_pulso] = useState('');
+    const [examenF_temSublingual, setExamenF_temSublingual] = useState('');
+    const [examenF_temAxilar, setExamenF_temAxilar] = useState('');
+    const [observacion_interrogatorio, setObservacion_interrogatorio] = useState('');
+
+    const [apto_interrogatorio, setAptoInterrogatorio] = useState<boolean | null>(null);
+    const [apto_examenFisico, setAptoExamenFisico] = useState<boolean | null>(null);
+
+    // Estados para modal de éxito/alerta
+      const [openModal, setOpenModal] = useState(false);
+      const [modalType, setModalType] = useState<"success" | "error">("success");
+      const [errorMsg, setErrorMsg] = useState("");
 
     const [showBox, setShowBox] = useState(false);
 
+    const { id } = useParams();
+
+
+    useEffect(() => {
+        const fetchPrechequeo = async () => {
+            if (id) {
+                try {
+                    const res = await axios.get(`http://localhost:3000/registro-donacion/prechequeo/${id}`);
+                    setExamenP_grupo(res.data.examenP_grupo || "");
+                    setExamenP_factor(res.data.examenP_factor || "");
+                    setExamenP_hemoglobina(res.data.examenP_hemoglobina || "");
+                } catch (error) {
+                    console.error("Error al obtener datos de prechequeo:", error);
+                }
+            }
+        };
+        fetchPrechequeo();
+    }, [id]);
+
     const handleClick = () => {
-        setShowBox(prev => !prev); // Alterna la visibilidad
+        setShowBox(prev => !prev);
     };
+
 
     const navigate = useNavigate();
 
@@ -132,12 +62,11 @@ export default function HistoriaDonante() {
         navigate("/historiadonante", { replace: true }); // Redirige a la vista de ....
     };
 
-    // Estados para respuestas del interrogatorio (ejemplo con 3 preguntas, agrega más según tu formulario)
-    const [resp1, setResp1] = useState<boolean | null>(null); // ¿Está usted bien?
-    const [resp2, setResp2] = useState<boolean | null>(null); // ¿Ha donado sangre...?
-    const [texto2, setTexto2] = useState(""); // ¿Cuándo?
-    const [resp3, setResp3] = useState<boolean | null>(null); // ¿Ha tenido dengue...?
-    const [texto3, setTexto3] = useState(""); // ¿Cuándo?
+    const [resp1, setResp1] = useState<boolean | null>(null);
+    const [resp2, setResp2] = useState<boolean | null>(null);
+    const [texto2, setTexto2] = useState("");
+    const [resp3, setResp3] = useState<boolean | null>(null);
+    const [texto3, setTexto3] = useState("");
     const [resp4, setResp4] = useState<boolean | null>(null);
     const [text4, setTexto4] = useState("");
     const [resp5, setResp5] = useState<boolean | null>(null);
@@ -180,11 +109,9 @@ export default function HistoriaDonante() {
     const [resp37, setResp37] = useState<boolean | null>(null);
     const [resp38, setResp38] = useState<boolean | null>(null);
     const [resp39, setResp39] = useState<boolean | null>(null);
-    
 
 
 
-    // Función para armar el array de respuestas
     const getRespuestasInterrogatorio = () => [
         { respuesta: resp1, respuesta_escrita: "" },
         { respuesta: resp2, respuesta_escrita: texto2 },
@@ -227,20 +154,60 @@ export default function HistoriaDonante() {
         { respuesta: resp39, respuesta_escrita: "" },
     ];
 
-    // Función para enviar al backend
+
+    // Validación simple
+  const hayCamposVacios = () => {
+    return !examenF_peso || !examenF_pulso || !examenF_temSublingual || !examenF_temAxilar || !examenF_hemoglobina || !getRespuestasInterrogatorio || apto_examenFisico === null || apto_interrogatorio === null;
+  };
+    
+
     const handleSubmit = async () => {
-        const payload = {
-            grupo,
-            factor,
-            hemoglobina,
-            peso,
-            pulso,
-            tempSublingual,
-            tempAxilar,
-            respuestas_interrogatorio: getRespuestasInterrogatorio(),
-        };
-        // await api.put(`/registro-donacion/${id}`, payload);
-        // ...modal de éxito/error...
+        if (hayCamposVacios()) {
+      setErrorMsg("Por favor complete todos los campos.");
+      setModalType("error");
+      setOpenModal(true);
+      return;
+    }
+    try {
+    const payload = {
+        examenF_peso,
+        examenF_pulso,
+        examenF_temSublingual,
+        examenF_temAxilar,
+        examenF_hemoglobina,
+        apto_examenFisico,
+        respuestas_interrogatorio: getRespuestasInterrogatorio(),
+        apto_interrogatorio,
+        observacion_interrogatorio,
+    };
+        await axios.put(`http://localhost:3000/registro-donacion/${id}`, payload);
+        // Puedes mostrar un mensaje de éxito aquí si lo deseas
+    } catch (error) {
+      setErrorMsg("Ocurrió un error al enviar los datos.");
+      setModalType("error");
+      setOpenModal(true);
+    }
+};
+
+
+    const textFieldSx = {
+        width: "100%",
+        "& .MuiOutlinedInput-root": {
+            color: "#000",
+            "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#00796B",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#00796B",
+            },
+        },
+        "& .MuiInputLabel-outlined": {
+            color: "#009688",
+        },
+        "& .MuiOutlinedInput-notchedOutline": {
+            paddingLeft: "8px",
+            paddingRight: "8px",
+        },
     };
 
 
@@ -268,14 +235,15 @@ export default function HistoriaDonante() {
                             </Typography>
                             <Box display="flex" justifyContent="space-between" padding={2} width={500}>
                                 <Box >
-                                    <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                        Grupo
-                                    </Typography>
+
                                     <TextField
                                         id="outlined-basic"
-                                        label=""
+                                        label="Grupo"
                                         variant="outlined"
                                         size="small"
+                                        value={examenP_grupo}
+                                        onChange={e => setExamenP_grupo(e.target.value)}
+                                        disabled
                                         sx={{
                                             width: 150,
                                             // Cambia el color del texto
@@ -304,35 +272,50 @@ export default function HistoriaDonante() {
                                 </Box>
 
                                 <Box>
-                                    <Typography id="modal-modal-description" sx={{ mt: 2 }} variant="h6" component="h5">
-                                        Hemoglobina
-                                    </Typography>
-                                    <Box sx={{ minWidth: 120, width: 150, minHeight: 40, position: 'revert-layer' }}>
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel id="demo-simple-select-label"></InputLabel>
-                                            <Select
-                                                labelId="demo-simple-select-label"
-                                                id="demo-simple-select"
-                                                value={hemoglobina}
-                                                label="Hemoglobina"
-                                                onChange={(e) => setHemoglobina(e.target.value)}
-                                            >
-                                                <MenuItem value={10}></MenuItem>
-                                                <MenuItem value={20}>normal</MenuItem>
-                                                <MenuItem value={30}>baja</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Box>
-                                </Box>
-                                <Box>
-                                    <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                        Factor
-                                    </Typography>
+
                                     <TextField
                                         id="outlined-basic"
-                                        label=""
+                                        label="Hemoglobina"
                                         variant="outlined"
                                         size="small"
+                                        value={examenP_hemoglobina}
+                                        onChange={e => setExamenP_hemoglobina(e.target.value)}
+                                        disabled
+                                        sx={{
+                                            width: 150,
+                                            // Cambia el color del texto
+                                            "& .MuiOutlinedInput-root": {
+                                                color: "#000",
+                                                // Cambia el color del borde
+                                                "& .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                                // Cambia el color del borde al hacer foco
+                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                            },
+                                            // Cambia el color del label
+                                            "& .MuiInputLabel-outlined": {
+                                                color: "#009688",
+                                            },
+                                            "& .MuiOutlinedInput-notchedOutline": {
+                                                paddingLeft: "8px",
+                                                paddingRight: "8px",
+                                            },
+                                        }}
+                                    />
+                                </Box>
+                                <Box>
+
+                                    <TextField
+                                        id="outlined-basic"
+                                        label="Factor"
+                                        variant="outlined"
+                                        size="small"
+                                        value={examenP_factor}
+                                        onChange={e => setExamenP_factor(e.target.value)}
+                                        disabled
                                         sx={{
                                             width: 150,
                                             // Cambia el color del texto
@@ -363,188 +346,80 @@ export default function HistoriaDonante() {
 
                     </Box>
 
-                    <Box>
-                        <Typography sx={{ mt: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5" >
-                            Examen Físico.
-                        </Typography>
+                    
 
-                        <Box display="flex" justifyContent="space-between" padding={2} width={600}>
-
-                            <Box >
-                                <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                    Peso
-                                </Typography>
-
+                        <Box sx={{ p: 2, width: 600 }}>
+                            <Typography sx={{ mb: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5">
+                                Examen Físico
+                            </Typography>
+                            <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
                                 <TextField
-                                    id="outlined-basic"
-                                    label=""
+                                    label="Peso"
                                     variant="outlined"
                                     size="small"
-                                    value={peso}
-                                    onChange={e => setPeso(e.target.value)}
-                                    sx={{
-                                        width: 150,
-                                        // Cambia el color del texto
-                                        "& .MuiOutlinedInput-root": {
-                                            color: "#000",
-                                            // Cambia el color del borde
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                            // Cambia el color del borde al hacer foco
-                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                        },
-                                        // Cambia el color del label
-                                        "& .MuiInputLabel-outlined": {
-                                            color: "#009688",
-                                        },
-                                        "& .MuiOutlinedInput-notchedOutline": {
-                                            paddingLeft: "8px",
-                                            paddingRight: "8px",
-                                        },
-                                    }}
+                                    value={examenF_peso}
+                                    onChange={e => setExamenF_peso(e.target.value)}
+                                    sx={textFieldSx}
                                 />
-
-
-                                <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                    Pulso
-                                </Typography>
-
                                 <TextField
-                                    id="outlined-basic"
-                                    label=""
+                                    label="Pulso"
                                     variant="outlined"
                                     size="small"
-                                    value={pulso}
-                                    onChange={e => setPulso(e.target.value)}
-                                    sx={{
-                                        width: 150,
-                                        // Cambia el color del texto
-                                        "& .MuiOutlinedInput-root": {
-                                            color: "#000",
-                                            // Cambia el color del borde
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                            // Cambia el color del borde al hacer foco
-                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                        },
-                                        // Cambia el color del label
-                                        "& .MuiInputLabel-outlined": {
-                                            color: "#009688",
-                                        },
-                                        "& .MuiOutlinedInput-notchedOutline": {
-                                            paddingLeft: "8px",
-                                            paddingRight: "8px",
-                                        },
-                                    }}
+                                    value={examenF_pulso}
+                                    onChange={e => setExamenF_pulso(e.target.value)}
+                                    sx={textFieldSx}
                                 />
-                            </Box>
-                            <Box >
-                                <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                    Temperatura sublingual
-                                </Typography>
                                 <TextField
-                                    id="outlined-basic"
-                                    label=""
+                                    label="Temperatura sublingual"
                                     variant="outlined"
                                     size="small"
-                                    value={tempSublingual}
-                                    onChange={e => setTempSublingual(e.target.value)}
-                                    sx={{
-                                        width: 150,
-                                        // Cambia el color del texto
-                                        "& .MuiOutlinedInput-root": {
-                                            color: "#000",
-                                            // Cambia el color del borde
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                            // Cambia el color del borde al hacer foco
-                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                        },
-                                        // Cambia el color del label
-                                        "& .MuiInputLabel-outlined": {
-                                            color: "#009688",
-                                        },
-                                        "& .MuiOutlinedInput-notchedOutline": {
-                                            paddingLeft: "8px",
-                                            paddingRight: "8px",
-                                        },
-                                    }}
+                                    value={examenF_temSublingual}
+                                    onChange={e => setExamenF_temSublingual(e.target.value)}
+                                    sx={textFieldSx}
                                 />
-                                <Typography id="modal-modal-description" sx={{ mt: 2 }} variant="h6" component="h5">
-                                    Temperatura axilar
-                                </Typography>
                                 <TextField
-                                    id="outlined-basic"
-                                    label=""
+                                    label="Temperatura axilar"
                                     variant="outlined"
-                                    value={tempAxilar}
-                                    onChange={e => setTempAxilar(e.target.value)}
                                     size="small"
-                                    sx={{
-                                        width: 150,
-                                        // Cambia el color del texto
-                                        "& .MuiOutlinedInput-root": {
-                                            color: "#000",
-                                            // Cambia el color del borde
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                            // Cambia el color del borde al hacer foco
-                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                        },
-                                        // Cambia el color del label
-                                        "& .MuiInputLabel-outlined": {
-                                            color: "#009688",
-                                        },
-                                        "& .MuiOutlinedInput-notchedOutline": {
-                                            paddingLeft: "8px",
-                                            paddingRight: "8px",
-                                        },
-                                    }}
+                                    value={examenF_temAxilar}
+                                    onChange={e => setExamenF_temAxilar(e.target.value)}
+                                    sx={textFieldSx}
                                 />
-                            </Box>
-                            <Box >
-                                <Typography id="modal-modal-description" sx={{ mt: 2, borderColor: "primary.dark " }} variant="h6" component="h5">
-                                    Hemoglobina
-                                </Typography>
-                                <Box sx={{ minWidth: 120, width: 150, minHeight: 40, position: 'revert-layer' }}>
-                                    <FormControl fullWidth size="small">
-                                        <InputLabel id="demo-simple-select-label"></InputLabel>
-                                        <Select
-                                            labelId="demo-simple-select-label"
-                                            id="demo-simple-select"
-                                            value={hemoglobina}
-                                            label="Hemoglobina"
-                                            onChange={(e) => setHemoglobina(e.target.value)}
-                                        >
-                                            <MenuItem value={10}></MenuItem>
-                                            <MenuItem value={20}>normal</MenuItem>
-                                            <MenuItem value={30}>baja</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                <TextField
+                                    label="Hemoglobina"
+                                    variant="outlined"
+                                    size="small"
+                                    value={examenF_hemoglobina}
+                                    onChange={e => setExamenF_hemoglobina(e.target.value)}
+                                    sx={textFieldSx}
+                                />
+                                <Box>
+                                    <FormGroup row>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={apto_examenFisico === true}
+                                                    onChange={() => setAptoExamenFisico(true)}
+                                                />
+                                            }
+                                            label="Apto"
+                                        />
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={apto_examenFisico === false}
+                                                    onChange={() => setAptoExamenFisico(false)}
+                                                />
+                                            }
+                                            label="No Apto"
+                                        />
+                                    </FormGroup>
                                 </Box>
                             </Box>
-
                         </Box>
                     </Box>
-
-
-
-                </Box>
-            )}
-
-
+            )
+            }
 
             <Accordion  >
                 <AccordionSummary
@@ -793,7 +668,7 @@ export default function HistoriaDonante() {
                                 </Box>
 
                                 <Box mr={1}>
-                                   <RadioGroup
+                                    <RadioGroup
                                         row
                                         value={resp7 === null ? "" : resp7 ? "SI" : "NO"}
                                         onChange={e => setResp7(e.target.value === "SI")}
@@ -1211,7 +1086,7 @@ export default function HistoriaDonante() {
 
                                 </Box>
                                 <Box mt={2} mr={1} >
-                                   <RadioGroup
+                                    <RadioGroup
                                         row
                                         value={resp23 === null ? "" : resp23 ? "SI" : "NO"}
                                         onChange={e => setResp23(e.target.value === "SI")}
@@ -1449,7 +1324,7 @@ export default function HistoriaDonante() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                   <RadioGroup
+                                    <RadioGroup
                                         row
                                         value={resp32 === null ? "" : resp32 ? "SI" : "NO"}
                                         onChange={e => setResp32(e.target.value === "SI")}
@@ -1544,7 +1419,7 @@ export default function HistoriaDonante() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                   <RadioGroup
+                                    <RadioGroup
                                         row
                                         value={resp37 === null ? "" : resp37 ? "SI" : "NO"}
                                         onChange={e => setResp37(e.target.value === "SI")}
@@ -1595,8 +1470,67 @@ export default function HistoriaDonante() {
 
                         </Box>
                     </Box>
+
+
                     <Box sx={{ ml: 50 }}>
-                        <ExclusiveCheckboxes />
+                        <Box sx={{ mt: 2, ml: 9, display: "flex", flexDirection: "column", gap: 1 }}>
+                            <FormGroup row>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={apto_interrogatorio === true}
+                                            onChange={() => setAptoInterrogatorio(true)}
+                                        />
+                                    }
+                                    label="Apto"
+                                />
+                                <FormControlLabel sx={{ ml: 29 }}
+                                    control={
+                                        <Checkbox
+                                            checked={apto_interrogatorio === false}
+                                            onChange={() => setAptoInterrogatorio(false)}
+                                        />
+                                    }
+                                    label="No Apto"
+                                />
+                            </FormGroup>
+
+                            {apto_interrogatorio === false && (
+                                <Box sx={{ margin: 3 }}>
+                                    <TextField
+                                        label="Observación"
+                                        value={observacion_interrogatorio}
+                                        onChange={e => setObservacion_interrogatorio(e.target.value)}
+                                        multiline
+                                        rows={3}
+                                        fullWidth
+                                        sx={{
+                                            width: 300, ml: 2,
+                                            // Cambia el color del texto
+                                            "& .MuiOutlinedInput-root": {
+                                                color: "#000",
+                                                // Cambia el color del borde
+                                                "& .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                                // Cambia el color del borde al hacer foco
+                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                            },
+                                            // Cambia el color del label
+                                            "& .MuiInputLabel-outlined": {
+                                                color: "#009688",
+                                            },
+                                            "& .MuiOutlinedInput-notchedOutline": {
+                                                paddingLeft: "8px",
+                                                paddingRight: "8px",
+                                            },
+                                        }}
+                                    />
+                                </Box>
+                            )}
+                        </Box>
                     </Box>
 
 
@@ -1618,6 +1552,51 @@ export default function HistoriaDonante() {
 
                 </AccordionDetails>
             </Accordion>
+
+             {/* Modal de éxito/alerta */}
+                  <Dialog
+                    open={openModal}
+                    onClose={() => setOpenModal(false)}
+                    PaperProps={{
+                      sx: {
+                        borderRadius: 3,
+                        padding: 3,
+                        minWidth: 320,
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                      },
+                    }}
+                  >
+                    <DialogTitle sx={{ textAlign: "center", pb: 0 }}>
+                      <Stack direction="column" alignItems="center" spacing={1}>
+                        {modalType === "success" ? (
+                          <>
+                            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
+                            <Typography variant="h5" fontWeight="bold" color="success.main">
+                              ¡Éxito!
+                            </Typography>
+                          </>
+                        ) : (
+                          <>
+                            <ErrorOutlineIcon sx={{ fontSize: 60, color: "error.main" }} />
+                            <Typography variant="h5" fontWeight="bold" color="error.main">
+                              Atención
+                            </Typography>
+                          </>
+                        )}
+                      </Stack>
+                    </DialogTitle>
+                    <DialogContent>
+                      <Typography
+                        variant="body1"
+                        textAlign="center"
+                        sx={{ mt: 1, fontSize: "1.1rem" }}
+                      >
+                        {modalType === "success"
+                          ? "Se guardó correctamente"
+                          : errorMsg}
+                      </Typography>
+                    </DialogContent>
+                  </Dialog>
         </>
     )
 }

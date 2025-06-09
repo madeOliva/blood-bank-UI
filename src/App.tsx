@@ -35,13 +35,15 @@ import EntradaProduccion from "./pages/produccion/EntradaProducción";
 import PlasmaIndustria from "./pages/produccion/PlasmaIndustria";
 import PageOne from "./pages/transfusiones/PageOne";
 import TransfusionPage from "./pages/transfusiones/TransfusionPage";
-// ...importa aquí el resto de tus componentes de páginas...
+import UsuarioActivo from "./pages/auth/Usuario";
+
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/usuario" element={<UsuarioActivo/>} />
 
       {/*Prechequeo y Seleccion*/}
       <Route path="/prechequeo" element={<ProtectedRoute allowedRoles={['tecnico_prechequeo']}>
@@ -79,7 +81,7 @@ export default function App() {
         <HojaCargoDonaciones />
       </ProtectedRoute>} />
 
-      <Route path="/historiadonante" element={<HistoriaDonante />} />
+      <Route path="/historiadonante/:id" element={<HistoriaDonante />} />
 
       {/*Transfusiones*/}
       <Route path="/pageone" element={<PageOne />} />

@@ -145,7 +145,7 @@ export default function Login() {
 
           <TextField
             id="outlined-basic"
-            label="Email"
+            label="Correo"
             variant="outlined"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -202,7 +202,7 @@ export default function Login() {
             variant="outlined"
           >
             <InputLabel htmlFor="outlined-adornment-password">
-              Password
+            Contraseña
             </InputLabel>
             <OutlinedInput
               id="outlined-adornment-password"
@@ -241,10 +241,10 @@ export default function Login() {
             sx={{ color: "white", width: 255 }}
             onClick={handleLogin}
           >
-            INICIAR SESION
+            INICIAR SESIÓN
           </Button>
 
-          <a href="/register">Registrate</a>
+          <a href="/register">Regístrate</a>
         </Box>
 
         <Box
