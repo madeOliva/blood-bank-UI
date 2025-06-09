@@ -1,7 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import BotonPersonalizado from "../../components/Button";
 import Navbar from "../../components/navbar/Navbar";
 import {
   Box,
@@ -24,52 +22,68 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Slide,
 } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
-// IMPORTS DEL CALENDARIO
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-
-const rows = [
-  { id: 1, sexo: "F", hc: "02022562246", edad: 14, volumen: 444, grupo: "A", factor: "+", no: "1" },
-  { id: 2, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo: "A", factor: "+", no: "2" },
-  { id: 3, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo: "A", factor: "+", no: "3" },
-  { id: 4, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo: "A", factor: "+", no: "4" },
-  { id: 5, sexo: "F", hc: "02022562246", edad: 11, volumen: 444, grupo: "A", factor: "+", no: "5" },
-  { id: 6, hc: "02022562246", sexo: "F", edad: 23, volumen: 444, grupo: "A", factor: "+", no: "6" },
-  { id: 7, hc: "02022562246", sexo: "F", edad: 150, volumen: 444, grupo: "A", factor: "+", no: "7" },
-  { id: 8, hc: "02022562246", sexo: "M", edad: 44, volumen: 444, grupo: "A", factor: "+", no: "8" },
-  { id: 9, hc: "02022562246", sexo: "M", edad: 36, volumen: 444, grupo: "A", factor: "+", no: "9" },
-  { id: 10, hc: "02022562246", sexo: "F", edad: 65, volumen: 444, grupo: "A", factor: "+", no: "10" },
-  { id: 11, hc: "02022562246", sexo: "F", edad: 65, volumen: 444, grupo: "A", factor: "+", no: "11" },
-];
+import BotonPersonalizado from "../../components/Button";
 
 export default function RecepciondiariasEntidad() {
-  const navigate = useNavigate();
+  const [entidad, setEntidad] = useState("");
+  const [selectedDate, setSelectedDate] = useState<any>(null);
 
-  const handleLogin = () => {
-    navigate("/register", { replace: true }); // Redirige a la vista de Prechequeo
-  };
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [entidad, setEntidad] = React.useState("");
-  const [selectedDate, setSelectedDate] = React.useState(null);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState<string | number | null>(null);
+  const [motivoDesecho, setMotivoDesecho] = useState("");
 
-  // Estado para el modal
-  const [openModal, setOpenModal] = React.useState(false);
-  const [selectedRowId, setSelectedRowId] = React.useState<number | null>(null);
+  const [openDeleteSuccess, setOpenDeleteSuccess] = useState(false);
 
-  // Estado para el acordeón (selección)
-  const [motivoDesecho, setMotivoDesecho] = React.useState("");
+  const [openSuccess, setOpenSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // NUEVO: Para advertencia si no hay selección
+  const [selectionModel, setSelectionModel] = useState<any[]>([]);
+  const [openWarning, setOpenWarning] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("http://localhost:3000/registro-donacion/donaciones-diarias")
+      .then(res => res.json())
+      .then(data => {
+        setRows(
+          Array.isArray(data)
+            ? data
+                .filter(row => !!row)
+                .map((row: any, idx: number) => ({
+                  ...row,
+                  id:
+                    typeof row.id === "string" ? row.id
+                    : typeof row._id === "string" ? row._id
+                    : (row._id && typeof row._id === "object" && row._id.$oid) ? row._id.$oid
+                    : String(idx),
+                }))
+            : []
+        );
+      })
+      .catch(() => setRows([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleChangeE = (event: SelectChangeEvent) => {
     setEntidad(event.target.value as string);
   };
 
-  const handleOpenModal = (id: number) => {
-    setSelectedRowId(id);
-    setOpenModal(true);
+  const handleOpenModal = (id: number | string | undefined) => {
+    if (typeof id === "number" || typeof id === "string") {
+      setSelectedRowId(id?.toString());
+      setOpenModal(true);
+    }
   };
 
   const handleCloseModal = () => {
@@ -78,16 +92,69 @@ export default function RecepciondiariasEntidad() {
     setMotivoDesecho("");
   };
 
-  const handleConfirmDesechar = () => {
-    // Aquí puedes poner la lógica para eliminar/desechar la fila
-    alert(`Desechada la fila con ID: ${selectedRowId} por motivo: ${motivoDesecho}`);
-    setOpenModal(false);
+  // Desechar (soft delete: solo cambia el estado en backend)
+  const handleConfirmDesechar = async () => {
+    if (!selectedRowId) return;
+    try {
+      const res = await fetch(`http://localhost:3000/registro-donacion/updatee/${selectedRowId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          motivo_desecho: motivoDesecho,
+          estado: "desechada",
+        }),
+      });
+
+      if (res.ok) {
+        // Recarga los datos desde el backend para reflejar el cambio
+        fetch("http://localhost:3000/registro-donacion/donaciones-diarias")
+          .then(res => res.json())
+          .then(data => {
+            setRows(
+              Array.isArray(data)
+                ? data
+                    .filter(row => !!row)
+                    .map((row: any, idx: number) => ({
+                      ...row,
+                      id:
+                        typeof row.id === "string" ? row.id
+                        : typeof row._id === "string" ? row._id
+                        : (row._id && typeof row._id === "object" && row._id.$oid) ? row._id.$oid
+                        : String(idx),
+                    }))
+                : []
+            );
+          });
+        setOpenDeleteSuccess(true);
+        setTimeout(() => setOpenDeleteSuccess(false), 1500);
+      } else {
+        alert("Error al desechar la donación.");
+      }
+    } catch (error) {
+      alert("Error de conexión con el backend.");
+      console.error(error);
+    }
     setSelectedRowId(null);
     setMotivoDesecho("");
+    setOpenModal(false);
   };
 
-  // Columnas con el botón que abre el modal
-  const columns: GridColDef<(typeof rows)[number]>[] = [
+  // NUEVO: Función para enviar y advertir si no hay selección
+  const handleEnviar = () => {
+    if (!selectionModel || selectionModel.length === 0) {
+      setSuccessMessage("Debe seleccionar al menos una bolsa.");
+      setOpenWarning(true);
+      setTimeout(() => setOpenWarning(false), 2000);
+      return;
+    }
+    setSuccessMessage("¡Donaciones enviadas correctamente!");
+    setOpenSuccess(true);
+    setTimeout(() => setOpenSuccess(false), 2000);
+  };
+
+  const columns: GridColDef<any>[] = [
     { field: "no", headerName: "NO", width: 90 },
     { field: "hc", headerName: "HC-donación", width: 150, editable: false },
     { field: "sexo", headerName: "Sexo", width: 70, editable: false },
@@ -101,15 +168,13 @@ export default function RecepciondiariasEntidad() {
       width: 150,
       editable: false,
       renderCell: (params) => (
-       
         <Button
-        onClick={() => handleOpenModal(params.id as number)}
-        color="error"
-        variant="contained"
-        
-      >
-        Desechar
-      </Button>
+          onClick={() => handleOpenModal(params.id)}
+          color="error"
+          variant="contained"
+        >
+          Desechar
+        </Button>
       ),
     },
   ];
@@ -118,18 +183,21 @@ export default function RecepciondiariasEntidad() {
     <>
       <Navbar />
       <Typography
-          variant="h4"
-          component="h5"
-          mt={8}
-          sx={{ fontSize: { xs: "2rem", md: "3rem" },backgroundColor:"primary.dark", textAlign: "center", fontFamily:"sans-serif", color:"white"}}
-        >
-          Recepción de Donaciones por Entidades
-        </Typography>
-      <Container >
-        
-
+        variant="h4"
+        component="h5"
+        mt={8}
+        sx={{
+          fontSize: { xs: "2rem", md: "3rem" },
+          backgroundColor: "primary.dark",
+          textAlign: "center",
+          fontFamily: "sans-serif",
+          color: "white"
+        }}
+      >
+        Recepción de Donaciones por Entidades
+      </Typography>
+      <Container>
         <Box sx={{ marginTop: "20px", width: "90%", marginBlockEnd: 1, marginLeft: 7 }}>
-          {/* Entidad a la izquierda, calendario a la derecha */}
           <Box
             sx={{
               display: "flex",
@@ -166,7 +234,7 @@ export default function RecepciondiariasEntidad() {
               <DatePicker
                 label="Fecha"
                 value={selectedDate}
-                onChange ={setSelectedDate}
+                onChange={setSelectedDate}
                 slotProps={{ textField: { width: 200 } }}
               />
             </LocalizationProvider>
@@ -183,11 +251,10 @@ export default function RecepciondiariasEntidad() {
                 fontFamily: '"Open Sans"',
                 color: "#000",
               },
-              //border: 1,
-              //borderRadius: 2,
             }}
-            rows={rows}
+            rows={rows.filter(row => row.estado !== "desechada")}
             columns={columns}
+            loading={loading}
             initialState={{
               pagination: {
                 paginationModel: {
@@ -197,49 +264,71 @@ export default function RecepciondiariasEntidad() {
             }}
             pageSizeOptions={[10]}
             checkboxSelection
+         onRowSelectionModelChange={(newSelection) => setSelectionModel(newSelection)}
             disableRowSelectionOnClick
           />
         </Box>
       </Container>
 
-      {/* Modal de confirmación con Accordion */}
+      {/* Modal de desecho */}
       <Dialog
         open={openModal}
         onClose={handleCloseModal}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 2,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+        TransitionComponent={Slide}
+        transitionDuration={400}
+        keepMounted
       >
-        <DialogTitle>Confirmar acción</DialogTitle>
+        <DialogTitle id="alert-dialog-title" sx={{ textAlign: "center" }}>
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 50, color: "error.main" }} />
+            <Typography variant="h6" fontWeight="bold" color="error.main">
+              ¿Desea desechar la donacion?
+            </Typography>
+          </Box>
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            ¿Estás seguro que deseas desechar la fila con ID: {selectedRowId}?
+          <DialogContentText id="alert-dialog-description" sx={{ textAlign: "center" }}>
+            <Accordion sx={{ mt: 2 }}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="panel1a-content"
+                id="panel1a-header"
+              >
+                <Typography>Selecciona el motivo por el cual va a desechar la bolsa</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    value={motivoDesecho}
+                    onChange={e => setMotivoDesecho(e.target.value)}
+                  >
+                    <FormControlLabel value="Lipemia" control={<Radio />} label="Lipemia" />
+                    <FormControlLabel value="Hemolisis" control={<Radio />} label="Hemolisis" />
+                    <FormControlLabel value="Bajo Volumen" control={<Radio />} label="Bajo Volumen" />
+                    <FormControlLabel value="Sobre Volumen" control={<Radio />} label="Sobre Volumen" />
+                    <FormControlLabel value="Venipunción" control={<Radio />} label="Venipunción" />
+                    <FormControlLabel value="Return" control={<Radio />} label="Return" />
+                    <FormControlLabel value="No tener muestra(los dos tubos del laboratorio)" control={<Radio />} label="No tener muestra(los dos tubos del laboratorio)" />
+                  </RadioGroup>
+                </FormControl>
+              </AccordionDetails>
+            </Accordion>
           </DialogContentText>
-          <Accordion sx={{ mt: 2 }}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls="panel1a-content"
-              id="panel1a-header"
-            >
-              <Typography>Selecciona el motivo por el cual va a desechar la bolsa</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <FormControl component="fieldset">
-                <RadioGroup
-                  value={motivoDesecho}
-                  onChange={e => setMotivoDesecho(e.target.value)}
-                >
-                  <FormControlLabel value="Lipemia" control={<Radio />} label="Lipemia" />
-                  <FormControlLabel value="Hemolisis" control={<Radio />} label="Hemolisis" />
-                  <FormControlLabel value="Bajo Volumen" control={<Radio />} label="Bajo Volumen" />
-                  <FormControlLabel value="Sobre Volumen" control={<Radio />} label="Sobre Volumen" />
-                  <FormControlLabel value="Venipunción" control={<Radio />} label="Venipunción" />
-                  <FormControlLabel value="Return" control={<Radio />} label="Return"/>
-                  <FormControlLabel value="No tener muestra(los dos tubos del laboratorio)" control={<Radio />} label="No tener muestra(los dos tubos del laboratorio)" />
-                </RadioGroup>
-              </FormControl>
-            </AccordionDetails>
-          </Accordion>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal}>Cancelar</Button>
+        <DialogActions sx={{ justifyContent: "center", pb: 2 }}>
+          <Button onClick={handleCloseModal} variant="outlined">
+            Cancelar
+          </Button>
           <Button
             onClick={handleConfirmDesechar}
             color="error"
@@ -251,6 +340,90 @@ export default function RecepciondiariasEntidad() {
         </DialogActions>
       </Dialog>
 
+      {/* Modal Éxito Desecho */}
+      <Dialog
+        open={openDeleteSuccess}
+        aria-labelledby="delete-success-dialog-title"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 3,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+      >
+        <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="delete-success-dialog-title">
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
+            <Typography variant="h5" fontWeight="bold" color="success.main">
+              ¡Éxito!
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
+            Registro desechado correctamente
+          </Typography>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Éxito Envío */}
+      <Dialog
+        open={openSuccess}
+        aria-labelledby="success-dialog-title"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 3,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+      >
+        <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="success-dialog-title">
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
+            <Typography variant="h5" fontWeight="bold" color="success.main">
+              ¡Éxito!
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
+            {successMessage}
+          </Typography>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Advertencia de selección */}
+      <Dialog
+        open={openWarning}
+        aria-labelledby="warning-dialog-title"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 3,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+      >
+        <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="warning-dialog-title">
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "warning.main" }} />
+            <Typography variant="h5" fontWeight="bold" color="warning.main">
+              Atención
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
+            Debe seleccionar al menos una bolsa.
+          </Typography>
+        </DialogContent>
+      </Dialog>
+
       <Box
         sx={{
           display: "flex",
@@ -258,9 +431,9 @@ export default function RecepciondiariasEntidad() {
           alignItems: "center",
         }}
       >
-        <BotonPersonalizado onClick={handleLogin} sx={{ width: 225, marginRight: 2 }}>
-          ENVIAR
-        </BotonPersonalizado>
+       <BotonPersonalizado onClick={handleEnviar} sx={{ width: 225, marginRight: 2 }}>
+  ENVIAR
+</BotonPersonalizado>
       </Box>
     </>
   );

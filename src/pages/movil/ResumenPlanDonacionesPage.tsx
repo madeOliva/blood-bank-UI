@@ -5,8 +5,16 @@ import {
   Typography,
   Box,
   Container,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  Button,
+  Stack,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import SearchIcon from "@mui/icons-material/Search";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import Navbar from "../../components/navbar/Navbar";
@@ -29,10 +37,14 @@ const API_URL = "http://localhost:3000/plan-trabajo";
 
 export default function ResumenPlanDonaciones() {
   const [rows, setRows] = useState<RowData[]>([]);
+  const [filteredRows, setFilteredRows] = useState<RowData[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchDate, setSearchDate] = useState<string>("");
 
   useEffect(() => {
-    axios.get(API_URL)
-      .then(res => {
+    axios
+      .get(API_URL)
+      .then((res) => {
         const data = res.data.map((item: any) => ({
           id: item._id || item.id,
           fechaHora: item.fecha || item.fechaHora,
@@ -45,12 +57,16 @@ export default function ResumenPlanDonaciones() {
           cdr: item.cdr,
         }));
         setRows(data);
+        setFilteredRows(data);
       })
-      .catch(() => setRows([]));
+      .catch(() => {
+        setRows([]);
+        setFilteredRows([]);
+      });
   }, []);
 
   // Agrupar datos por mes
-  const groupedData = rows.reduce((acc, row) => {
+  const groupedData = filteredRows.reduce((acc, row) => {
     const month = dayjs(row.fechaHora).format("MMMM YYYY");
     if (!acc[month]) acc[month] = [];
     acc[month].push(row);
@@ -77,7 +93,7 @@ export default function ResumenPlanDonaciones() {
           return params.value.join(", ");
         }
         return params.value || "";
-      }
+      },
     },
     { field: "lugarDonacion", headerName: "Lugar donación", width: 160 },
     { field: "compromiso", headerName: "Compromiso", width: 140 },
@@ -85,24 +101,87 @@ export default function ResumenPlanDonaciones() {
     { field: "cdr", headerName: "CDR", width: 100 },
   ];
 
+  // Solo esta función handleSearch (filtrado local)
+  const handleSearch = () => {
+    if (!searchDate) {
+      setFilteredRows(rows);
+      setSearchOpen(false);
+      return;
+    }
+    const data = rows.filter((row) =>
+      dayjs(row.fechaHora).format("YYYY-MM-DD") === searchDate
+    );
+    setFilteredRows(data);
+    setSearchOpen(false);
+  };
+
+  // Restablecer filtro
+  const handleClearSearch = () => {
+    setSearchDate("");
+    setFilteredRows(rows);
+    setSearchOpen(false);
+  };
+
   return (
     <>
       <Navbar />
 
-      <Typography
-        variant="h4"
-        component="h5"
-        sx={{
-          fontSize: { xs: "2rem", md: "3rem" },
-          backgroundColor: "primary.dark",
-          color: "white",
-          textAlign: "center",
-          marginBlock: 5,
-          mt: 8,
-        }}
-      >
-        Planes Donaciones Mensual
-      </Typography>
+      {/* Contenedor para el título y el buscador */}
+      <Box sx={{ position: "relative", mt: 8, mb: 5 }}>
+        <Typography
+          variant="h4"
+          component="h5"
+          sx={{
+            fontSize: { xs: "2rem", md: "3rem" },
+            backgroundColor: "primary.dark",
+            color: "white",
+            textAlign: "center",
+            width: "100%",
+            py: 2,
+          }}
+        >
+          Planes Donaciones Mensual
+        </Typography>
+        {/* Buscador en la esquina superior derecha, fuera del navbar */}
+        <IconButton
+          color="primary"
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1,
+            backgroundColor: "white",
+            boxShadow: 2,
+            "&:hover": { backgroundColor: "#f0f0f0" },
+          }}
+          onClick={() => setSearchOpen(true)}
+        >
+          <SearchIcon />
+        </IconButton>
+      </Box>
+
+      <Dialog open={searchOpen} onClose={() => setSearchOpen(false)}>
+        <DialogTitle>Buscar plan por fecha</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Fecha"
+              type="date"
+              value={searchDate}
+              onChange={(e) => setSearchDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+            <Button variant="contained" onClick={handleSearch} disabled={!searchDate}>
+              Buscar
+            </Button>
+            <Button variant="outlined" onClick={handleClearSearch}>
+              Limpiar búsqueda
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
       <Container maxWidth="lg" sx={{ mt: 5, mb: 5 }}>
         {Object.entries(groupedData).map(([month, entries]) => (
           <Accordion key={month} sx={{ mb: 2 }}>
@@ -127,7 +206,7 @@ export default function ResumenPlanDonaciones() {
           </Accordion>
         ))}
 
-        {rows.length === 0 && (
+        {filteredRows.length === 0 && (
           <Typography variant="body1" textAlign="center" sx={{ mt: 3 }}>
             No hay datos para mostrar.
           </Typography>
