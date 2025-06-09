@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Box from "@mui/material/Box";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import BotonPersonalizado from "../../components/Button";
@@ -12,127 +12,146 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import axios from "axios";
 import dayjs from "dayjs";
 
-const initialRows = [
-  {
-    id: 1,
-    fechaHora: "2025-05-01 14:30",
-    areaSalud: "Centro",
-    consejoPopular: "CP1",
-    consultoriosAfectados: 3,
-    lugarDonacion: "Policlínico Central",
-    compromiso: "10 donaciones",
-    responsableSalud: "Dr. Pérez",
-    cdr: "CDR 1",
-  },
-  {
-    id: 2,
-    fechaHora: "2025-05-01 09:15",
-    areaSalud: "Norte",
-    consejoPopular: "CP2",
-    consultoriosAfectados: 2,
-    lugarDonacion: "Consultorio 5",
-    compromiso: "8 donaciones",
-    responsableSalud: "Dra. Gómez",
-    cdr: "CDR 2",
-  },
-  {
-    id: 3,
-    fechaHora: "2025-05-02 10:00",
-    areaSalud: "Centro",
-    consejoPopular: "CP3",
-    consultoriosAfectados: 1,
-    lugarDonacion: "Policlínico Sur",
-    compromiso: "5 donaciones",
-    responsableSalud: "Dr. Ruiz",
-    cdr: "CDR 3",
-  },
-  // ... otras filas
-];
+
+
+
+export type PlanDonacion = {
+  id: number;
+  fechaHora: string;
+  areaSalud: string;
+  consejoPopular: string;
+  consultoriosAfectados: number;
+  lugarDonacion: string;
+  compromiso: string;
+  responsableSalud: string;
+  cdr: string;
+};
+
+type LocationState = {
+  updatedRow?: PlanDonacion;
+  newRow?: PlanDonacion;
+};
+
+const API_URL = "http://localhost:3000/plan-trabajo";
 
 export default function PlanDonaciones() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [rows, setRows] = useState<PlanDonacion[]>([]);
+  const [openConfirm, setOpenConfirm] = useState<boolean>(false);
+  const [openSuccess, setOpenSuccess] = useState<boolean>(false);
+  const [openDeleteSuccess, setOpenDeleteSuccess] = useState<boolean>(false);
+  const [openError, setOpenError] = useState<boolean>(false);
+  const [rowToDelete, setRowToDelete] = useState<PlanDonacion | null>(null);
+  const [openModifyConfirm, setOpenModifyConfirm] = useState<boolean>(false);
+  const [rowToModify, setRowToModify] = useState<PlanDonacion | null>(null);
 
-  const [rows, setRows] = useState(initialRows);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // Email modal states
+  const [openEmailModal, setOpenEmailModal] = useState(false);
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
 
-  const [openConfirm, setOpenConfirm] = useState(false);
-  const [openSuccess, setOpenSuccess] = useState(false);
-  const [openDeleteSuccess, setOpenDeleteSuccess] = useState(false);
-  const [openError, setOpenError] = useState(false);
-
-  const [rowToDelete, setRowToDelete] = useState(null);
-  const [openModifyConfirm, setOpenModifyConfirm] = useState(false);
-  const [rowToModify, setRowToModify] = useState(null);
-
-  // Detectar fila actualizada o nueva al volver de FormularioPlan
   useEffect(() => {
-    if (location.state?.updatedRow) {
-      const updatedRow = location.state.updatedRow;
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(API_URL);
+    const data = res.data.map((item: any) => ({
+  id: item._id || item.id,
+  fechaHora: item.fecha || item.fechaHora,
+  areaSalud: item.areasalud || item.areaSalud,
+  consejoPopular: item.consejopopular || item.consejoPopular,
+  consultoriosAfectados: item.consultoriosafectados || item.consultoriosAfectados, // <-- aquí
+  lugarDonacion: item.lugarDonacion,
+  compromiso: item.compromiso,
+  responsableSalud: item.responsableDeSalud || item.responsableSalud,
+  cdr: item.cdr,
+}));
+        setRows(data);
+      } catch (err) {
+        setRows([]);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const state = location.state as LocationState | undefined;
+    if (state?.updatedRow) {
       setRows((prevRows) =>
-        prevRows.map((row) => (row.id === updatedRow.id ? updatedRow : row))
+        prevRows.map((row) => (row.id === state.updatedRow!.id ? state.updatedRow! : row))
       );
       navigate(location.pathname, { replace: true, state: {} });
     }
-    if (location.state?.newRow) {
-      const newRow = location.state.newRow;
+    if (state?.newRow) {
       setRows((prevRows) => {
-        const exists = prevRows.some((row) => row.id === newRow.id);
+        const exists = prevRows.some((row) => row.id === state.newRow!.id);
         if (exists) return prevRows;
-        return [...prevRows, newRow];
+        return [...prevRows, state.newRow!];
       });
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, navigate]);
+  }, [location.state, navigate, location.pathname]);
 
-  // Extraer fechas únicas (YYYY-MM-DD)
-  const uniqueDates = useMemo(() => {
-    const datesSet = new Set(
-      rows.map((row) => dayjs(row.fechaHora).format("YYYY-MM-DD"))
-    );
-    return Array.from(datesSet).sort();
-  }, [rows]);
-
-  // Filtrar filas según fecha seleccionada
   const filteredRows = useMemo(() => {
-    if (!selectedDate) return rows;
-    return rows.filter(
-      (row) => dayjs(row.fechaHora).format("YYYY-MM-DD") === selectedDate
-    );
-  }, [selectedDate, rows]);
+    return rows;
+  }, [rows]);
 
   const handleEnviarClick = () => {
     if (rows.length === 0) {
       setOpenError(true);
     } else {
-      setOpenConfirm(true);
+      setOpenEmailModal(true);
     }
   };
 
-  const handleEliminarClick = (row) => {
+  const handleEliminarClick = (row: PlanDonacion) => {
     setRowToDelete(row);
     setOpenConfirm(true);
   };
 
-  const handleConfirmSend = () => {
-    setOpenConfirm(false);
-    setOpenSuccess(true);
-    setTimeout(() => {
-      navigate("/resumenDonaciones", { state: { data: rows } });
-    }, 1500);
+  const handleConfirmDelete = async () => {
+    if (!rowToDelete) return;
+    try {
+      await axios.delete(`${API_URL}/${rowToDelete.id}`);
+      setRows((prev) => prev.filter((r) => r.id !== rowToDelete.id));
+      setOpenDeleteSuccess(true);
+    } catch (e) {
+      setOpenError(true);
+    } finally {
+      setOpenConfirm(false);
+      setRowToDelete(null);
+    }
   };
 
-  const handleConfirmDelete = () => {
-    setOpenConfirm(false);
-    setOpenDeleteSuccess(true);
+  // Enviar plan por correo
+  const handleSendPlanByEmail = async () => {
+    setSending(true);
+    try {
+      await axios.post(`${API_URL}/enviar-correo`, {
+        email,
+        planes: rows,
+      });
+      setOpenEmailModal(false);
+      setOpenSuccess(true);
+      setTimeout(() => {
+        navigate("/resumenDonaciones", { state: { data: rows } });
+      }, 1500);
+    } catch (e) {
+      setOpenEmailModal(false);
+      setOpenError(true);
+    } finally {
+      setSending(false);
+    }
   };
 
-  const handleModificarClick = (row) => {
+  const handleModificarClick = (row: PlanDonacion) => {
     setRowToModify(row);
     setOpenModifyConfirm(true);
   };
@@ -143,7 +162,7 @@ export default function PlanDonaciones() {
   };
 
   useEffect(() => {
-    let timer;
+    let timer: ReturnType<typeof setTimeout>;
     if (openSuccess) {
       timer = setTimeout(() => {
         setOpenSuccess(false);
@@ -153,19 +172,17 @@ export default function PlanDonaciones() {
   }, [openSuccess]);
 
   useEffect(() => {
-    let timer;
-    if (openDeleteSuccess && rowToDelete) {
+    let timer: ReturnType<typeof setTimeout>;
+    if (openDeleteSuccess) {
       timer = setTimeout(() => {
-        setRows((prev) => prev.filter((r) => r.id !== rowToDelete.id));
         setOpenDeleteSuccess(false);
-        setRowToDelete(null);
       }, 1500);
     }
     return () => clearTimeout(timer);
-  }, [openDeleteSuccess, rowToDelete]);
+  }, [openDeleteSuccess]);
 
   useEffect(() => {
-    let timer;
+    let timer: ReturnType<typeof setTimeout>;
     if (openError) {
       timer = setTimeout(() => {
         setOpenError(false);
@@ -175,10 +192,26 @@ export default function PlanDonaciones() {
   }, [openError]);
 
   const columns: GridColDef[] = [
-    { field: "fechaHora", headerName: "Fecha y Hora", width: 160 },
+  {
+  field: "fechaHora",
+  headerName: "Fecha y Hora",
+  width: 160,
+  renderCell: (params) =>
+    params.value ? dayjs(params.value).format("DD/MM/YYYY 08:00 A") : "",
+},
     { field: "areaSalud", headerName: "Área de salud", width: 150 },
     { field: "consejoPopular", headerName: "Consejo popular", width: 150 },
-    { field: "consultoriosAfectados", headerName: "Consultorios afectados", width: 180 },
+   {
+  field: "consultoriosAfectados",
+  headerName: "Consultorios afectados",
+  width: 180,
+  renderCell: (params) => {
+    if (Array.isArray(params.value)) {
+      return params.value.join(", ");
+    }
+    return params.value || "";
+  }
+},
     { field: "lugarDonacion", headerName: "Lugar donación", width: 160 },
     { field: "compromiso", headerName: "Compromiso", width: 140 },
     { field: "responsableSalud", headerName: "Responsable de salud", width: 170 },
@@ -190,7 +223,7 @@ export default function PlanDonaciones() {
       sortable: false,
       filterable: false,
       disableExport: true,
-      renderCell: (params: GridRenderCellParams) => (
+      renderCell: (params: GridRenderCellParams<PlanDonacion>) => (
         <>
           <Button
             variant="contained"
@@ -234,7 +267,7 @@ export default function PlanDonaciones() {
 
       <Container maxWidth={false}>
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-     
+          {/* Aquí podrías agregar filtros por fecha si lo deseas */}
         </Box>
 
         <Box
@@ -257,7 +290,7 @@ export default function PlanDonaciones() {
                 color: "#000",
               },
             }}
-            rows={rows}
+            rows={filteredRows}
             columns={columns}
             initialState={{
               pagination: {
@@ -286,6 +319,40 @@ export default function PlanDonaciones() {
           Enviar
         </BotonPersonalizado>
       </Box>
+
+      {/* Modal para pedir correo */}
+      <Dialog
+        open={openEmailModal}
+        onClose={() => setOpenEmailModal(false)}
+        aria-labelledby="email-dialog-title"
+      >
+        <DialogTitle id="email-dialog-title">Enviar plan por correo</DialogTitle>
+        <DialogContent>
+          <Typography mb={2}>
+            Introduzca el correo electrónico al que desea enviar el plan:
+          </Typography>
+          <TextField
+            label="Correo electrónico"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            fullWidth
+            autoFocus
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEmailModal(false)} color="primary">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSendPlanByEmail}
+            color="primary"
+            disabled={!email || sending}
+          >
+            {sending ? "Enviando..." : "Enviar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Modal Confirmación Envío o Eliminación */}
       <Dialog
@@ -318,7 +385,7 @@ export default function PlanDonaciones() {
             No
           </Button>
           <Button
-            onClick={rowToDelete ? handleConfirmDelete : handleConfirmSend}
+            onClick={rowToDelete ? handleConfirmDelete : () => setOpenEmailModal(true)}
             color="primary"
             autoFocus
           >

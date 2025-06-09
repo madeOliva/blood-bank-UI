@@ -43,13 +43,13 @@ export default function HojaCargo() {
     navigate(`/inscripcion/`);
   };
 
-//   // Filtrar las filas según las fechas seleccionadas
-//   const filteredRows = rows.filter((row) => {
-//     const fecha = dayjs(row.fecha);
-//     if (fechaInicio && fecha.isBefore(fechaInicio, "day")) return false;
-//     if (fechaFin && fecha.isAfter(fechaFin, "day")) return false;
-//     return true;
-//   });
+  //   // Filtrar las filas según las fechas seleccionadas
+  //   const filteredRows = rows.filter((row) => {
+  //     const fecha = dayjs(row.fecha);
+  //     if (fechaInicio && fecha.isBefore(fechaInicio, "day")) return false;
+  //     if (fechaFin && fecha.isAfter(fechaFin, "day")) return false;
+  //     return true;
+  //   });
 
   return (
     <>
@@ -61,7 +61,9 @@ export default function HojaCargo() {
         sx={{
           fontSize: { xs: "2rem", md: "3rem" },
           textAlign: "center",
-          paddingTop: 2,
+          backgroundColor: "#00796B",
+          color: "white",
+          marginTop: 10,
           fontFamily: '"Open Sans"',
         }}
       >
@@ -69,7 +71,7 @@ export default function HojaCargo() {
       </Typography>
       {/* Contenedor para los campos de fecha */}
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box
+        <Box
           sx={{
             display: "flex",
             gap: 10,
@@ -82,7 +84,7 @@ export default function HojaCargo() {
             value={fechaInicio}
             onChange={(newValue) => setFechaInicio(newValue)}
             slotProps={{
-              textField: {sx:{width:400}},
+              textField: { sx: { width: 400 } },
             }}
           />
           <DateTimePicker
@@ -90,7 +92,7 @@ export default function HojaCargo() {
             value={fechaFin}
             onChange={(newValue) => setFechaFin(newValue)}
             slotProps={{
-              textField: {sx:{width:400}},
+              textField: { sx: { width: 400 } },
             }}
           />
         </Box>
@@ -98,7 +100,7 @@ export default function HojaCargo() {
       {/* Contenedor para centrar el DataGrid */}
       <Box
         style={{
-            display: "flex",
+          display: "flex",
           justifyContent: "center",
           marginTop: "20px",
         }}

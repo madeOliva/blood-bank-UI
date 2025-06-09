@@ -1,116 +1,58 @@
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, IconButton, InputLabel, MenuItem, Modal, Radio, RadioGroup, Select, TextField, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, IconButton, InputLabel, MenuItem, Modal, Radio, RadioGroup, Select, Stack, TextField, Typography } from "@mui/material";
 import Navbar from "../../components/navbar/Navbar";
-import React, { useState } from "react";
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BotonPersonalizado from "../../components/Button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import  { useEffect, useState } from "react";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import axios from "axios";
 
 
-type CheckedState = {
-    a: boolean;
-    b: boolean;
-};
+export default function HistoriaDonante() {
+    const [ examenP_grupo, setExamenP_grupo] = useState('');
+    const [examenP_factor, setExamenP_factor] = useState('');
+    const [examenP_hemoglobina, setExamenP_hemoglobina] = useState('');
+    const [examenF_hemoglobina, setExamenF_hemoglobina] = useState('');
+    const [examenF_peso, setExamenF_peso] = useState('');
+    const [examenF_pulso, setExamenF_pulso] = useState('');
+    const [examenF_temSublingual, setExamenF_temSublingual] = useState('');
+    const [examenF_temAxilar, setExamenF_temAxilar] = useState('');
+    const [observacion_interrogatorio, setObservacion_interrogatorio] = useState('');
 
-function ExclusiveCheckboxes() {
-    const [checked, setChecked] = useState<CheckedState>({ a: false, b: false });
-    const [open, setOpen] = useState(false);
+    const [apto_interrogatorio, setAptoInterrogatorio] = useState<boolean | null>(null);
+    const [apto_examenFisico, setAptoExamenFisico] = useState<boolean | null>(null);
 
-    const handleChange =
-        (name: keyof CheckedState) =>
-            (event: React.ChangeEvent<HTMLInputElement>): void => {
-                if (event.target.checked) {
-                    setChecked({ a: name === "a", b: name === "b" });
-                    if (name === "b") setOpen(true); // Abrir modal si se selecciona "No Apto"
-                } else {
-                    setChecked((prev) => ({ ...prev, [name]: false }));
+    // Estados para modal de éxito/alerta
+      const [openModal, setOpenModal] = useState(false);
+      const [modalType, setModalType] = useState<"success" | "error">("success");
+      const [errorMsg, setErrorMsg] = useState("");
+
+    const [showBox, setShowBox] = useState(false);
+
+    const { id } = useParams();
+
+
+    useEffect(() => {
+        const fetchPrechequeo = async () => {
+            if (id) {
+                try {
+                    const res = await axios.get(`http://localhost:3000/registro-donacion/prechequeo/${id}`);
+                    setExamenP_grupo(res.data.examenP_grupo || "");
+                    setExamenP_factor(res.data.examenP_factor || "");
+                    setExamenP_hemoglobina(res.data.examenP_hemoglobina || "");
+                } catch (error) {
+                    console.error("Error al obtener datos de prechequeo:", error);
                 }
-            };
+            }
+        };
+        fetchPrechequeo();
+    }, [id]);
 
-    const handleClose = () => {
-        setOpen(false);
+    const handleClick = () => {
+        setShowBox(prev => !prev);
     };
-
-    return (
-        <>
-            <FormGroup row>
-                <FormControlLabel
-                    sx={{ ml: 5 }}
-                    control={
-                        <Checkbox checked={checked.a} onChange={handleChange("a")} />
-                    }
-                    label="Apto"
-                />
-                <FormControlLabel
-                    sx={{ ml: 35 }}
-                    control={
-                        <Checkbox checked={checked.b} onChange={handleChange("b")} />
-                    }
-                    label="No Apto"
-                />
-            </FormGroup>
-
-            <Modal
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="observacion-modal-title"
-                aria-describedby="observacion-modal-description"
-            >
-                <Box
-                    sx={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        width: 300,
-                        bgcolor: "background.paper",
-                        border: "1px solid",
-                        borderColor: "primary.main",
-                        borderRadius: 1,
-                        boxShadow: 24,
-                        p: 2,
-                    }}
-                >
-                    <Typography sx={{ mt: 2,  }} variant="h6" component="h5">
-                        Observación
-                    </Typography>
-                    <TextField
-                        id="outlined-basic"
-                        label=""
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                            width: 200,ml:3,
-                            
-                            "& .MuiOutlinedInput-root": {
-                                color: "#000",
-                                "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: "#00796B",
-                                },
-                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: "#00796B",
-                                },
-                            },
-                            "& .MuiInputLabel-outlined": {
-                                color: "#009688",
-                            },
-                            "& .MuiOutlinedInput-notchedOutline": {
-                                paddingLeft: "8px",
-                                paddingRight: "8px",
-                            },
-                        }}
-                    />
-
-                </Box>
-
-            </Modal>
-        </>
-    );
-}
-
-
-
-function AccordionUsage() {
 
 
     const navigate = useNavigate();
@@ -120,8 +62,365 @@ function AccordionUsage() {
         navigate("/historiadonante", { replace: true }); // Redirige a la vista de ....
     };
 
+    const [resp1, setResp1] = useState<boolean | null>(null);
+    const [resp2, setResp2] = useState<boolean | null>(null);
+    const [texto2, setTexto2] = useState("");
+    const [resp3, setResp3] = useState<boolean | null>(null);
+    const [texto3, setTexto3] = useState("");
+    const [resp4, setResp4] = useState<boolean | null>(null);
+    const [text4, setTexto4] = useState("");
+    const [resp5, setResp5] = useState<boolean | null>(null);
+    const [resp6, setResp6] = useState<boolean | null>(null);
+    const [resp7, setResp7] = useState<boolean | null>(null);
+    const [resp8, setResp8] = useState<boolean | null>(null);
+    const [texto8, setTexto8] = useState("");
+    const [resp9, setResp9] = useState<boolean | null>(null);
+    const [resp10, setResp10] = useState<boolean | null>(null);
+    const [texto10, setTexto10] = useState("");
+    const [resp11, setResp11] = useState<boolean | null>(null);
+    const [resp12, setResp12] = useState<boolean | null>(null);
+    const [resp13, setResp13] = useState<boolean | null>(null);
+    const [resp14, setResp14] = useState<boolean | null>(null);
+    const [resp15, setResp15] = useState<boolean | null>(null);
+    const [resp16, setResp16] = useState<boolean | null>(null);
+    const [resp17, setResp17] = useState<boolean | null>(null);
+    const [resp18, setResp18] = useState<boolean | null>(null);
+    const [resp19, setResp19] = useState<boolean | null>(null);
+    const [resp20, setResp20] = useState<boolean | null>(null);
+    const [resp21, setResp21] = useState<boolean | null>(null);
+    const [resp22, setResp22] = useState<boolean | null>(null);
+    const [resp23, setResp23] = useState<boolean | null>(null);
+    const [texto23, setTexto23] = useState("");
+    const [resp24, setResp24] = useState<boolean | null>(null);
+    const [texto24, setTexto24] = useState("");
+    const [resp25, setResp25] = useState<boolean | null>(null);
+    const [resp26, setResp26] = useState<boolean | null>(null);
+    const [resp27, setResp27] = useState<boolean | null>(null);
+    const [resp28, setResp28] = useState<boolean | null>(null);
+    const [texto28, setTexto28] = useState("");
+    const [resp29, setResp29] = useState<boolean | null>(null);
+    const [resp30, setResp30] = useState<boolean | null>(null);
+    const [resp31, setResp31] = useState<boolean | null>(null);
+    const [resp32, setResp32] = useState<boolean | null>(null);
+    const [resp33, setResp33] = useState<boolean | null>(null);
+    const [resp34, setResp34] = useState<boolean | null>(null);
+    const [resp35, setResp35] = useState<boolean | null>(null);
+    const [resp36, setResp36] = useState<boolean | null>(null);
+    const [resp37, setResp37] = useState<boolean | null>(null);
+    const [resp38, setResp38] = useState<boolean | null>(null);
+    const [resp39, setResp39] = useState<boolean | null>(null);
+
+
+
+    const getRespuestasInterrogatorio = () => [
+        { respuesta: resp1, respuesta_escrita: "" },
+        { respuesta: resp2, respuesta_escrita: texto2 },
+        { respuesta: resp3, respuesta_escrita: texto3 },
+        { respuesta: resp4, respuesta_escrita: text4 },
+        { respuesta: resp5, respuesta_escrita: "" },
+        { respuesta: resp6, respuesta_escrita: "" },
+        { respuesta: resp7, respuesta_escrita: "" },
+        { respuesta: resp8, respuesta_escrita: texto8 },
+        { respuesta: resp9, respuesta_escrita: "" },
+        { respuesta: resp10, respuesta_escrita: texto10 },
+        { respuesta: resp11, respuesta_escrita: "" },
+        { respuesta: resp12, respuesta_escrita: "" },
+        { respuesta: resp13, respuesta_escrita: "" },
+        { respuesta: resp14, respuesta_escrita: "" },
+        { respuesta: resp15, respuesta_escrita: "" },
+        { respuesta: resp16, respuesta_escrita: "" },
+        { respuesta: resp17, respuesta_escrita: "" },
+        { respuesta: resp18, respuesta_escrita: "" },
+        { respuesta: resp19, respuesta_escrita: "" },
+        { respuesta: resp20, respuesta_escrita: "" },
+        { respuesta: resp21, respuesta_escrita: "" },
+        { respuesta: resp22, respuesta_escrita: "" },
+        { respuesta: resp23, respuesta_escrita: texto23 },
+        { respuesta: resp24, respuesta_escrita: texto24 },
+        { respuesta: resp25, respuesta_escrita: "" },
+        { respuesta: resp26, respuesta_escrita: "" },
+        { respuesta: resp27, respuesta_escrita: "" },
+        { respuesta: resp28, respuesta_escrita: texto28 },
+        { respuesta: resp29, respuesta_escrita: "" },
+        { respuesta: resp30, respuesta_escrita: "" },
+        { respuesta: resp31, respuesta_escrita: "" },
+        { respuesta: resp32, respuesta_escrita: "" },
+        { respuesta: resp33, respuesta_escrita: "" },
+        { respuesta: resp34, respuesta_escrita: "" },
+        { respuesta: resp35, respuesta_escrita: "" },
+        { respuesta: resp36, respuesta_escrita: "" },
+        { respuesta: resp37, respuesta_escrita: "" },
+        { respuesta: resp38, respuesta_escrita: "" },
+        { respuesta: resp39, respuesta_escrita: "" },
+    ];
+
+
+    // Validación simple
+  const hayCamposVacios = () => {
+    return !examenF_peso || !examenF_pulso || !examenF_temSublingual || !examenF_temAxilar || !examenF_hemoglobina || !getRespuestasInterrogatorio || apto_examenFisico === null || apto_interrogatorio === null;
+  };
+    
+
+    const handleSubmit = async () => {
+        if (hayCamposVacios()) {
+      setErrorMsg("Por favor complete todos los campos.");
+      setModalType("error");
+      setOpenModal(true);
+      return;
+    }
+    try {
+    const payload = {
+        examenF_peso,
+        examenF_pulso,
+        examenF_temSublingual,
+        examenF_temAxilar,
+        examenF_hemoglobina,
+        apto_examenFisico,
+        respuestas_interrogatorio: getRespuestasInterrogatorio(),
+        apto_interrogatorio,
+        observacion_interrogatorio,
+    };
+        await axios.put(`http://localhost:3000/registro-donacion/${id}`, payload);
+        // Puedes mostrar un mensaje de éxito aquí si lo deseas
+    } catch (error) {
+      setErrorMsg("Ocurrió un error al enviar los datos.");
+      setModalType("error");
+      setOpenModal(true);
+    }
+};
+
+
+    const textFieldSx = {
+        width: "100%",
+        "& .MuiOutlinedInput-root": {
+            color: "#000",
+            "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#00796B",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#00796B",
+            },
+        },
+        "& .MuiInputLabel-outlined": {
+            color: "#009688",
+        },
+        "& .MuiOutlinedInput-notchedOutline": {
+            paddingLeft: "8px",
+            paddingRight: "8px",
+        },
+    };
+
+
+
     return (
-        <div>
+        <>
+            <Navbar />
+
+            <Typography sx={{ mt: 10, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5" >
+                Historia del Donante
+            </Typography>
+
+            <IconButton onClick={handleClick} sx={{ color: "primary.dark", ml: 160, fontSize: 70, mt: 7 }}>
+                <AddIcon fontSize="inherit" />
+            </IconButton>
+
+            {showBox && (
+                <Box display={"flex"} justifyContent={"space-between"} padding={2} margin={5} border={1}>
+                    <Box >
+
+
+                        <Box >
+                            <Typography sx={{ mt: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5" >
+                                Resultados del Prechequeo.
+                            </Typography>
+                            <Box display="flex" justifyContent="space-between" padding={2} width={500}>
+                                <Box >
+
+                                    <TextField
+                                        id="outlined-basic"
+                                        label="Grupo"
+                                        variant="outlined"
+                                        size="small"
+                                        value={examenP_grupo}
+                                        onChange={e => setExamenP_grupo(e.target.value)}
+                                        disabled
+                                        sx={{
+                                            width: 150,
+                                            // Cambia el color del texto
+                                            "& .MuiOutlinedInput-root": {
+                                                color: "#000",
+                                                // Cambia el color del borde
+                                                "& .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                                // Cambia el color del borde al hacer foco
+                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                            },
+                                            // Cambia el color del label
+                                            "& .MuiInputLabel-outlined": {
+                                                color: "#009688",
+                                            },
+                                            "& .MuiOutlinedInput-notchedOutline": {
+                                                paddingLeft: "8px",
+                                                paddingRight: "8px",
+                                            },
+                                        }}
+                                    />
+
+                                </Box>
+
+                                <Box>
+
+                                    <TextField
+                                        id="outlined-basic"
+                                        label="Hemoglobina"
+                                        variant="outlined"
+                                        size="small"
+                                        value={examenP_hemoglobina}
+                                        onChange={e => setExamenP_hemoglobina(e.target.value)}
+                                        disabled
+                                        sx={{
+                                            width: 150,
+                                            // Cambia el color del texto
+                                            "& .MuiOutlinedInput-root": {
+                                                color: "#000",
+                                                // Cambia el color del borde
+                                                "& .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                                // Cambia el color del borde al hacer foco
+                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                            },
+                                            // Cambia el color del label
+                                            "& .MuiInputLabel-outlined": {
+                                                color: "#009688",
+                                            },
+                                            "& .MuiOutlinedInput-notchedOutline": {
+                                                paddingLeft: "8px",
+                                                paddingRight: "8px",
+                                            },
+                                        }}
+                                    />
+                                </Box>
+                                <Box>
+
+                                    <TextField
+                                        id="outlined-basic"
+                                        label="Factor"
+                                        variant="outlined"
+                                        size="small"
+                                        value={examenP_factor}
+                                        onChange={e => setExamenP_factor(e.target.value)}
+                                        disabled
+                                        sx={{
+                                            width: 150,
+                                            // Cambia el color del texto
+                                            "& .MuiOutlinedInput-root": {
+                                                color: "#000",
+                                                // Cambia el color del borde
+                                                "& .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                                // Cambia el color del borde al hacer foco
+                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                            },
+                                            // Cambia el color del label
+                                            "& .MuiInputLabel-outlined": {
+                                                color: "#009688",
+                                            },
+                                            "& .MuiOutlinedInput-notchedOutline": {
+                                                paddingLeft: "8px",
+                                                paddingRight: "8px",
+                                            },
+                                        }}
+                                    />
+                                </Box>
+                            </Box>
+                        </Box>
+
+                    </Box>
+
+                    
+
+                        <Box sx={{ p: 2, width: 600 }}>
+                            <Typography sx={{ mb: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5">
+                                Examen Físico
+                            </Typography>
+                            <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+                                <TextField
+                                    label="Peso"
+                                    variant="outlined"
+                                    size="small"
+                                    value={examenF_peso}
+                                    onChange={e => setExamenF_peso(e.target.value)}
+                                    sx={textFieldSx}
+                                />
+                                <TextField
+                                    label="Pulso"
+                                    variant="outlined"
+                                    size="small"
+                                    value={examenF_pulso}
+                                    onChange={e => setExamenF_pulso(e.target.value)}
+                                    sx={textFieldSx}
+                                />
+                                <TextField
+                                    label="Temperatura sublingual"
+                                    variant="outlined"
+                                    size="small"
+                                    value={examenF_temSublingual}
+                                    onChange={e => setExamenF_temSublingual(e.target.value)}
+                                    sx={textFieldSx}
+                                />
+                                <TextField
+                                    label="Temperatura axilar"
+                                    variant="outlined"
+                                    size="small"
+                                    value={examenF_temAxilar}
+                                    onChange={e => setExamenF_temAxilar(e.target.value)}
+                                    sx={textFieldSx}
+                                />
+                                <TextField
+                                    label="Hemoglobina"
+                                    variant="outlined"
+                                    size="small"
+                                    value={examenF_hemoglobina}
+                                    onChange={e => setExamenF_hemoglobina(e.target.value)}
+                                    sx={textFieldSx}
+                                />
+                                <Box>
+                                    <FormGroup row>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={apto_examenFisico === true}
+                                                    onChange={() => setAptoExamenFisico(true)}
+                                                />
+                                            }
+                                            label="Apto"
+                                        />
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={apto_examenFisico === false}
+                                                    onChange={() => setAptoExamenFisico(false)}
+                                                />
+                                            }
+                                            label="No Apto"
+                                        />
+                                    </FormGroup>
+                                </Box>
+                            </Box>
+                        </Box>
+                    </Box>
+            )
+            }
+
             <Accordion  >
                 <AccordionSummary
                     sx={{ display: "flex", backgroundColor: "primary.dark", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" } }}
@@ -142,7 +441,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp1 === null ? "" : resp1 ? "SI" : "NO"}
+                                        onChange={e => setResp1(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -158,6 +464,8 @@ function AccordionUsage() {
                                             label=""
                                             variant="outlined"
                                             size="small"
+                                            value={texto2}
+                                            onChange={e => setTexto2(e.target.value)}
                                             sx={{
                                                 width: 300, ml: 3,
                                                 // Cambia el color del texto
@@ -190,7 +498,14 @@ function AccordionUsage() {
 
 
                                 <Box mt={5} mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp2 === null ? "" : resp2 ? "SI" : "NO"}
+                                        onChange={e => setResp2(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -207,6 +522,8 @@ function AccordionUsage() {
                                             label=""
                                             variant="outlined"
                                             size="small"
+                                            value={texto3}
+                                            onChange={e => setTexto3(e.target.value)}
                                             sx={{
                                                 width: 300, ml: 3,
                                                 // Cambia el color del texto
@@ -239,7 +556,14 @@ function AccordionUsage() {
 
 
                                 <Box mt={5} mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp3 === null ? "" : resp3 ? "SI" : "NO"}
+                                        onChange={e => setResp3(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -253,6 +577,8 @@ function AccordionUsage() {
                                             label=""
                                             variant="outlined"
                                             size="small"
+                                            value={text4}
+                                            onChange={e => setTexto4(e.target.value)}
                                             sx={{
                                                 width: 300, ml: 3,
                                                 // Cambia el color del texto
@@ -281,7 +607,14 @@ function AccordionUsage() {
 
                                 </Box>
                                 <Box mt={2} mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp4 === null ? "" : resp4 ? "SI" : "NO"}
+                                        onChange={e => setResp4(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -293,7 +626,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp5 === null ? "" : resp5 ? "SI" : "NO"}
+                                        onChange={e => setResp5(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -307,7 +647,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp6 === null ? "" : resp6 ? "SI" : "NO"}
+                                        onChange={e => setResp6(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -321,7 +668,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp7 === null ? "" : resp7 ? "SI" : "NO"}
+                                        onChange={e => setResp7(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -337,6 +691,8 @@ function AccordionUsage() {
                                             label=""
                                             variant="outlined"
                                             size="small"
+                                            value={texto8}
+                                            onChange={e => setTexto8(e.target.value)}
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -365,7 +721,14 @@ function AccordionUsage() {
 
                                 </Box>
                                 <Box mt={2} mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp8 === null ? "" : resp8 ? "SI" : "NO"}
+                                        onChange={e => setResp8(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -377,7 +740,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp9 === null ? "" : resp9 ? "SI" : "NO"}
+                                        onChange={e => setResp9(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -393,6 +763,8 @@ function AccordionUsage() {
                                             label=""
                                             variant="outlined"
                                             size="small"
+                                            value={texto10}
+                                            onChange={e => setTexto10(e.target.value)}
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -421,7 +793,14 @@ function AccordionUsage() {
 
                                 </Box>
                                 <Box mt={2} mr={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp10 === null ? "" : resp10 ? "SI" : "NO"}
+                                        onChange={e => setResp10(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -433,7 +812,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp11 === null ? "" : resp11 ? "SI" : "NO"}
+                                        onChange={e => setResp11(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -447,7 +833,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp12 === null ? "" : resp12 ? "SI" : "NO"}
+                                        onChange={e => setResp12(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -461,7 +854,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp13 === null ? "" : resp13 ? "SI" : "NO"}
+                                        onChange={e => setResp13(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -475,7 +875,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={0.5} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp14 === null ? "" : resp14 ? "SI" : "NO"}
+                                        onChange={e => setResp14(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -489,7 +896,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp15 === null ? "" : resp15 ? "SI" : "NO"}
+                                        onChange={e => setResp15(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -501,7 +915,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp16 === null ? "" : resp16 ? "SI" : "NO"}
+                                        onChange={e => setResp16(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -513,7 +934,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp17 === null ? "" : resp17 ? "SI" : "NO"}
+                                        onChange={e => setResp17(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -525,7 +953,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={5}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp18 === null ? "" : resp18 ? "SI" : "NO"}
+                                        onChange={e => setResp18(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -537,7 +972,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={5}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp19 === null ? "" : resp19 ? "SI" : "NO"}
+                                        onChange={e => setResp19(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -549,7 +991,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp20 === null ? "" : resp20 ? "SI" : "NO"}
+                                        onChange={e => setResp20(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
                         </Box>
@@ -565,7 +1014,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp21 === null ? "" : resp21 ? "SI" : "NO"}
+                                        onChange={e => setResp21(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -577,7 +1033,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp22 === null ? "" : resp22 ? "SI" : "NO"}
+                                        onChange={e => setResp22(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -593,6 +1056,8 @@ function AccordionUsage() {
                                             label=""
                                             variant="outlined"
                                             size="small"
+                                            value={texto23}
+                                            onChange={e => setTexto23(e.target.value)}
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -621,7 +1086,14 @@ function AccordionUsage() {
 
                                 </Box>
                                 <Box mt={2} mr={1} >
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp23 === null ? "" : resp23 ? "SI" : "NO"}
+                                        onChange={e => setResp23(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -635,6 +1107,8 @@ function AccordionUsage() {
                                             label=""
                                             variant="outlined"
                                             size="small"
+                                            value={texto24}
+                                            onChange={e => setTexto24(e.target.value)}
                                             sx={{
                                                 width: 300, ml: 5,
                                                 // Cambia el color del texto
@@ -663,7 +1137,14 @@ function AccordionUsage() {
 
                                 </Box>
                                 <Box mt={2} mr={1} >
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp24 === null ? "" : resp24 ? "SI" : "NO"}
+                                        onChange={e => setResp24(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
                             <Box display={"flex"} justifyContent={"space-between"} >
@@ -674,7 +1155,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp25 === null ? "" : resp25 ? "SI" : "NO"}
+                                        onChange={e => setResp25(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -688,7 +1176,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp26 === null ? "" : resp26 ? "SI" : "NO"}
+                                        onChange={e => setResp26(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
 
 
@@ -702,7 +1197,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={8}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp27 === null ? "" : resp27 ? "SI" : "NO"}
+                                        onChange={e => setResp27(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -716,6 +1218,8 @@ function AccordionUsage() {
                                             label=""
                                             variant="outlined"
                                             size="small"
+                                            value={texto28}
+                                            onChange={e => setTexto28(e.target.value)}
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -744,7 +1248,14 @@ function AccordionUsage() {
 
                                 </Box>
                                 <Box mt={2} mr={1} >
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp28 === null ? "" : resp28 ? "SI" : "NO"}
+                                        onChange={e => setResp28(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -756,7 +1267,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={3}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp29 === null ? "" : resp29 ? "SI" : "NO"}
+                                        onChange={e => setResp29(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -768,7 +1286,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp30 === null ? "" : resp30 ? "SI" : "NO"}
+                                        onChange={e => setResp30(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -780,7 +1305,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp31 === null ? "" : resp31 ? "SI" : "NO"}
+                                        onChange={e => setResp31(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -792,7 +1324,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp32 === null ? "" : resp32 ? "SI" : "NO"}
+                                        onChange={e => setResp32(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -804,7 +1343,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp33 === null ? "" : resp33 ? "SI" : "NO"}
+                                        onChange={e => setResp33(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -816,7 +1362,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp34 === null ? "" : resp34 ? "SI" : "NO"}
+                                        onChange={e => setResp34(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -828,7 +1381,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp35 === null ? "" : resp35 ? "SI" : "NO"}
+                                        onChange={e => setResp35(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -840,7 +1400,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp36 === null ? "" : resp36 ? "SI" : "NO"}
+                                        onChange={e => setResp36(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -852,7 +1419,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp37 === null ? "" : resp37 ? "SI" : "NO"}
+                                        onChange={e => setResp37(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -864,7 +1438,14 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp38 === null ? "" : resp38 ? "SI" : "NO"}
+                                        onChange={e => setResp38(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
@@ -876,14 +1457,80 @@ function AccordionUsage() {
                                 </Box>
 
                                 <Box mr={1} mt={1}>
-                                    <RadioButtonsGroup />
+                                    <RadioGroup
+                                        row
+                                        value={resp39 === null ? "" : resp39 ? "SI" : "NO"}
+                                        onChange={e => setResp39(e.target.value === "SI")}
+                                    >
+                                        <FormControlLabel value="SI" control={<Radio />} label="SI" />
+                                        <FormControlLabel value="NO" control={<Radio />} label="NO" />
+                                    </RadioGroup>
                                 </Box>
                             </Box>
 
                         </Box>
                     </Box>
+
+
                     <Box sx={{ ml: 50 }}>
-                        <ExclusiveCheckboxes />
+                        <Box sx={{ mt: 2, ml: 9, display: "flex", flexDirection: "column", gap: 1 }}>
+                            <FormGroup row>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={apto_interrogatorio === true}
+                                            onChange={() => setAptoInterrogatorio(true)}
+                                        />
+                                    }
+                                    label="Apto"
+                                />
+                                <FormControlLabel sx={{ ml: 29 }}
+                                    control={
+                                        <Checkbox
+                                            checked={apto_interrogatorio === false}
+                                            onChange={() => setAptoInterrogatorio(false)}
+                                        />
+                                    }
+                                    label="No Apto"
+                                />
+                            </FormGroup>
+
+                            {apto_interrogatorio === false && (
+                                <Box sx={{ margin: 3 }}>
+                                    <TextField
+                                        label="Observación"
+                                        value={observacion_interrogatorio}
+                                        onChange={e => setObservacion_interrogatorio(e.target.value)}
+                                        multiline
+                                        rows={3}
+                                        fullWidth
+                                        sx={{
+                                            width: 300, ml: 2,
+                                            // Cambia el color del texto
+                                            "& .MuiOutlinedInput-root": {
+                                                color: "#000",
+                                                // Cambia el color del borde
+                                                "& .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                                // Cambia el color del borde al hacer foco
+                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                                    borderColor: "#00796B",
+                                                },
+                                            },
+                                            // Cambia el color del label
+                                            "& .MuiInputLabel-outlined": {
+                                                color: "#009688",
+                                            },
+                                            "& .MuiOutlinedInput-notchedOutline": {
+                                                paddingLeft: "8px",
+                                                paddingRight: "8px",
+                                            },
+                                        }}
+                                    />
+                                </Box>
+                            )}
+                        </Box>
                     </Box>
 
 
@@ -895,7 +1542,7 @@ function AccordionUsage() {
 
                         }}
                     >
-                        <BotonPersonalizado onClick={handleHc} sx={{ width: 225 }}>
+                        <BotonPersonalizado onClick={handleSubmit} sx={{ width: 225 }}>
                             ACEPTAR
                         </BotonPersonalizado>
                     </Box>
@@ -905,332 +1552,51 @@ function AccordionUsage() {
 
                 </AccordionDetails>
             </Accordion>
-        </div>
-    );
-}
 
-
-
-
-function RadioButtonsGroup() {
-    return (
-        <FormControl sx={{ marginTop: 1 }}>
-            <FormLabel id="demo-row-radio-buttons-group-label"></FormLabel>
-            <RadioGroup
-                row
-                aria-labelledby="demo-row-radio-buttons-group-label"
-                name="row-radio-buttons-group"
-            >
-                <FormControlLabel value="female" control={<Radio />} label="SI" />
-                <FormControlLabel value="male" control={<Radio />} label="NO" />
-            </RadioGroup>
-        </FormControl>
-    );
-}
-
-
-export default function HistoriaDonante() {
-    const [hemoglobina, setHemoglobina] = React.useState('');
-
-    const [showBox, setShowBox] = useState(false);
-
-    const handleClick = () => {
-        setShowBox(prev => !prev); // Alterna la visibilidad
-    };
-    return (
-        <>
-            <Navbar />
-
-            <Typography sx={{ mt: 10, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5" >
-                Historia del Donante
-            </Typography>
-
-            <IconButton onClick={handleClick} sx={{ color: "primary.dark", ml: 160, fontSize: 70, mt: 7 }}>
-                <AddIcon fontSize="inherit" />
-            </IconButton>
-
-            {showBox && (
-                <Box display={"flex"} justifyContent={"space-between"} padding={2} margin={5} border={1}>
-                    <Box >
-
-
-                        <Box >
-                            <Typography sx={{ mt: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5" >
-                                Resultados del Prechequeo.
+             {/* Modal de éxito/alerta */}
+                  <Dialog
+                    open={openModal}
+                    onClose={() => setOpenModal(false)}
+                    PaperProps={{
+                      sx: {
+                        borderRadius: 3,
+                        padding: 3,
+                        minWidth: 320,
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                      },
+                    }}
+                  >
+                    <DialogTitle sx={{ textAlign: "center", pb: 0 }}>
+                      <Stack direction="column" alignItems="center" spacing={1}>
+                        {modalType === "success" ? (
+                          <>
+                            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
+                            <Typography variant="h5" fontWeight="bold" color="success.main">
+                              ¡Éxito!
                             </Typography>
-                            <Box display="flex" justifyContent="space-between" padding={2} width={500}>
-                                <Box >
-                                    <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                        Grupo
-                                    </Typography>
-                                    <TextField
-                                        id="outlined-basic"
-                                        label=""
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{
-                                            width: 150,
-                                            // Cambia el color del texto
-                                            "& .MuiOutlinedInput-root": {
-                                                color: "#000",
-                                                // Cambia el color del borde
-                                                "& .MuiOutlinedInput-notchedOutline": {
-                                                    borderColor: "#00796B",
-                                                },
-                                                // Cambia el color del borde al hacer foco
-                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                    borderColor: "#00796B",
-                                                },
-                                            },
-                                            // Cambia el color del label
-                                            "& .MuiInputLabel-outlined": {
-                                                color: "#009688",
-                                            },
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                paddingLeft: "8px",
-                                                paddingRight: "8px",
-                                            },
-                                        }}
-                                    />
-
-                                </Box>
-
-                                <Box>
-                                    <Typography id="modal-modal-description" sx={{ mt: 2 }} variant="h6" component="h5">
-                                        Hemoglobina
-                                    </Typography>
-                                    <Box sx={{ minWidth: 120, width: 150, minHeight: 40, position: 'revert-layer' }}>
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel id="demo-simple-select-label"></InputLabel>
-                                            <Select
-                                                labelId="demo-simple-select-label"
-                                                id="demo-simple-select"
-                                                value={hemoglobina}
-                                                label="Hemoglobina"
-                                                onChange={(e) => setHemoglobina(e.target.value)}
-                                            >
-                                                <MenuItem value={10}></MenuItem>
-                                                <MenuItem value={20}>normal</MenuItem>
-                                                <MenuItem value={30}>baja</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Box>
-                                </Box>
-                                <Box>
-                                    <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                        Factor
-                                    </Typography>
-                                    <TextField
-                                        id="outlined-basic"
-                                        label=""
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{
-                                            width: 150,
-                                            // Cambia el color del texto
-                                            "& .MuiOutlinedInput-root": {
-                                                color: "#000",
-                                                // Cambia el color del borde
-                                                "& .MuiOutlinedInput-notchedOutline": {
-                                                    borderColor: "#00796B",
-                                                },
-                                                // Cambia el color del borde al hacer foco
-                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                    borderColor: "#00796B",
-                                                },
-                                            },
-                                            // Cambia el color del label
-                                            "& .MuiInputLabel-outlined": {
-                                                color: "#009688",
-                                            },
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                paddingLeft: "8px",
-                                                paddingRight: "8px",
-                                            },
-                                        }}
-                                    />
-                                </Box>
-                            </Box>
-                        </Box>
-
-                    </Box>
-
-                    <Box>
-                        <Typography sx={{ mt: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5" >
-                            Examen Físico.
-                        </Typography>
-
-                        <Box display="flex" justifyContent="space-between" padding={2} width={600}>
-
-                            <Box >
-                                <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                    Peso
-                                </Typography>
-
-                                <TextField
-                                    id="outlined-basic"
-                                    label=""
-                                    variant="outlined"
-                                    size="small"
-                                    sx={{
-                                        width: 150,
-                                        // Cambia el color del texto
-                                        "& .MuiOutlinedInput-root": {
-                                            color: "#000",
-                                            // Cambia el color del borde
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                            // Cambia el color del borde al hacer foco
-                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                        },
-                                        // Cambia el color del label
-                                        "& .MuiInputLabel-outlined": {
-                                            color: "#009688",
-                                        },
-                                        "& .MuiOutlinedInput-notchedOutline": {
-                                            paddingLeft: "8px",
-                                            paddingRight: "8px",
-                                        },
-                                    }}
-                                />
-
-
-                                <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                    Pulso
-                                </Typography>
-
-                                <TextField
-                                    id="outlined-basic"
-                                    label=""
-                                    variant="outlined"
-                                    size="small"
-                                    sx={{
-                                        width: 150,
-                                        // Cambia el color del texto
-                                        "& .MuiOutlinedInput-root": {
-                                            color: "#000",
-                                            // Cambia el color del borde
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                            // Cambia el color del borde al hacer foco
-                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                        },
-                                        // Cambia el color del label
-                                        "& .MuiInputLabel-outlined": {
-                                            color: "#009688",
-                                        },
-                                        "& .MuiOutlinedInput-notchedOutline": {
-                                            paddingLeft: "8px",
-                                            paddingRight: "8px",
-                                        },
-                                    }}
-                                />
-                            </Box>
-                            <Box >
-                                <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                    Temperatura sublingual
-                                </Typography>
-                                <TextField
-                                    id="outlined-basic"
-                                    label=""
-                                    variant="outlined"
-                                    size="small"
-                                    sx={{
-                                        width: 150,
-                                        // Cambia el color del texto
-                                        "& .MuiOutlinedInput-root": {
-                                            color: "#000",
-                                            // Cambia el color del borde
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                            // Cambia el color del borde al hacer foco
-                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                        },
-                                        // Cambia el color del label
-                                        "& .MuiInputLabel-outlined": {
-                                            color: "#009688",
-                                        },
-                                        "& .MuiOutlinedInput-notchedOutline": {
-                                            paddingLeft: "8px",
-                                            paddingRight: "8px",
-                                        },
-                                    }}
-                                />
-                                <Typography id="modal-modal-description" sx={{ mt: 2 }} variant="h6" component="h5">
-                                    Temperatura axilar
-                                </Typography>
-                                <TextField
-                                    id="outlined-basic"
-                                    label=""
-                                    variant="outlined"
-                                    size="small"
-                                    sx={{
-                                        width: 150,
-                                        // Cambia el color del texto
-                                        "& .MuiOutlinedInput-root": {
-                                            color: "#000",
-                                            // Cambia el color del borde
-                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                            // Cambia el color del borde al hacer foco
-                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                borderColor: "#00796B",
-                                            },
-                                        },
-                                        // Cambia el color del label
-                                        "& .MuiInputLabel-outlined": {
-                                            color: "#009688",
-                                        },
-                                        "& .MuiOutlinedInput-notchedOutline": {
-                                            paddingLeft: "8px",
-                                            paddingRight: "8px",
-                                        },
-                                    }}
-                                />
-                            </Box>
-                            <Box >
-                                <Typography id="modal-modal-description" sx={{ mt: 2, borderColor: "primary.dark " }} variant="h6" component="h5">
-                                    Hemoglobina
-                                </Typography>
-                                <Box sx={{ minWidth: 120, width: 150, minHeight: 40, position: 'revert-layer' }}>
-                                    <FormControl fullWidth size="small">
-                                        <InputLabel id="demo-simple-select-label"></InputLabel>
-                                        <Select
-                                            labelId="demo-simple-select-label"
-                                            id="demo-simple-select"
-                                            value={hemoglobina}
-                                            label="Hemoglobina"
-                                            onChange={(e) => setHemoglobina(e.target.value)}
-                                        >
-                                            <MenuItem value={10}></MenuItem>
-                                            <MenuItem value={20}>normal</MenuItem>
-                                            <MenuItem value={30}>baja</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Box>
-                            </Box>
-
-                        </Box>
-                    </Box>
-
-
-
-                </Box>
-            )}
-
-
-
-            <AccordionUsage />
+                          </>
+                        ) : (
+                          <>
+                            <ErrorOutlineIcon sx={{ fontSize: 60, color: "error.main" }} />
+                            <Typography variant="h5" fontWeight="bold" color="error.main">
+                              Atención
+                            </Typography>
+                          </>
+                        )}
+                      </Stack>
+                    </DialogTitle>
+                    <DialogContent>
+                      <Typography
+                        variant="body1"
+                        textAlign="center"
+                        sx={{ mt: 1, fontSize: "1.1rem" }}
+                      >
+                        {modalType === "success"
+                          ? "Se guardó correctamente"
+                          : errorMsg}
+                      </Typography>
+                    </DialogContent>
+                  </Dialog>
         </>
     )
 }

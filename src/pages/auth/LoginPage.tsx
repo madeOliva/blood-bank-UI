@@ -11,6 +11,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import LogoApp from "../../pictures/LogoApp.png";
 import { useNavigate } from "react-router-dom";
 import axios, { isAxiosError } from "axios";
+import { jwtDecode } from "jwt-decode";
 
 
 
@@ -18,6 +19,11 @@ interface LoginResponse {
   access_token: string;
 }
 
+interface JwtPayload {
+  email: string;
+  password: string;
+  role: string;
+}
 
 export default function Login() {
 
@@ -57,14 +63,43 @@ export default function Login() {
       });
 
       const { access_token } = response.data;
-      console.log('eeee')
 
       if (!access_token) {
         setError('No se recibió token de autenticación');
         return;
       }
+      // Decodifica el token y guarda el rol
+      const decoded = jwtDecode<JwtPayload>(access_token);
       localStorage.setItem('token', access_token);
-      navigate('/prechequeo');
+      localStorage.setItem('userRole', decoded.role);
+      if (decoded.role === 'medico') {
+        navigate('/resultadosprechequeo');
+      } else if (decoded.role === 'tecnico_aseguramiento_calidad') {
+        navigate('/vizualizar');
+      } else if(decoded.role === 'medico_hospital') {
+        navigate('/');
+      }else if(decoded.role === 'medico_consultorio') {
+        navigate('/listadop');
+      }else if(decoded.role === 'tecnico_prechequeo'){
+        navigate('/prechequeo');
+      }else if (decoded.role === 'jefe_extraccion_movil'){
+        navigate('/planDonaciones')
+      }else if (decoded.role === 'tecnico_movil'){
+        navigate('/planDonaciones')
+      }else if (decoded.role === 'tecnico_inscripcion'){
+        navigate('/citados')
+      }else if (decoded.role === 'tecnico_transfusion'){
+        navigate('/pageone')
+      }else if (decoded.role === 'tecnico_donacion'){
+        navigate('/lista-espera')
+      }else if (decoded.role === 'tecnico_laboratorio_suma' || decoded.role === 'tecnico_laboratorio_inmuno' || decoded.role === 'tecnico_laboratorio_calidad'){
+        navigate('/principal_lab')
+      }else if (decoded.role === 'tecnico_produccion'){
+        navigate('/entrada_produccion')
+      }
+       else {
+        setError('No tienes permiso para acceder a esta sección.');
+      }
     } catch (err) {
       if (isAxiosError(err)) {
         setError(err.response?.data?.message || 'Error al iniciar sesión. Intenta de nuevo.');
@@ -73,9 +108,6 @@ export default function Login() {
       }
     }
   };
-
-
-
 
   return (
     <div>
@@ -113,7 +145,7 @@ export default function Login() {
 
           <TextField
             id="outlined-basic"
-            label="Email"
+            label="Correo"
             variant="outlined"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -141,7 +173,7 @@ export default function Login() {
               },
             }}
           />
-          
+
           <FormControl
             sx={{
               width: 255,
@@ -170,7 +202,7 @@ export default function Login() {
             variant="outlined"
           >
             <InputLabel htmlFor="outlined-adornment-password">
-              Password
+            Contraseña
             </InputLabel>
             <OutlinedInput
               id="outlined-adornment-password"
@@ -209,10 +241,10 @@ export default function Login() {
             sx={{ color: "white", width: 255 }}
             onClick={handleLogin}
           >
-            INICIAR SESION
+            INICIAR SESIÓN
           </Button>
 
-          <a href="/register">Registrate</a>
+          <a href="/register">Regístrate</a>
         </Box>
 
         <Box
