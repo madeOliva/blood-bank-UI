@@ -6,19 +6,17 @@ import Navbar from "../../components/navbar/Navbar"
 import { Button, Typography } from "@mui/material";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import { useEffect, useState } from "react";
-import api from "../../api/client";
 import axios from "axios";
 
 
 
 
-function Water({ row, onRemove }: { row: any, onRemove: (id: number) => void }) {
+function Water({ row }: { row: any }) {
 
   const navigate = useNavigate();
 
   const handleHc = () => {
-    onRemove(row.id); // Elimina la fila
-    navigate("/historiadonante", { replace: true }); // Redirige a la vista de Prechequeo
+    navigate(`/historiadonante/${row._id}`); // Usa el _id real
   };
 
   return (<Button
@@ -52,13 +50,14 @@ export default function ResultadosPrechequeo() {
         // Mapea los datos para la tabla
         const mappedRows = res.data.map((reg: any, idx: number) => ({
           id: idx + 1,
+          _id: reg._id,
           nombre: reg.nombre,
           primer_apellido: reg.primer_apellido,
           segundo_apellido: reg.segundo_apellido,
           examenP_grupo: reg.examenP_grupo,
           examenP_factor: reg.examenP_factor,
           examenP_hemoglobina: reg.examenP_hemoglobina,
-          apto_prechequeo: reg.apto_prechequeo ? "Apto" : reg.no_apto_prechequeo ? "No Apto" : "",
+          apto_prechequeo: reg.apto_prechequeo || "",
         }));
         setRows(mappedRows);
       } catch (error) {
@@ -69,63 +68,63 @@ export default function ResultadosPrechequeo() {
   }, []);
 
   const columns: GridColDef[] = [
-  { field: "id", headerName: "No", width: 90 },
-  {
-    field: "nombre",
-    headerName: "Nombre",
-    width: 150,
-    editable: false,
-  },
+    { field: "id", headerName: "No", width: 90 },
+    {
+      field: "nombre",
+      headerName: "Nombre",
+      width: 150,
+      editable: false,
+    },
 
-  {
-    field: "primer_apellido",
-    headerName: "Primer Apellido",
-    width: 150,
-    editable: false,
-  },
+    {
+      field: "primer_apellido",
+      headerName: "Primer Apellido",
+      width: 150,
+      editable: false,
+    },
 
-  {
-    field: "segundo_apellido",
-    headerName: "Segundo Apellido",
-    width: 150,
-    editable: false,
-  },
-  {
-    field: "examenP_grupo",
-    headerName: "Grupo",
-    width: 150,
-    editable: false,
-  },
-  {
-    field: "examenP_factor",
-    headerName: "Factor",
-    width: 150,
-    editable: false,
-  },
+    {
+      field: "segundo_apellido",
+      headerName: "Segundo Apellido",
+      width: 150,
+      editable: false,
+    },
+    {
+      field: "examenP_grupo",
+      headerName: "Grupo",
+      width: 150,
+      editable: false,
+    },
+    {
+      field: "examenP_factor",
+      headerName: "Factor",
+      width: 150,
+      editable: false,
+    },
 
-  {
-    field: "examenP_hemoglobina",
-    headerName: "Hemoglobina",
-    width: 150,
-    editable: false,
-  },
+    {
+      field: "examenP_hemoglobina",
+      headerName: "Hemoglobina",
+      width: 150,
+      editable: false,
+    },
 
-  {
-    field: "apto_prechequeo",
-    headerName: "Apto/NoApto",
-    width: 150,
-    editable: false,
-  },
+    {
+      field: "apto_prechequeo",
+      headerName: "Apto/NoApto",
+      width: 150,
+      editable: false,
+    },
 
-  {
-    field: "actions",
-    headerName: "",
-    width: 150,
-    renderCell: (params) => <Water row={params.row} onRemove={removeRow} />,
-  },
+    {
+  field: "actions",
+  headerName: "",
+  width: 150,
+  renderCell: (params) => <Water row={params.row} />,
+},
 
 
-];
+  ];
 
   const handleHc = () => {
     // Aquí puedes poner lógica de autenticación si lo deseas

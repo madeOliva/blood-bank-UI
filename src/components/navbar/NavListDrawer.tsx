@@ -55,6 +55,7 @@ export default function NavListDrawer() {
 
 
   const handleInicio = () => {
+    localStorage.removeItem('access_token');
     navigate("/", { replace: true });
   };
 

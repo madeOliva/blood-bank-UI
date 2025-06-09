@@ -17,52 +17,69 @@ import {
   DialogContent,
   Stack,
   TextField,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import React from "react";
-import ExclusiveCheckboxes from "../../components/Checkbox";
-import api from "../../api/client";
 import axios from "axios";
 
 function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => void }) {
   const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
 
   // Para selects
   const [examenP_grupo, setGrupo] = useState('');
   const [examenP_factor, setFactor] = useState('');
   const [examenP_hemoglobina, setHemoglobina] = useState('');
 
-  // Estado para los checkboxes
-  const [checked, setChecked] = useState({ apto: false, noapto: false });
+  // Estado exclusivo para los checkboxes
+  const [apto, setApto] = useState<boolean | null>(null);
 
   // Estados para modal de éxito/alerta
   const [openModal, setOpenModal] = useState(false);
   const [modalType, setModalType] = useState<"success" | "error">("success");
   const [errorMsg, setErrorMsg] = useState("");
 
+  const [error, setError] = React.useState('');
+
+  const handleOpen = () => {
+    setApto(null); // ambos inactivos al abrir
+    setGrupo('');
+    setFactor('');
+    setHemoglobina('');
+    setOpen(true);
+  };
+  const handleClose = () => setOpen(false);
+
   const handleReset = () => {
     setGrupo('');
     setFactor('');
     setHemoglobina('');
-    setChecked({ apto: false, noapto: false });
+    setApto(null);
     handleClose();
   };
 
   // Validación simple
   const hayCamposVacios = () => {
-    return !examenP_grupo || !examenP_factor || !examenP_hemoglobina || (!checked.apto && !checked.noapto);
+    return !examenP_grupo || !examenP_factor || !examenP_hemoglobina || apto === null;
   };
 
   const handleSubmit = async () => {
+    setError('');
     if (hayCamposVacios()) {
       setErrorMsg("Por favor complete todos los campos y seleccione Apto o No Apto.");
       setModalType("error");
       setOpenModal(true);
+      return;
+    }
+
+    const hemoglobinaNum = Number(examenP_hemoglobina);
+    if (isNaN(hemoglobinaNum) || hemoglobinaNum < 125) {
+      setError('La hemoglobina tiene q ser mayor a 125');
       return;
     }
     try {
@@ -70,13 +87,11 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
         examenP_grupo,
         examenP_factor,
         examenP_hemoglobina,
-        apto_prechequeo: checked.apto ? true : checked.noapto ? false : undefined,
+        apto_prechequeo: apto,
       };
-      await api.put(`/registro-donacion/${row.id}`, payload);
+      await axios.put(`http://localhost:3000/registro-donacion/${row.id}`, payload);
       setModalType("success");
       setOpenModal(true);
-      handleReset();
-      onRemove(row.id);
     } catch (error) {
       setErrorMsg("Ocurrió un error al enviar los datos.");
       setModalType("error");
@@ -88,7 +103,13 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
   React.useEffect(() => {
     if (openModal) {
       const timeoutDuration = modalType === "success" ? 1200 : 2000;
-      const timer = setTimeout(() => setOpenModal(false), timeoutDuration);
+      const timer = setTimeout(() => {
+        setOpenModal(false);
+        if (modalType === "success") {
+          handleReset(); // Ahora sí resetea y cierra el modal principal
+          onRemove(row.id);
+        }
+      }, timeoutDuration);
       return () => clearTimeout(timer);
     }
   }, [openModal, modalType]);
@@ -178,8 +199,33 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
             }}
           />
           <Box sx={{ mt: 2, ml: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-            <ExclusiveCheckboxes checked={checked} onChange={setChecked} />
+            <FormGroup row>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={apto === true}
+                    onChange={() => setApto(true)}
+                  />
+                }
+                label="Apto"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={apto === false}
+                    onChange={() => setApto(false)}
+                  />
+                }
+                label="No Apto"
+              />
+            </FormGroup>
           </Box>
+
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mb: 1 }}>
+              {error}
+            </Typography>
+          )}
 
           <BotonPersonalizado onClick={handleSubmit} sx={{ width: 225, mt: 2 }}>
             ACEPTAR
@@ -235,8 +281,6 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
   );
 }
 
- 
-
 const style = {
   position: 'absolute',
   top: '50%',
@@ -258,24 +302,24 @@ export default function Prechequeo() {
     setRows((prev) => prev.filter((row) => row.id !== id));
   };
 
-// Las columnas deben ir fuera del componente para evitar redefinición
-const columns: GridColDef<any>[] = [
-  { field: "ci", headerName: "CI", width: 150 },
-  { field: "nombre", headerName: "Nombre", width: 100 },
-  { field: "primer_apellido", headerName: "Primer Apellido", width: 100 },
-  { field: "segundo_apellido", headerName: "Segundo Apellido", width: 100 },
-  { field: "edad", headerName: "Edad", width: 100 },
-  { field: "sexo", headerName: "Sexo", width: 100 },
-  { field: "grupo_sanguine", headerName: "Grupo", width: 100 },
-  { field: "factor", headerName: "Factor", width: 100 },
-  { field: "donante de", headerName: "Donante de", width: 100 },
-  {
-    field: "actions",
-    headerName: "Examenes",
-    width: 150,
-    renderCell: (params) => <ModalWindow row={params.row} onRemove={removeRow}/>,
-  },
-];
+  // Las columnas deben ir fuera del componente para evitar redefinición
+  const columns: GridColDef<any>[] = [
+    { field: "ci", headerName: "CI", width: 150 },
+    { field: "nombre", headerName: "Nombre", width: 100 },
+    { field: "primer_apellido", headerName: "Primer Apellido", width: 100 },
+    { field: "segundo_apellido", headerName: "Segundo Apellido", width: 100 },
+    { field: "edad", headerName: "Edad", width: 100 },
+    { field: "sexo", headerName: "Sexo", width: 100 },
+    { field: "grupo_sanguine", headerName: "Grupo", width: 100 },
+    { field: "factor", headerName: "Factor", width: 100 },
+    { field: "donante de", headerName: "Donante de", width: 100 },
+    {
+      field: "actions",
+      headerName: "Examenes",
+      width: 150,
+      renderCell: (params) => <ModalWindow row={params.row} onRemove={removeRow} />,
+    },
+  ];
 
   const handleResultadosPrechequeo = () => {
     navigate("/resultadosprechequeo", { replace: true });
@@ -288,12 +332,12 @@ const columns: GridColDef<any>[] = [
         // Mapea los datos para la tabla
         const mappedRows = res.data.map((reg: any) => ({
           id: reg._id,
-          ci: reg.persona?.ci,
-          nombre: reg.persona?.nombre,
-          primer_apellido: reg.persona?.primer_apellido,
-          segundo_apellido: reg.persona?.segundo_apellido,
-          edad: reg.persona?.edad,
-          sexo: reg.persona?.sexo,
+          ci: reg.historiaClinica?.ci,
+          nombre: reg.historiaClinica?.nombre,
+          primer_apellido: reg.historiaClinica?.primer_apellido,
+          segundo_apellido: reg.historiaClinica?.segundo_apellido,
+          edad: reg.historiaClinica?.edad,
+          sexo: reg.historiaClinica?.sexo,
           grupo_sanguine: reg.historiaClinica?.grupo_sanguine,
           factor: reg.historiaClinica?.factor,
           "donante de":
@@ -302,7 +346,7 @@ const columns: GridColDef<any>[] = [
               : reg.historiaClinica?.es_posibleDonante
                 ? "Posible"
                 : "No",
-        })); // ver lo del donante con Barby
+        }));
         setRows(mappedRows);
       } catch (error) {
         console.error("Error al cargar los registros:", error);
@@ -346,7 +390,7 @@ const columns: GridColDef<any>[] = [
                 },
               },
             }}
-            pageSizeOptions={[7]}
+            pageSizeOptions={[]}
             getRowId={(row) => row.id}
           />
         </Box>
