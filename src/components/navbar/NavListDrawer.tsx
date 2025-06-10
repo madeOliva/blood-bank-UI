@@ -104,6 +104,11 @@ export default function NavListDrawer() {
     navigate("/desechos", { replace: true });
   };
 
+    const handleDesechospro = () => {
+    navigate("/desechospro", { replace: true });
+  };
+
+
   const handleRC = () => {
     navigate("/entrada_produccion", { replace: true });
   };
@@ -546,23 +551,7 @@ export default function NavListDrawer() {
                     </ListItemButton>
                   </ListItem>
 
-                  <ListItem disablePadding>
-                    <ListItemButton onClick={() => handleLiberacion()} sx={{
-                      "&:active .MuiListItemIcon-root": {
-                        "& svg": {
-                          color: "red !important",
-                        },
-                      },
-                      "&:active .MuiTypography-root": {
-                        color: "red !important",
-                      },
-                    }}>
-                      <ListItemIcon>
-                        <VaccinesIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
-                      </ListItemIcon>
-                      <ListItemText primary="Liberación de Componentes" />
-                    </ListItemButton>
-                  </ListItem>
+                  
 
                   <ListItem disablePadding>
                     <ListItemButton onClick={() => handleReanalizar()} sx={{
@@ -583,6 +572,42 @@ export default function NavListDrawer() {
                   </ListItem>
 
                   <ListItem disablePadding>
+                    <ListItemButton onClick={() => handleLiberacion()} sx={{
+                      "&:active .MuiListItemIcon-root": {
+                        "& svg": {
+                          color: "red !important",
+                        },
+                      },
+                      "&:active .MuiTypography-root": {
+                        color: "red !important",
+                      },
+                    }}>
+                      <ListItemIcon>
+                        <VaccinesIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                      </ListItemIcon>
+                      <ListItemText primary="Liberación de Componentes" />
+                    </ListItemButton>
+                  </ListItem>
+
+                  <ListItem disablePadding>
+                    <ListItemButton onClick={() => handleDesechospro()} sx={{
+                      "&:active .MuiListItemIcon-root": {
+                        "& svg": {
+                          color: "red !important",
+                        },
+                      },
+                      "&:active .MuiTypography-root": {
+                        color: "red !important",
+                      },
+                    }}>
+                      <ListItemIcon>
+                        <DeleteIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                      </ListItemIcon>
+                      <ListItemText primary="Confirmacion de Desechos" />
+                    </ListItemButton>
+                  </ListItem>
+
+                  <ListItem disablePadding>
                     <ListItemButton onClick={() => handleDesecho()} sx={{
                       "&:active .MuiListItemIcon-root": {
                         "& svg": {
@@ -599,6 +624,8 @@ export default function NavListDrawer() {
                       <ListItemText primary="Desechos" />
                     </ListItemButton>
                   </ListItem>
+
+                  
                 </List>
               </Collapse>
             </>)}

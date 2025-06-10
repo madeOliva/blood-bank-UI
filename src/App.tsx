@@ -36,6 +36,7 @@ import EntradaProduccion from "./pages/produccion/EntradaProducción";
 import PlasmaIndustria from "./pages/produccion/PlasmaIndustria";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UsuarioActivo from "./pages/auth/Usuario";
+import DesechosPro from "./pages/calidad/ConfirmacionDesechoProPage";
 
 export default function App() {
   return (
@@ -216,6 +217,15 @@ export default function App() {
         element={
           <ProtectedRoute allowedRoles={["tecnico_aseguramiento_calidad"]}>
             <Desechos />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/desechospro"
+        element={
+          <ProtectedRoute allowedRoles={["tecnico_aseguramiento_calidad"]}>
+            <DesechosPro />
           </ProtectedRoute>
         }
       />

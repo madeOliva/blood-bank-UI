@@ -188,7 +188,7 @@ const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDona
     if (openModal && modalType === "success") {
       const timer = setTimeout(() => {
         setOpenModal(false);
-        navigate("/planDonaciones");
+      
       }, 1000);
       return () => clearTimeout(timer);
     }
