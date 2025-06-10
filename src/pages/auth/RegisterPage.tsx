@@ -135,7 +135,7 @@ const handleRegister = async () => {
 
           <TextField
             id="outlined-basicc"
-            label="Name"
+            label="Nombre"
             variant="outlined"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -167,7 +167,7 @@ const handleRegister = async () => {
 
           <TextField
             id="outlined-basic"
-            label="Email"
+            label="Correo"
             variant="outlined"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -225,7 +225,7 @@ const handleRegister = async () => {
             variant="outlined"
           >
             <InputLabel htmlFor="outlined-adornment-password">
-              Password
+              Contraseña
             </InputLabel>
             <OutlinedInput
               id="outlined-adornment-password"
@@ -255,7 +255,7 @@ const handleRegister = async () => {
 
           <TextField
             id="outlined-basicc"
-            label="Role"
+            label="Rol"
             variant="outlined"
             value={role}
             onChange={(e) => setRole(e.target.value)}
@@ -284,22 +284,24 @@ const handleRegister = async () => {
               },
             }}
           />
+          
+          {error && (
+          <Typography color="error" variant="body2" sx={{ mb: 1 }}>
+            {error}
+          </Typography>
+        )}
 
           <Button
             variant="contained"
             sx={{ color: "white", width: 255 }}
             onClick={handleRegister}
           >
-            Registrarse
+            Regístrate
           </Button>
           <a href="/">Inicia Sesión</a>
         </Box>
 
-        {error && (
-          <Typography color="error" variant="body2" sx={{ mb: 1 }}>
-            {error}
-          </Typography>
-        )}
+        
 
 
           < Box
