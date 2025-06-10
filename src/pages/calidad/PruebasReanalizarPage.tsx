@@ -1,15 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import BotonPersonalizado from "../../components/Button";
 import Navbar from "../../components/navbar/Navbar";
 import {
   Box,
   Container,
   FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   SelectChangeEvent,
   Typography,
   Button,
@@ -26,48 +22,66 @@ import {
   Radio,
 } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
-// IMPORTS DEL CALENDARIO
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-
-const rows = [
-  { id: 1, sexo: "F", hc: "02022562246", edad: 14, volumen: 444, grupo: "A", factor: "+", no: "1" },
-  { id: 2, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo: "A", factor: "+", no: "2" },
-  { id: 3, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo: "A", factor: "+", no: "3" },
-  { id: 4, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo: "A", factor: "+", no: "4" },
-  { id: 5, sexo: "F", hc: "02022562246", edad: 11, volumen: 444, grupo: "A", factor: "+", no: "5" },
-  { id: 6, hc: "02022562246", sexo: "F", edad: 23, volumen: 444, grupo: "A", factor: "+", no: "6" },
-  { id: 7, hc: "02022562246", sexo: "F", edad: 150, volumen: 444, grupo: "A", factor: "+", no: "7" },
-  { id: 8, hc: "02022562246", sexo: "M", edad: 44, volumen: 444, grupo: "A", factor: "+", no: "8" },
-  { id: 9, hc: "02022562246", sexo: "M", edad: 36, volumen: 444, grupo: "A", factor: "+", no: "9" },
-  { id: 10, hc: "02022562246", sexo: "F", edad: 65, volumen: 444, grupo: "A", factor: "+", no: "10" },
-  { id: 11, hc: "02022562246", sexo: "F", edad: 65, volumen: 444, grupo: "A", factor: "+", no: "11" },
-];
+import axios from "axios";
 
 export default function PruebasReanalizar() {
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    navigate("/register", { replace: true }); // Redirige a la vista de Prechequeo
-  };
-
-  const [entidad, setEntidad] = React.useState("");
-  const [selectedDate, setSelectedDate] = React.useState(null);
+  const [rows, setRows] = useState<any[]>([]);
+  const [entidad, setEntidad] = useState("");
+  const [selectedDate, setSelectedDate] = useState(null);
 
   // Estado para el modal
-  const [openModal, setOpenModal] = React.useState(false);
-  const [selectedRowId, setSelectedRowId] = React.useState<number | null>(null);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState<number | string | null>(null);
 
   // Estado para el acordeón (selección)
-  const [motivoDesecho, setMotivoDesecho] = React.useState("");
+  const [motivoDesecho, setMotivoDesecho] = useState("");
+
+  // Cargar todos los datos desde el backend (sin filtro)
+ useEffect(() => {
+  axios.get('http://localhost:3000/registro-donacion/donaciones-diarias')
+    .then(response => {
+      console.log(response.data);
+      setRows(
+        response.data
+          .filter((item: any) => {
+            // Si estado es string
+            if (typeof item.estado === "string") {
+              return item.estado.toLowerCase() === "analizada";
+            }
+            // Si estado es objeto con nombre
+            if (item.estado && item.estado.nombre) {
+              return item.estado.nombre.toLowerCase() === "analizada";
+            }
+            return false;
+          })
+          .map((item: any, idx: number) => ({
+            id: item.id || item._id || idx,
+            no: item.no ?? idx + 1,
+            hc: item.hc ?? "",
+            grupo: item.grupo ?? "",
+            factor: item.factor ?? "",
+            volumen: item.volumen ?? "",
+            hiv: item.hiv ?? "",
+            hbsag: item.hbsag ?? "",
+            hcv: item.hcv ?? "",
+            bdrl: item.bdrl ?? "",
+            contratipaje: item.contratipaje ?? "",
+            du: item.du ?? "",
+          }))
+      );
+    })
+    .catch(error => {
+      console.error('Error fetching data:', error);
+    });
+}, []);
 
   const handleChangeE = (event: SelectChangeEvent) => {
     setEntidad(event.target.value as string);
   };
 
-  const handleOpenModal = (id: number) => {
+  const handleOpenModal = (id: number | string) => {
     setSelectedRowId(id);
     setOpenModal(true);
   };
@@ -78,37 +92,125 @@ export default function PruebasReanalizar() {
     setMotivoDesecho("");
   };
 
-  const handleConfirmDesechar = () => {
-    // Aquí puedes poner la lógica para eliminar/desechar la fila
-    alert(`Desechada la fila con ID: ${selectedRowId} por motivo: ${motivoDesecho}`);
-    setOpenModal(false);
-    setSelectedRowId(null);
-    setMotivoDesecho("");
-  };
+  // Desechar: actualiza el estado en la base de datos
+ const handleConfirmDesechar = async () => {
+  if (!selectedRowId) return;
+  try {
+    await axios.put(`http://localhost:3000/registro-donacion/updatee/${selectedRowId}`, {
+      motivo_desecho: motivoDesecho,
+      estado: "desechada",
+    });
+    // Recarga los datos y filtra solo los de estado "analizada"
+    const response = await axios.get('http://localhost:3000/registro-donacion/donaciones-diarias');
+    setRows(
+      response.data
+        .filter((item: any) => {
+          if (typeof item.estado === "string") {
+            return item.estado.toLowerCase() === "analizada";
+          }
+          if (item.estado && item.estado.nombre) {
+            return item.estado.nombre.toLowerCase() === "analizada";
+          }
+          return false;
+        })
+        .map((item: any, idx: number) => ({
+          id: item.id || item._id || idx,
+          no: item.no ?? idx + 1,
+          hc: item.hc ?? "",
+          grupo: item.grupo ?? "",
+          factor: item.factor ?? "",
+          volumen: item.volumen ?? "",
+          hiv: item.hiv ?? "",
+          hbsag: item.hbsag ?? "",
+          hcv: item.hcv ?? "",
+          bdrl: item.bdrl ?? "",
+          contratipaje: item.contratipaje ?? "",
+          du: item.du ?? "",
+        }))
+    );
+  } catch (error) {
+    alert("Error al desechar la muestra.");
+  }
+  setOpenModal(false);
+  setSelectedRowId(null);
+  setMotivoDesecho("");
+};
 
-  // Columnas con el botón que abre el modal
-  const columns: GridColDef<(typeof rows)[number]>[] = [
-    { field: "no", headerName: "NO", width: 90 },
-    { field: "hc", headerName: "HC-donación", width: 150, editable: false },
-    { field: "sexo", headerName: "Sexo", width: 70, editable: false },
-    { field: "edad", headerName: "Edad", type: "number", width: 70, editable: false },
-    { field: "volumen", headerName: "Volumen", type: "number", width: 90, editable: false },
-    { field: "grupo", headerName: "Grupo", width: 70, editable: false },
-    { field: "factor", headerName: "Factor", width: 70, editable: false },
+  // Enviar: actualiza el estado en la base de datos
+ const handleEnviarIndividual = async (id: string | number) => {
+  try {
+    await axios.put(`http://localhost:3000/registro-donacion/updatee/${id}`, {
+      estado: "aceptada",
+    });
+    // Recarga los datos y filtra solo los de estado "analizada"
+    const response = await axios.get('http://localhost:3000/registro-donacion/donaciones-diarias');
+    setRows(
+      response.data
+        .filter((item: any) => {
+          if (typeof item.estado === "string") {
+            return item.estado.toLowerCase() === "analizada";
+          }
+          if (item.estado && item.estado.nombre) {
+            return item.estado.nombre.toLowerCase() === "analizada";
+          }
+          return false;
+        })
+        .map((item: any, idx: number) => ({
+          id: item.id || item._id || idx,
+          no: item.no ?? idx + 1,
+          hc: item.hc ?? "",
+          grupo: item.grupo ?? "",
+          factor: item.factor ?? "",
+          volumen: item.volumen ?? "",
+          hiv: item.hiv ?? "",
+          hbsag: item.hbsag ?? "",
+          hcv: item.hcv ?? "",
+          bdrl: item.bdrl ?? "",
+          contratipaje: item.contratipaje ?? "",
+          du: item.du ?? "",
+        }))
+    );
+  } catch (error) {
+    alert("Error al enviar la muestra.");
+  }
+};
+
+  // Columnas con los botones y solo los datos solicitados
+  const columns: GridColDef<any>[] = [
+    { field: "no", headerName: "NO", width: 70 },
+    { field: "hc", headerName: "Historia Clínica", width: 130 },
+    { field: "grupo", headerName: "Grupo", width: 70 },
+    { field: "factor", headerName: "Factor", width: 90 },
+    { field: "volumen", headerName: "Volumen", width: 90 },
+    { field: "hiv", headerName: "HIV", width: 90 },
+    { field: "hbsag", headerName: "HBsAg", width: 90 },
+    { field: "hcv", headerName: "HCV", width: 90 },
+    { field: "bdrl", headerName: "BDRL", width: 90 },
+    { field: "contratipaje", headerName: "Contratipaje", width: 120 },
+    { field: "du", headerName: "DU", width: 90 },
     {
       field: "accion",
       headerName: "",
-      width: 150,
+      width: 220,
       editable: false,
       renderCell: (params) => (
-        <Button
-                onClick={() => handleOpenModal(params.id as number)}
-                color="error"
-                variant="contained"
-                
-              >
-                Desechar
-              </Button>
+        <>
+          <Button
+            onClick={() => handleOpenModal(params.id)}
+            color="error"
+            variant="contained"
+            sx={{ mr: 1 }}
+          >
+            Desechar
+          </Button>
+          <Button
+            onClick={() => handleEnviarIndividual(params.id)}
+            color="success"
+            variant="contained"
+          >
+            Enviar
+          </Button>
+        </>
       ),
     },
   ];
@@ -117,33 +219,24 @@ export default function PruebasReanalizar() {
     <>
       <Navbar />
       <Typography
-          variant="h4"
-          component="h5"
-          mt={8}
-          sx={{ fontSize: { xs: "2rem", md: "3rem" },backgroundColor:"primary.dark", textAlign: "center", fontFamily:"sans-serif", color:"white" }}
-        >
-          Pruebas a Reanalizar
-        </Typography>
-      <Container>
-        
-
-        <Box sx={{ marginTop: "20px", width: "90%", marginBlockEnd: 1, marginLeft: 7 }}>
-          {/* Entidad a la izquierda, calendario a la derecha */}
-          <Box
-            sx={{
-              display: "flex",
-              mb: 2,
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            
-            
-          </Box>
-
+        variant="h4"
+        component="h5"
+        sx={{
+          fontSize: { xs: "2rem", md: "3rem" },
+          backgroundColor: "primary.dark",
+          color: "white",
+          textAlign: "center",
+          marginBlock: 5,
+          mt: 8,
+        }}
+      >
+        Pruebas a Reanalizar
+      </Typography>
+      <Container maxWidth={false}>
+        <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
           <DataGrid
             sx={{
-              height: 400,
+              height: 450,
               "& .MuiDataGrid-columnHeaderTitle": {
                 fontFamily: '"Open Sans"',
                 fontWeight: 600,
@@ -163,72 +256,60 @@ export default function PruebasReanalizar() {
               },
             }}
             pageSizeOptions={[10]}
-            checkboxSelection
-            disableRowSelectionOnClick
           />
         </Box>
       </Container>
 
       {/* Modal de confirmación con Accordion */}
       <Dialog
-        open={openModal}
-        onClose={handleCloseModal}
+  open={openModal}
+  onClose={handleCloseModal}
+>
+  <DialogTitle>Desechar muestra</DialogTitle>
+  <DialogContent>
+    <DialogContentText>
+      ¿Estás seguro que deseas desechar esta muestra?
+    </DialogContentText>
+    <Accordion sx={{ mt: 2 }}>
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        aria-controls="panel1a-content"
+        id="panel1a-header"
       >
-        <DialogTitle>Confirmar acción</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            ¿Estás seguro que deseas desechar la fila con ID: {selectedRowId}?
-          </DialogContentText>
-          <Accordion sx={{ mt: 2 }}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls="panel1a-content"
-              id="panel1a-header"
-            >
-              <Typography>Selecciona el motivo de desecho de la muestra</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <FormControl component="fieldset">
-                <RadioGroup
-                  value={motivoDesecho}
-                  onChange={e => setMotivoDesecho(e.target.value)}
-                >
-                  <FormControlLabel value="Lipemia" control={<Radio />} label="Lipemia" />
-                  <FormControlLabel value="Hemolisis" control={<Radio />} label="Hemolisis" />
-                  <FormControlLabel value="Return" control={<Radio />} label="Return" />
-                  <FormControlLabel value="Bajo Volumen" control={<Radio />} label="Bajo Volumen"/>
-                  <FormControlLabel value="Sobre Volumen" control={<Radio />} label="Sobre Volumen" />
-                  <FormControlLabel value="Lipotimia" control={<Radio />} label="Lipotimia" />
-                  <FormControlLabel value="Otros" control={<Radio />} label="Otro" />
-                </RadioGroup>
-              </FormControl>
-            </AccordionDetails>
-          </Accordion>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal}>Cancelar</Button>
-          <Button
-            onClick={handleConfirmDesechar}
-            color="error"
-            variant="contained"
-            disabled={!motivoDesecho}
+        <Typography>Selecciona el motivo de desecho de la muestra</Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <FormControl component="fieldset">
+          <RadioGroup
+            value={motivoDesecho}
+            onChange={e => setMotivoDesecho(e.target.value)}
           >
-            Desechar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <BotonPersonalizado onClick={handleLogin} sx={{ width: 225, marginRight: 2 }}>
-          ENVIAR
-        </BotonPersonalizado>
-      </Box>
+            <FormControlLabel value="Lipemia" control={<Radio />} label="Lipemia" />
+            <FormControlLabel value="Hemolisis" control={<Radio />} label="Hemolisis" />
+            <FormControlLabel value="Return" control={<Radio />} label="Return" />
+            <FormControlLabel value="Bajo Volumen" control={<Radio />} label="Bajo Volumen" />
+            <FormControlLabel value="Sobre Volumen" control={<Radio />} label="Sobre Volumen" />
+            <FormControlLabel value="Lipotimia" control={<Radio />} label="Lipotimia" />
+            <FormControlLabel value="Otros" control={<Radio />} label="Otro" />
+          </RadioGroup>
+        </FormControl>
+      </AccordionDetails>
+    </Accordion>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseModal} color="inherit">
+      Cancelar
+    </Button>
+    <Button
+      onClick={handleConfirmDesechar}
+      color="error"
+      variant="contained"
+      disabled={!motivoDesecho}
+    >
+      Desechar
+    </Button>
+  </DialogActions>
+</Dialog>
     </>
   );
 }

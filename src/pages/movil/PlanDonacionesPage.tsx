@@ -300,8 +300,7 @@ export default function PlanDonaciones() {
               },
             }}
             pageSizeOptions={[10]}
-            checkboxSelection
-            disableRowSelectionOnClick
+           
           />
         </Box>
       </Container>
