@@ -100,7 +100,7 @@ export default function App() {
         </ProtectedRoute>
       } />
 
-      <Route path="/historiadonante" element={<HistoriaDonante />} />
+      <Route path="/historiadonante/:id" element={<HistoriaDonante />} />
 
       {/* Transfusiones */}
       <Route path="/pageone" element={<PageOne />} />
