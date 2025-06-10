@@ -35,11 +35,7 @@ import ComponentesObtenidos from "./pages/produccion/ComponentesObtenidos";
 import EntradaProduccion from "./pages/produccion/EntradaProducción";
 import PlasmaIndustria from "./pages/produccion/PlasmaIndustria";
 import ProtectedRoute from "./components/ProtectedRoute";
-<<<<<<< HEAD
-import HojaCargoDonaciones from "./pages/donaciones/HojaCargoDonaciones";
-=======
 import UsuarioActivo from "./pages/auth/Usuario";
->>>>>>> 0e7be355fb0bc8e7f0ac7a50feffc8e9d05b80dc
 
 export default function App() {
   return (
@@ -48,8 +44,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/usuario" element={<UsuarioActivo />} />
 
-<<<<<<< HEAD
-      {/*Prechequeo y Seleccion*/}
+      {/* Prechequeo y Seleccion */}
       <Route
         path="/prechequeo"
         element={
@@ -75,7 +70,7 @@ export default function App() {
         }
       />
 
-      {/*Inscripcion*/}
+      {/* Inscripcion */}
       <Route
         path="/inscripcion/:ci"
         element={
@@ -84,7 +79,6 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/inscripcion"
         element={
@@ -110,7 +104,7 @@ export default function App() {
         }
       />
 
-      {/*Donacion*/}
+      {/* Donacion */}
       <Route
         path="/lista-espera"
         element={
@@ -143,63 +137,6 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-=======
-      {/* Prechequeo y Seleccion */}
-      <Route path="/prechequeo" element={
-        <ProtectedRoute allowedRoles={['tecnico_prechequeo']}>
-          <Prechequeo />
-        </ProtectedRoute>
-      } />
-      <Route path="/resultadosprechequeo" element={
-        <ProtectedRoute allowedRoles={['medico']}>
-          <ResultadosPrechequeo />
-        </ProtectedRoute>
-      } />
-      <Route path="/registronoaptos" element={
-        <ProtectedRoute allowedRoles={['medico']}>
-          <DonantesNoAptos />
-        </ProtectedRoute>
-      } />
-
-      {/* Inscripcion */}
-      <Route path="/inscripcion" element={
-        <ProtectedRoute allowedRoles={['tecnico_inscripcion']}>
-          <FormularioInscripcion />
-        </ProtectedRoute>
-      } />
-      <Route path="/citados" element={
-        <ProtectedRoute allowedRoles={['tecnico_inscripcion']}>
-          <Citados />
-        </ProtectedRoute>
-      } />
-      <Route path="/hoja-cargo" element={
-        <ProtectedRoute allowedRoles={['tecnico_inscripcion']}>
-          <HojaCargo />
-        </ProtectedRoute>
-      } />
-
-      {/* Donacion */}
-      <Route path="/lista-espera" element={
-        <ProtectedRoute allowedRoles={['tecnico_donacion']}>
-          <ListaEspera />
-        </ProtectedRoute>
-      } />
-      <Route path="/donaciones-sangre" element={
-        <ProtectedRoute allowedRoles={['tecnico_donacion']}>
-          <DonacionesSangre />
-        </ProtectedRoute>
-      } />
-      <Route path="/donaciones-plasma" element={
-        <ProtectedRoute allowedRoles={['tecnico_donacion']}>
-          <DonacionesPlasma />
-        </ProtectedRoute>
-      } />
-      <Route path="/hoja-cargo-donaciones" element={
-        <ProtectedRoute allowedRoles={['tecnico_donacion']}>
-          <HojaCargoDonaciones />
-        </ProtectedRoute>
-      } />
->>>>>>> 0e7be355fb0bc8e7f0ac7a50feffc8e9d05b80dc
 
       <Route path="/historiadonante/:id" element={<HistoriaDonante />} />
 
@@ -207,14 +144,11 @@ export default function App() {
       <Route path="/pageone" element={<PageOne />} />
       <Route path="/transfusionpage" element={<TransfusionPage />} />
 
-<<<<<<< HEAD
-      {/*Centro Movil*/}
+      {/* Centro Movil */}
       <Route
         path="/formularioplan"
         element={
-          <ProtectedRoute
-            allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}
-          >
+          <ProtectedRoute allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}>
             <Plan />
           </ProtectedRoute>
         }
@@ -222,9 +156,7 @@ export default function App() {
       <Route
         path="/planDonaciones"
         element={
-          <ProtectedRoute
-            allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}
-          >
+          <ProtectedRoute allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}>
             <PlanDonaciones />
           </ProtectedRoute>
         }
@@ -232,9 +164,7 @@ export default function App() {
       <Route
         path="/resumenDonaciones"
         element={
-          <ProtectedRoute
-            allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}
-          >
+          <ProtectedRoute allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}>
             <ResumenPlanDonaciones />
           </ProtectedRoute>
         }
@@ -242,15 +172,13 @@ export default function App() {
       <Route
         path="/pedidos"
         element={
-          <ProtectedRoute
-            allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}
-          >
+          <ProtectedRoute allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}>
             <PedidosPage />
           </ProtectedRoute>
         }
       />
 
-      {/*Calidad*/}
+      {/* Calidad */}
       <Route
         path="/calidad"
         element={
@@ -292,7 +220,7 @@ export default function App() {
         }
       />
 
-      {/*Produccion*/}
+      {/* Produccion */}
       <Route
         path="/bajas"
         element={
@@ -326,7 +254,7 @@ export default function App() {
         }
       />
 
-      {/*Laboratorio*/}
+      {/* Laboratorio */}
       <Route
         path="/suma_lab"
         element={
@@ -366,7 +294,7 @@ export default function App() {
         }
       />
 
-      {/*Historia Clinica*/}
+      {/* Historia Clinica */}
       <Route
         path="/listadop"
         element={
@@ -399,122 +327,6 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-=======
-      {/* Centro Movil */}
-      <Route path="/formularioplan" element={
-        <ProtectedRoute allowedRoles={['jefe_extraccion_movil', 'tecnico_movil']}>
-          <Plan />
-        </ProtectedRoute>
-      } />
-      <Route path="/planDonaciones" element={
-        <ProtectedRoute allowedRoles={['jefe_extraccion_movil', 'tecnico_movil']}>
-          <PlanDonaciones />
-        </ProtectedRoute>
-      } />
-      <Route path="/resumenDonaciones" element={
-        <ProtectedRoute allowedRoles={['jefe_extraccion_movil', 'tecnico_movil']}>
-          <ResumenPlanDonaciones />
-        </ProtectedRoute>
-      } />
-      <Route path="/pedidos" element={
-        <ProtectedRoute allowedRoles={['jefe_extraccion_movil', 'tecnico_movil']}>
-          <PedidosPage />
-        </ProtectedRoute>
-      } />
-
-      {/* Calidad */}
-      <Route path="/calidad" element={
-        <ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
-          <RecepciondiariasEntidad />
-        </ProtectedRoute>
-      } />
-      <Route path="/vizualizar" element={
-        <ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
-          <VizualizarDonaciones />
-        </ProtectedRoute>
-      } />
-      <Route path="/reanalizar" element={
-        <ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
-          <PruebasReanalizar />
-        </ProtectedRoute>
-      } />
-      <Route path="/liberacion" element={
-        <ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
-          <LiberacionComponentes />
-        </ProtectedRoute>
-      } />
-      <Route path="/desechos" element={
-        <ProtectedRoute allowedRoles={['tecnico_aseguramiento_calidad']}>
-          <Desechos />
-        </ProtectedRoute>
-      } />
-
-      {/* Produccion */}
-      <Route path="/bajas" element={
-        <ProtectedRoute allowedRoles={['tecnico_produccion']}>
-          <Bajas />
-        </ProtectedRoute>
-      } />
-      <Route path="/plasma_industria" element={
-        <ProtectedRoute allowedRoles={['tecnico_produccion']}>
-          <PlasmaIndustria />
-        </ProtectedRoute>
-      } />
-      <Route path="/componentes_obtenidos" element={
-        <ProtectedRoute allowedRoles={['tecnico_produccion']}>
-          <ComponentesObtenidos />
-        </ProtectedRoute>
-      } />
-      <Route path="/entrada_produccion" element={
-        <ProtectedRoute allowedRoles={['tecnico_produccion']}>
-          <EntradaProduccion />
-        </ProtectedRoute>
-      } />
-
-      {/* Laboratorio */}
-      <Route path="/suma_lab" element={
-        <ProtectedRoute allowedRoles={['tecnico_laboratorio_suma']}>
-          <LabSuma />
-        </ProtectedRoute>
-      } />
-      <Route path="/inmuno_lab" element={
-        <ProtectedRoute allowedRoles={['tecnico_laboratorio_inmuno']}>
-          <LabInmuno />
-        </ProtectedRoute>
-      } />
-      <Route path="/calidad_lab" element={
-        <ProtectedRoute allowedRoles={['tecnico_laboratorio_calidad']}>
-          <LabCCalidad />
-        </ProtectedRoute>
-      } />
-      <Route path="/principal_lab" element={
-        <ProtectedRoute allowedRoles={['tecnico_laboratorio_suma', 'tecnico_laboratorio_inmuno', 'tecnico_laboratorio_calidad']}>
-          <PrincipalLab />
-        </ProtectedRoute>
-      } />
-
-      {/* Historia Clinica */}
-      <Route path="/listadop" element={
-        <ProtectedRoute allowedRoles={['medico_consultorio']}>
-          <ListadoPacientes />
-        </ProtectedRoute>
-      } />
-      <Route path="/visualizarhc" element={
-        <ProtectedRoute allowedRoles={['medico_consultorio']}>
-          <VisualizarHC />
-        </ProtectedRoute>
-      } />
-      <Route path="/crearhc" element={
-        <ProtectedRoute allowedRoles={['medico_consultorio']}>
-          <NuevaHistoriaClinica />
-        </ProtectedRoute>
-      } />
-      <Route path="/visualizarhc/:id" element={
-        <ProtectedRoute allowedRoles={['medico_consultorio']}>
-          <VisualizarHC />
-        </ProtectedRoute>
-      } />
->>>>>>> 0e7be355fb0bc8e7f0ac7a50feffc8e9d05b80dc
     </Routes>
   );
 }
