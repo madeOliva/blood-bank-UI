@@ -3,54 +3,57 @@ import BotonPersonalizado from "../../components/Button";
 import Box from "@mui/material/Box";
 import Navbar from "../../components/navbar/Navbar";
 import { useNavigate } from "react-router-dom";
-import {  useState } from "react";
+import {  useEffect, useState } from "react";
 import { Tooltip,Typography } from "@mui/material";
+import axios from "axios";
+
+const API_URL = "http://localhost:3000/donacion"
 
 
 // Datos de Ejemplo
 const initialAnalizar =[
     {
         id:1,
-        no_consecutivo:"1",
+        numero_consecutivo:"1",
         hist_clinic:"HC-001",
-        hiv:"Negativo",
-        hepatitisB:"Negativo",
-        hepatitisC:"Negativo",
-        serologia:"Positivo",
-        grupo:"A",
+        resultado_VIH:true,
+        resultado_hepatitisB:false,
+        resultado_hepatitisC:true,
+        resultado_serologia:false,
+        resultado_tipage:"A",
         factor:"+",
-        contratipaje:"B",
-        du:"",
+        resultado_contratipaje:"B",
+        resultado_DU:"",
         fecha:"2023-01-15",
        
     },
      {
         id:2,
-        no_consecutivo:"2",
+        numero_consecutivo:"2",
         hist_clinic:"HC-002",
-        hiv:"Negativo",
-        hepatitisB:"Negativo",
-        hepatitisC:"Negativo",
-        serologia:"Positivo",
-        grupo:"A",
+        resultado_VIH:true,
+        resultado_hepatitisB:false,
+        resultado_hepatitisC:true,
+        resultado_serologia:false,
+        resultado_tipage:"A",
         factor:"+",
-        contratipaje:"B",
-        du:"",
+        resultado_contratipaje:"B",
+        resultado_DU:"",
         fecha:"2023-01-15",
        
     },
      {
         id:3,
-        no_consecutivo:"3",
+        numero_consecutivo:"3",
         hist_clinic:"HC-003",
-        hiv:"Negativo",
-        hepatitisB:"Negativo",
-        hepatitisC:"Negativo",
-        serologia:"Positivo",
-        grupo:"A",
+        resultado_VIH:false,
+        resultado_hepatitisB:true,
+        resultado_hepatitisC:false,
+        resultado_serologia:true,
+        resultado_tipage:"A",
         factor:"+",
-        contratipaje:"B",
-        du:"",
+        resultado_contratipaje:"B",
+        resultado_DU:false,
         fecha:"2023-01-15",
        
     }
@@ -58,83 +61,83 @@ const initialAnalizar =[
 const initialReanalizar =[
     {
         id:1,
-        no_consecutivo:"1",
+        numero_consecutivo:"1",
         hist_clinic:"HC-001",
-        hivR:"",
-        hivRR:"",
-        hivRRB:"",
-        hepatitisBR:"",
-        hepatitisB_RR:"",
-        hepatitisB_RRB:"",
-        hepatitisC_R:"Negativo",
-        hepatitisC_RR:"",
-        hepatitisC_RRB:"",
-        serologiaR:"Positivo",
-        serologiaRR:"",
-        serologiaRRB:"",
-        grupo:"A",
+        hivR:true,
+        hivRR:true,
+        hivRRB:true,
+        hepatitisBR:false,
+        hepatitisB_RR:false,
+        hepatitisB_RRB:false,
+        hepatitisC_R:true,
+        hepatitisC_RR:false,
+        hepatitisC_RRB:true,
+        serologiaR:false,
+        serologiaRR:false,
+        serologiaRRB:false,
+        resultado_tipage:"A",
         factor:"+",
-        contratipaje:"B",
-        duR:"",
-        duRR:"",
-        duRRB:"",
+        resultado_contratipaje:"B",
+        duR:true,
+        duRR:false,
+        duRRB:false,
         fecha:"2023-01-15",
        
     },
-     {
-        id:2,
-        no_consecutivo:"2",
-        hist_clinic:"HC-002",
-        hivR:"",
-        hivRR:"",
-        hivRRB:"",
-        hepatitisBR:"",
-        hepatitisB_RR:"",
-        hepatitisB_RRB:"",
-        hepatitisC_R:"Negativo",
-        hepatitisC_RR:"",
-        hepatitisC_RRB:"",
-        serologiaR:"Positivo",
-        serologiaRR:"",
-        serologiaRRB:"",
-        grupo:"A",
-        factor:"+",
-        contratipaje:"B",
-        duR:"",
-        duRR:"",
-        duRRB:"",
-        fecha:"2023-01-15",
-       
-    },
-     {
-        id:3,
-        no_consecutivo:"3",
-        hist_clinic:"HC-003",
-        hivR:"",
-        hivRR:"",
-        hivRRB:"",
-        hepatitisBR:"",
-        hepatitisB_RR:"",
-        hepatitisB_RRB:"",
-        hepatitisC_R:"Negativo",
-        hepatitisC_RR:"",
-        hepatitisC_RRB:"",
-        serologiaR:"Positivo",
-        serologiaRR:"",
-        serologiaRRB:"",
-        grupo:"A",
-        factor:"+",
-        contratipaje:"B",
-        duR:"",
-        duRR:"",
-        duRRB:"",
-        fecha:"2023-01-15",
-       
-    }
+    {
+      id:2,
+      numero_consecutivo:"2",
+      hist_clinic:"HC-002",
+      hivR:true,
+      hivRR:true,
+      hivRRB:true,
+      hepatitisBR:false,
+      hepatitisB_RR:false,
+      hepatitisB_RRB:false,
+      hepatitisC_R:true,
+      hepatitisC_RR:false,
+      hepatitisC_RRB:true,
+      serologiaR:false,
+      serologiaRR:false,
+      serologiaRRB:false,
+      resultado_tipage:"A",
+      factor:"+",
+      resultado_contratipaje:"B",
+      duR:true,
+      duRR:false,
+      duRRB:false,
+      fecha:"2023-01-15",
+     
+  },
+  {
+    id:3,
+    numero_consecutivo:"3",
+    hist_clinic:"HC-003",
+    hivR:true,
+    hivRR:true,
+    hivRRB:true,
+    hepatitisBR:false,
+    hepatitisB_RR:false,
+    hepatitisB_RRB:false,
+    hepatitisC_R:true,
+    hepatitisC_RR:false,
+    hepatitisC_RRB:true,
+    serologiaR:false,
+    serologiaRR:false,
+    serologiaRRB:false,
+    resultado_tipage:"A",
+    factor:"+",
+    resultado_contratipaje:"B",
+    duR:true,
+    duRR:false,
+    duRRB:false,
+    fecha:"2023-01-15",
+   
+},
 ]
 const analizarColumns: GridColDef[] =[
     {
-        field:"no_consecutivo",
+        field:"numero_consecutivo",
         headerName:"No Consecutivo",
         width:120,
     },
@@ -145,16 +148,18 @@ const analizarColumns: GridColDef[] =[
         editable:false,
     },
     {
-        field: "hiv",
+        field: "resultado_VIH",
         headerName: "HIV",
         width: 180,
         editable: true,
         type: "singleSelect",
         valueOptions: ["Positivo", "Negativo"],
+       
+        },
         
-      },
+      
       {
-        field: "hepatitisB",
+        field: "resultado_hepatitisB",
         headerName: "HBsAg",
         type: "singleSelect",
         width: 120,
@@ -163,7 +168,7 @@ const analizarColumns: GridColDef[] =[
       },
      
       {
-        field: "hepatitisC",
+        field: "resultado_hepatitisC",
         headerName: "HCV ",
         type: "singleSelect",
         width: 140,
@@ -171,7 +176,7 @@ const analizarColumns: GridColDef[] =[
         valueOptions: ["Positivo", "Negativo"],
       },
       {
-        field: "serologia",
+        field: "resultado_serologia",
         headerName: "VDRL",
         type: "singleSelect",
         width: 140,
@@ -179,7 +184,7 @@ const analizarColumns: GridColDef[] =[
         valueOptions: ["Positivo", "Negativo"],
       },
       {
-        field: "grupo",
+        field: "resultado_tipage",
         headerName: "Grupo Sanguíneo",
         width: 180,
         editable: true,
@@ -196,7 +201,7 @@ const analizarColumns: GridColDef[] =[
         valueOptions: ["+", "-"],
       },
       {
-        field: "contratipaje",
+        field: "resultado_contratipaje",
         headerName: "Contratipaje",
         type: "singleSelect",
         width: 140,
@@ -204,7 +209,7 @@ const analizarColumns: GridColDef[] =[
         valueOptions: ["A", "B","AB","O"],
       },
       {
-        field: "du",
+        field: "resultado_DU",
         headerName: "DU",
         type: "singleSelect",
         width: 140,
@@ -392,30 +397,82 @@ export default function PrincipalLab(){
     const [selectedRow,setSelectedRow] = useState(null);
     const navigate = useNavigate();
 
-    const handleRowClick =(params: GridRowParams)=>{
+    const fetchAnalizarData = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/registro_donacion');
+        const data = response.data;
+    
+        const analizarData = data.filter((item: any) => item.estado === "Analizadas");
+        const reanalizarData = data.filter((item: any) => item.estado === "Reanalizadas");
+    
+        setAnalizar(analizarData);
+        setReanalizar(reanalizarData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    useEffect(() => {
+      fetchAnalizarData();
+    }, []);
+
+    const fetchReanalizarData = async () => {
+      try {
+        const response = await axios.get(API_URL);
+        setReanalizar(response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+  
+  const handleRowClick =(params: GridRowParams)=>{
         setSelectedRow(params.row);
     };
     
-    const handleAnalizarRowUpdate = (newRow: any) => {
-        const updatedRows = analizar.map((row) => 
+    
+    const handleAnalizarRowUpdate = async (newRow: any) => {
+      try {
+        await axios.put(`${API_URL}/${newRow.id}`, newRow);
+        const updatedRows = analizar.map((row) =>
           row.id === newRow.id ? newRow : row
         );
         setAnalizar(updatedRows);
         return newRow;
-      };
-      const handleReanalizarRowUpdate = (newRow: any) => {
-        const updatedRows = REanalizar.map((row) => 
+      } catch (error) {
+        console.error("Error updating row:", error);
+        return newRow;
+      }
+    };   
+      
+    const handleReanalizarRowUpdate = async (newRow: any) => {
+      try {
+        await axios.put(`${API_URL}/${newRow.id}`, newRow);
+        const updatedRows = REanalizar.map((row) =>
           row.id === newRow.id ? newRow : row
         );
         setReanalizar(updatedRows);
         return newRow;
-      };
+      } catch (error) {
+        console.error("Error updating row:", error);
+        return newRow;
+      }
+    };
 
-      const handleSave = () => {
-        // Aquí iría la lógica para guardar en la base de datos
+    const handleSave = async () => {
+      try {
+        await axios.post(API_URL, { analizar, REanalizar });
         console.log("Datos guardados:", analizar);
-        navigate("/componentes_obtenidos");
-      };
+        
+      } catch (error) {
+        console.error("Error saving data:", error);
+      }
+    };
+
+    useEffect(() => {
+      fetchAnalizarData();
+    }, []);
+    useEffect(() => {
+      fetchReanalizarData();
+    }, []);
 
       return (
           <>
@@ -453,6 +510,7 @@ export default function PrincipalLab(){
                   
                 />
               </Box>
+
                 {/*Tabla Reanalizar*/ }
                 <Typography variant="h5" gutterBottom sx={{color:"primary.main",mt:2,mb:2}}>
                 Muestras Reanalizadas
@@ -485,12 +543,7 @@ export default function PrincipalLab(){
                   Guardar Cambios
                 </BotonPersonalizado>
                 
-               {/*<BotonPersonalizado 
-                  onClick={() => navigate("/componentes_obtenidos")} 
-                  sx={{ width: 200 }}
-                >
-                  Continuar a Componentes
-                </BotonPersonalizado>*/}
+               
               </Box>
             </Box>
           </>
