@@ -36,6 +36,7 @@ import EntradaProduccion from "./pages/produccion/EntradaProducción";
 import PlasmaIndustria from "./pages/produccion/PlasmaIndustria";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UsuarioActivo from "./pages/auth/Usuario";
+import DesechosPro from "./pages/calidad/ConfirmacionDesechoProPage";
 
 export default function App() {
   return (
@@ -44,7 +45,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/usuario" element={<UsuarioActivo />} />
 
-      {/*Prechequeo y Seleccion*/}
+      {/* Prechequeo y Seleccion */}
       <Route
         path="/prechequeo"
         element={
@@ -70,7 +71,7 @@ export default function App() {
         }
       />
 
-      {/*Inscripcion*/}
+      {/* Inscripcion */}
       <Route
         path="/inscripcion/:id"
         element={
@@ -79,7 +80,6 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/inscripcion"
         element={
@@ -105,7 +105,7 @@ export default function App() {
         }
       />
 
-      {/*Donacion*/}
+      {/* Donacion */}
       <Route
         path="/lista-espera"
         element={
@@ -139,19 +139,17 @@ export default function App() {
         }
       />
 
-      <Route path="/historiadonante" element={<HistoriaDonante />} />
+      <Route path="/historiadonante/:id" element={<HistoriaDonante />} />
 
       {/* Transfusiones */}
       <Route path="/pageone" element={<PageOne />} />
       <Route path="/transfusionpage" element={<TransfusionPage />} />
 
-      {/*Centro Movil*/}
+      {/* Centro Movil */}
       <Route
         path="/formularioplan"
         element={
-          <ProtectedRoute
-            allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}
-          >
+          <ProtectedRoute allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}>
             <Plan />
           </ProtectedRoute>
         }
@@ -159,9 +157,7 @@ export default function App() {
       <Route
         path="/planDonaciones"
         element={
-          <ProtectedRoute
-            allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}
-          >
+          <ProtectedRoute allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}>
             <PlanDonaciones />
           </ProtectedRoute>
         }
@@ -169,9 +165,7 @@ export default function App() {
       <Route
         path="/resumenDonaciones"
         element={
-          <ProtectedRoute
-            allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}
-          >
+          <ProtectedRoute allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}>
             <ResumenPlanDonaciones />
           </ProtectedRoute>
         }
@@ -179,15 +173,13 @@ export default function App() {
       <Route
         path="/pedidos"
         element={
-          <ProtectedRoute
-            allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}
-          >
+          <ProtectedRoute allowedRoles={["jefe_extraccion_movil", "tecnico_movil"]}>
             <PedidosPage />
           </ProtectedRoute>
         }
       />
 
-      {/*Calidad*/}
+      {/* Calidad */}
       <Route
         path="/calidad"
         element={
@@ -228,8 +220,16 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/desechospro"
+        element={
+          <ProtectedRoute allowedRoles={["tecnico_aseguramiento_calidad"]}>
+            <DesechosPro />
+          </ProtectedRoute>
+        }
+      />
 
-      {/*Produccion*/}
+      {/* Produccion */}
       <Route
         path="/bajas"
         element={
@@ -263,7 +263,7 @@ export default function App() {
         }
       />
 
-      {/*Laboratorio*/}
+      {/* Laboratorio */}
       <Route
         path="/suma_lab"
         element={
@@ -303,7 +303,7 @@ export default function App() {
         }
       />
 
-      {/*Historia Clinica*/}
+      {/* Historia Clinica */}
       <Route
         path="/listadop"
         element={

@@ -12,15 +12,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import DownloadIcon from "@mui/icons-material/Download";
 import axios from "axios";
 import dayjs from "dayjs";
-
-
-
 
 export type PlanDonacion = {
   id: number;
@@ -53,26 +50,42 @@ export default function PlanDonaciones() {
   const [openModifyConfirm, setOpenModifyConfirm] = useState<boolean>(false);
   const [rowToModify, setRowToModify] = useState<PlanDonacion | null>(null);
 
-  // Email modal states
-  const [openEmailModal, setOpenEmailModal] = useState(false);
-  const [email, setEmail] = useState("");
-  const [sending, setSending] = useState(false);
+  // Función para descargar el plan como PDF
+  const handleDescargarPDF = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/descargar-plan",
+        { planes: rows },
+        { responseType: "blob" }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "plan.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setOpenError(true);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await axios.get(API_URL);
-    const data = res.data.map((item: any) => ({
-  id: item._id || item.id,
-  fechaHora: item.fecha || item.fechaHora,
-  areaSalud: item.areasalud || item.areaSalud,
-  consejoPopular: item.consejopopular || item.consejoPopular,
-  consultoriosAfectados: item.consultoriosafectados || item.consultoriosAfectados, // <-- aquí
-  lugarDonacion: item.lugarDonacion,
-  compromiso: item.compromiso,
-  responsableSalud: item.responsableDeSalud || item.responsableSalud,
-  cdr: item.cdr,
-}));
+        const data = res.data.map((item: any) => ({
+          id: item._id || item.id,
+          fechaHora: item.fecha || item.fechaHora,
+          areaSalud: item.areasalud || item.areaSalud,
+          consejoPopular: item.consejopopular || item.consejoPopular,
+          consultoriosAfectados: item.consultoriosafectados || item.consultoriosAfectados,
+          lugarDonacion: item.lugarDonacion,
+          compromiso: item.compromiso,
+          responsableSalud: item.responsableDeSalud || item.responsableSalud,
+          cdr: item.cdr,
+        }));
         setRows(data);
       } catch (err) {
         setRows([]);
@@ -103,14 +116,6 @@ export default function PlanDonaciones() {
     return rows;
   }, [rows]);
 
-  const handleEnviarClick = () => {
-    if (rows.length === 0) {
-      setOpenError(true);
-    } else {
-      setOpenEmailModal(true);
-    }
-  };
-
   const handleEliminarClick = (row: PlanDonacion) => {
     setRowToDelete(row);
     setOpenConfirm(true);
@@ -127,27 +132,6 @@ export default function PlanDonaciones() {
     } finally {
       setOpenConfirm(false);
       setRowToDelete(null);
-    }
-  };
-
-  // Enviar plan por correo
-  const handleSendPlanByEmail = async () => {
-    setSending(true);
-    try {
-      await axios.post(`${API_URL}/enviar-correo`, {
-        email,
-        planes: rows,
-      });
-      setOpenEmailModal(false);
-      setOpenSuccess(true);
-      setTimeout(() => {
-        navigate("/resumenDonaciones", { state: { data: rows } });
-      }, 1500);
-    } catch (e) {
-      setOpenEmailModal(false);
-      setOpenError(true);
-    } finally {
-      setSending(false);
     }
   };
 
@@ -192,26 +176,26 @@ export default function PlanDonaciones() {
   }, [openError]);
 
   const columns: GridColDef[] = [
-  {
-  field: "fechaHora",
-  headerName: "Fecha y Hora",
-  width: 160,
-  renderCell: (params) =>
-    params.value ? dayjs(params.value).format("DD/MM/YYYY 08:00 A") : "",
-},
+    {
+      field: "fechaHora",
+      headerName: "Fecha y Hora",
+      width: 160,
+      renderCell: (params) =>
+        params.value ? dayjs(params.value).format("DD/MM/YYYY 08:00 A") : "",
+    },
     { field: "areaSalud", headerName: "Área de salud", width: 150 },
     { field: "consejoPopular", headerName: "Consejo popular", width: 150 },
-   {
-  field: "consultoriosAfectados",
-  headerName: "Consultorios afectados",
-  width: 180,
-  renderCell: (params) => {
-    if (Array.isArray(params.value)) {
-      return params.value.join(", ");
-    }
-    return params.value || "";
-  }
-},
+    {
+      field: "consultoriosAfectados",
+      headerName: "Consultorios afectados",
+      width: 180,
+      renderCell: (params) => {
+        if (Array.isArray(params.value)) {
+          return params.value.join(", ");
+        }
+        return params.value || "";
+      }
+    },
     { field: "lugarDonacion", headerName: "Lugar donación", width: 160 },
     { field: "compromiso", headerName: "Compromiso", width: 140 },
     { field: "responsableSalud", headerName: "Responsable de salud", width: 170 },
@@ -267,7 +251,15 @@ export default function PlanDonaciones() {
 
       <Container maxWidth={false}>
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {/* Aquí podrías agregar filtros por fecha si lo deseas */}
+          {/* Botón para descargar PDF */}
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<DownloadIcon />}
+            onClick={handleDescargarPDF}
+          >
+            Descargar PDF
+          </Button>
         </Box>
 
         <Box
@@ -300,61 +292,13 @@ export default function PlanDonaciones() {
               },
             }}
             pageSizeOptions={[10]}
-            checkboxSelection
-            disableRowSelectionOnClick
           />
         </Box>
       </Container>
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          mt: 3,
-          mb: 5,
-        }}
-      >
-        <BotonPersonalizado onClick={handleEnviarClick} sx={{ width: 225 }}>
-          Enviar
-        </BotonPersonalizado>
-      </Box>
+      {/* Elimina el botón Enviar y el modal de correo */}
 
-      {/* Modal para pedir correo */}
-      <Dialog
-        open={openEmailModal}
-        onClose={() => setOpenEmailModal(false)}
-        aria-labelledby="email-dialog-title"
-      >
-        <DialogTitle id="email-dialog-title">Enviar plan por correo</DialogTitle>
-        <DialogContent>
-          <Typography mb={2}>
-            Introduzca el correo electrónico al que desea enviar el plan:
-          </Typography>
-          <TextField
-            label="Correo electrónico"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            fullWidth
-            autoFocus
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEmailModal(false)} color="primary">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSendPlanByEmail}
-            color="primary"
-            disabled={!email || sending}
-          >
-            {sending ? "Enviando..." : "Enviar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modal Confirmación Envío o Eliminación */}
+      {/* Modal Confirmación Eliminación */}
       <Dialog
         open={openConfirm}
         onClose={() => {
@@ -370,9 +314,7 @@ export default function PlanDonaciones() {
               ¿Está seguro que desea eliminar el registro de{" "}
               <strong>{rowToDelete.responsableSalud}</strong>?
             </>
-          ) : (
-            "¿Está seguro que desea enviar el plan?"
-          )}
+          ) : null}
         </DialogContent>
         <DialogActions>
           <Button
@@ -385,7 +327,7 @@ export default function PlanDonaciones() {
             No
           </Button>
           <Button
-            onClick={rowToDelete ? handleConfirmDelete : () => setOpenEmailModal(true)}
+            onClick={handleConfirmDelete}
             color="primary"
             autoFocus
           >
@@ -413,35 +355,6 @@ export default function PlanDonaciones() {
             Sí
           </Button>
         </DialogActions>
-      </Dialog>
-
-      {/* Modal Éxito Envío */}
-      <Dialog
-        open={openSuccess}
-        onClose={() => setOpenSuccess(false)}
-        aria-labelledby="success-dialog-title"
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            padding: 3,
-            minWidth: 320,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-          },
-        }}
-      >
-        <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="success-dialog-title">
-          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
-            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
-            <Typography variant="h5" fontWeight="bold" color="success.main">
-              ¡Éxito!
-            </Typography>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
-            Se envió correctamente
-          </Typography>
-        </DialogContent>
       </Dialog>
 
       {/* Modal Éxito Eliminación */}
@@ -496,7 +409,7 @@ export default function PlanDonaciones() {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
-            No se puede enviar porque no hay planes registrados.
+            No se puede realizar la acción.
           </Typography>
         </DialogContent>
       </Dialog>

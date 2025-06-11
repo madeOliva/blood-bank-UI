@@ -20,15 +20,15 @@ export default function Desechos() {
     axios.get("http://localhost:3000/registro-donacion/donaciones-diarias")
       .then(response => {
         // Filtra solo los registros con estado "desechada"
-        const desechadas = response.data
-          .filter((item: any) => item.estado === "desechada")
-          .map((item: any, idx: number) => ({
-            id: item.id || idx,
-            no: item.no,
-            hc: item.hc,
-            desecho: "Bolsa",
-            motivo: item.motivo_desecho || "Sin motivo" // Solo usa motivo_desecho
-          }));
+     const desechadas = response.data
+  .filter((item: any) => item.estado === "desechada")
+  .map((item: any, idx: number) => ({
+    id: item.id || idx,
+    no: item.no,
+    hc: item.hc,
+    desecho: item.desecho, // <-- solo usa el valor que viene del backend
+    motivo: item.motivo_desecho || "Sin motivo"
+  }));
         setRows(desechadas);
       })
       .catch(error => {
