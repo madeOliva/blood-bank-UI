@@ -23,7 +23,6 @@ import LiberacionComponentes from "./pages/calidad/LiberacionComponentesPage";
 import PruebasReanalizar from "./pages/calidad/PruebasReanalizarPage";
 import RecepciondiariasEntidad from "./pages/calidad/ResepciondiariasEntidadPage";
 import VizualizarDonaciones from "./pages/calidad/VizualizarDonacionesPage";
-import NuevaHistoriaClinica from "./pages/historia_clinica/CreaHC";
 import ListadoPacientes from "./pages/historia_clinica/ListadoPaciente";
 import VisualizarHC from "./pages/historia_clinica/VisualizarHC";
 import LabCCalidad from "./pages/laboratorio/LabCCalidad";
@@ -36,6 +35,8 @@ import EntradaProduccion from "./pages/produccion/EntradaProducción";
 import PlasmaIndustria from "./pages/produccion/PlasmaIndustria";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UsuarioActivo from "./pages/auth/Usuario";
+import CitadosPS from "./pages/prechequeo_seleccion/CitadosPage";
+import NuevaHistoriaClinica from "./pages/historia_clinica/CrearHC";
 import DesechosPro from "./pages/calidad/ConfirmacionDesechoProPage";
 
 export default function App() {
@@ -54,6 +55,9 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route path="/citadosps" element={<CitadosPS />} />
+
       <Route
         path="/resultadosprechequeo"
         element={
@@ -321,7 +325,7 @@ export default function App() {
         }
       />
       <Route
-        path="/crearhc"
+        path="/crearhc/:id"
         element={
           <ProtectedRoute allowedRoles={["medico_consultorio"]}>
             <NuevaHistoriaClinica />

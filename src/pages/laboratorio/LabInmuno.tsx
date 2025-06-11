@@ -4,33 +4,37 @@ import Box from "@mui/material/Box";
 import Navbar from "../../components/navbar/Navbar";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Typography } from "@mui/material";
+import { Typography ,Stack} from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import {Dialog, DialogTitle,DialogContent,DialogContentText} from "@mui/material";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+
 
 
 // Datos de ejemplo
 const initialRows = [
   {
     id: 1,
-    no_consecutivo: "1",
+    numero_consecutivo: "1",
     hist_clinica: "HC-001",
-    serologia:"",
-    grupo: "",
-    factor: "",
-    contratipaje: "",
-    du: "",
+    resultado_serologia:"",
+    resultado_tipage: "",
+    resultado_rh: "",
+    resultado_contratipaje: "",
+    resultado_DU: "",
     fecha: "",
   },
   {
     id: 2,
-    no_consecutivo: "2",
+    numero_consecutivo: "2",
     hist_clinica: "HC-002",
-    serologia:"",
-    grupo: "",
-    factor: "",
-    contratipaje: "",
-    du: "",
+    resultado_serologia:"",
+    resultado_tipage: "",
+    resultado_rh: "",
+    resultado_contratipaje: "",
+    resultado_DU: "",
     fecha: "",
   },
   // Más filas de ejemplo...
@@ -41,36 +45,56 @@ export default function LabInmuno() {
   const [selectedRow, setSelectedRow] = useState(null);
   const [columnVisibilityModel,setColumnVisibilityModel]= useState({});
   const navigate = useNavigate();
+  const [openModal,setOpenModal] = useState(false);
+  const [openEmptyFieldsModal, setOpenEmptyFieldsModal] = useState(false);
+ 
 
-  const isCellEditable = (params: GridCellParams) =>{
-    if(params.field === 'du'){
-      return params.row.factor === "-";
+ 
+ const isCellEditable = (params: GridCellParams) =>{
+    if(params.field === 'resultado_DU'){
+      return params.row.resultado_rh === "-";
     }
     return true;
   };
   useEffect(() =>{
-    const shouldShowDU = rows.some(row => row.factor === "-");
+    const shouldShowDU = rows.some(row => row.resultado_rh === "-");
     setColumnVisibilityModel(prev => ({
       ...prev,
-      du:shouldShowDU
+      resultado_DU:shouldShowDU
     }));
   },[rows]);
+
+ useEffect(()=>{
+  if(openModal){
+    const timer =setTimeout(()=> setOpenModal(false),3000);
+    return()=>clearTimeout(timer);
+  }
+ },[openModal]);
+
+ useEffect(()=>{
+  if(openEmptyFieldsModal){
+    const timer = setTimeout(()=> setOpenEmptyFieldsModal(false),3000);
+    return()=> clearTimeout(timer);
+  }
+ },[openEmptyFieldsModal]);
+
+ 
 
   //Funcion para marcar todos como negativo
  const handleMarkAllNegative = (event:React.ChangeEvent<HTMLInputElement>)=>{
   const isChecked = event.target.checked;
   const updatedRows = rows.map(row =>({
     ...row,
-    factor:isChecked? "-":"",
-    du:isChecked? "Negativo":"",
-    serologia:isChecked? "Negativo":""
+    resultado_rh:isChecked? "-":"",
+    resultado_DU:isChecked? "Negativo":"",
+    resultado_serologia:isChecked? "Negativo":""
   }));
   setRows(updatedRows)
  };
 
  //Verifica si todos estan marcados como negativos
  const allNegative = rows.every(row =>
-  row.factor === "-" && row.du === "Negativo" && row.serologia === "Negativo"
+  row.resultado_rh === "-" && row.resultado_DU === "Negativo" && row.resultado_serologia === "Negativo"
  );
 
   const handleRowClick = (params: GridRowParams) => {
@@ -93,15 +117,42 @@ export default function LabInmuno() {
    return updatedRow;
   };
 
+  //Función para verificar campos vacíos
+  const hasEmptyFields = () =>{
+    return rows.some(row =>{
+      return(
+        row.resultado_serologia === "" ||
+        row.resultado_tipage === "" ||
+        row.resultado_rh === "" ||
+        (row.resultado_rh === "-" && row.resultado_DU === "") ||
+        row.resultado_contratipaje === "" ||
+        row.fecha === ""
+      );
+    });
+  };
+
    const handleSave = () => {
-    // Aquí iría la lógica para guardar en la base de datos
-    console.log("Datos guardados:", rows);
-    navigate("/componentes_obtenidos");
+    if(hasEmptyFields()){
+      setOpenEmptyFieldsModal(true);
+    }else{
+      console.log("Datos guardados:",rows);
+      setOpenModal(true);
+    }
+    
+  };
+
+  //Función para cerrar los modales
+  const handleCloseModal =()=>{
+    setOpenModal(false);
+  };
+
+  const handleCloseEmptyFieldsModal = ()=>{
+    setOpenEmptyFieldsModal(false);
   };
 
 const columns: GridColDef[] = [
   {
-    field: "no_consecutivo",
+    field: "numero_consecutivo",
     headerName: "No Consecutivo",
     width: 150,
   },
@@ -112,7 +163,7 @@ const columns: GridColDef[] = [
     editable: false,
   },
   {
-    field: "serologia",
+    field: "resultado_serologia",
     headerName: "Serología",
     width: 180,
     editable: true,
@@ -121,7 +172,7 @@ const columns: GridColDef[] = [
     
   },
   {
-    field: "grupo",
+    field: "resultado_tipage",
     headerName: "Grupo Sanguíneo",
     width: 180,
     editable: true,
@@ -130,7 +181,7 @@ const columns: GridColDef[] = [
     
   },
   {
-    field: "factor",
+    field: "resultado_rh",
     headerName: "Rh",
     type: "singleSelect",
     width: 120,
@@ -138,7 +189,7 @@ const columns: GridColDef[] = [
     valueOptions: ["+", "-"],
   },
   {
-    field: "contratipaje",
+    field: "resultado_contratipaje",
     headerName: "Contratipaje",
     type: "singleSelect",
     width: 140,
@@ -146,7 +197,7 @@ const columns: GridColDef[] = [
     valueOptions: ["A", "B","AB","O"],
   },
   {
-    field: "du",
+    field: "resultado_DU",
     headerName: "DU",
     type: "singleSelect",
     width: 140,
@@ -197,7 +248,7 @@ return (
             columnVisibilityModel={columnVisibilityModel}
             processRowUpdate={handleProcessRowUpdate}
             getCellClassName ={(params: GridCellParams) =>{
-              if(params.field ===  'du' && params.row.factor !== "-"){
+              if(params.field ===  'resultado_DU' && params.row.resultado_rh !== "-"){
                 return 'disabled-cell';
               }
               return "";
@@ -249,24 +300,88 @@ return (
 
 
         <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
-          <BotonPersonalizado onClick={handleSave} sx={{ width: 200 }}>
+          <BotonPersonalizado 
+          onClick={handleSave}
+           sx={{ width: 200 }}>
             Guardar Cambios
           </BotonPersonalizado>
+
           
-          {/* <Tooltip title="AllNegative" >
-          <BotonPersonalizado onClick={handleMarkAllNegative} sx={{ width: 200 }}>
-            Todos Negativos
-          </BotonPersonalizado>
-            </Tooltip> */}
-          
-          {/*<BotonPersonalizado 
-            onClick={() => navigate("/componentes_obtenidos")} 
-            sx={{ width: 200 }}
-          >
-            Continuar a Componentes
-          </BotonPersonalizado>*/}
         </Box>
-      </Box>
-    </>
-  );
+        </Box>
+
+{/* Modal de confirmación */}
+<Dialog
+  open={openModal}
+  onClose={handleCloseModal}
+  PaperProps={{
+    sx: {
+      borderRadius: 3,
+      padding: 3,
+      minWidth: 320,
+      boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+    },
+  }}
+  aria-labelledby="alert-dialog-title"
+  aria-describedby="alert-dialog-description"
+>
+  
+  <DialogTitle id="alert-dialog-title" sx={{ textAlign: "center", pb: 0 }} >
+  <Stack direction="column" alignItems="center" spacing={1}>
+     <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
+     <Typography variant="h5" fontWeight="bold" color="success.main">
+     ¡Éxito!
+    </Typography>                 
+  </Stack>
+ 
+  </DialogTitle>
+  <DialogContent >
+    <DialogContentText id="alert-dialog-description"  
+              variant="body1"
+              textAlign="center"
+              sx={{ mt: 1, fontSize: "1.1rem" }}>
+      Los cambios se guardaron correctamente.
+    </DialogContentText>
+  </DialogContent>
+ 
+</Dialog>
+
+{/*Modal de advertencia para campos vacíos*/}
+<Dialog
+open={openEmptyFieldsModal}
+onClose={handleCloseEmptyFieldsModal}
+PaperProps={{
+  sx:{
+    borderRadius:3,
+    padding:3,
+    minWidht:320,
+    boxShadow:"0 8px 24px rgba(0,0,0,0.2)",
+  }
+}}
+aria-labelledby="empty-fields-dialog-title"
+aria-describedby="empty-fields-dialog-description"
+>
+<DialogTitle id="alert-dialog-title" sx={{ textAlign: "center", pb: 0 }} >
+  <Stack direction="column" alignItems="center" spacing={1}>
+     <ErrorOutlineIcon sx={{ fontSize: 60, color: "error.main" }} />
+     <Typography variant="h5" fontWeight="bold" color="error.main">
+     ¡Error!
+    </Typography>                 
+  </Stack>
+ 
+  </DialogTitle>
+  <DialogContent >
+    <DialogContentText id="alert-dialog-description"  
+              variant="body1"
+              textAlign="center"
+              sx={{ mt: 1, fontSize: "1.1rem" }}>
+      Existen campos vacíos.
+    </DialogContentText>
+  </DialogContent>
+</Dialog>
+
+
+</>
+);
+     
 }
