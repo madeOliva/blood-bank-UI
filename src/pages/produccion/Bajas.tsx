@@ -1,142 +1,131 @@
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { Box, Typography } from "@mui/material";
+import { Box,  Typography } from "@mui/material";
 import Navbar from "../../components/navbar/Navbar";
-import BotonPersonalizado from "../../components/Button";
-//import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState,  } from "react";
+
 
 const columns: GridColDef[] = [
   { field: "no_consecutivo", 
     headerName: "No", 
-    width: 150
+    width: 120
   },
-    { field: "no_tubuladura", 
-      headerName: "No Tubuladura", 
-      width: 150 
+    { field: "no_hc", 
+      headerName: "No HC", 
+      width: 170 
     },
     {
       field: "componente",
       headerName: "Componente",
-      width: 150,
+      width: 170,
       type: "singleSelect",
-      valueOptions: ["CEPL", "CP", "PFC", "CRIO"],
+      valueOptions: ['CEPL','CEAD','CE','CP','SP','SC','PC', 'PFC', 'CRIO'],
     },
     {
       field: "causa",
       headerName: "Causa",
-      width: 150,
+      width: 170,
       type: "singleSelect",
-      valueOptions: ["Ictero", "Lipemia", "Hemolisis", "Otras"],
+      valueOptions: ["Ictero", "Lipemia", "Hemolisis", "Rotura"],
     },
-    {
-      field: "confirmacion",
-      headerName: "Confirmación Calidad",
-      width: 200,
-      type: "boolean",
-     
-    },
+    
   ];
   
   const initialRows = [
     {
       id: 1,
       no_consecutivo: "1",
-      no_tubuladura: "TUB001",
+      no_hc: "TUB001",
       componente: "CEPL",
       causa: "Lipemia",
-      confirmacion: false,
+     
     },
     {
       id: 2,
       no_consecutivo: "2",
-      no_tubuladura: "TUB002",
+      no_hc: "TUB002",
       componente: "CP",
       causa: "Hemolisis",
-      confirmacion: false,
+     
     },
     {
       id: 3,
       no_consecutivo: "3",
-      no_tubuladura: "TUB003",
+      no_hc: "TUB003",
       componente: "CRIO",
       causa: "Icteo",
       confirmacion: false,
     },{
       id: 4,
       no_consecutivo: "4",
-      no_tubuladura: "TUB004",
+      no_hc: "TUB004",
       componente: "CEPL",
       causa: "Lipemia",
-      confirmacion: false,
+      
     },{
       id: 5,
       no_consecutivo: "5",
-      no_tubuladura: "TUB005",
+      no_hc: "TUB005",
       componente: "PFC",
       causa: "Hemolisis",
-      confirmacion: false,
+     
     },{
       id: 6,
       no_consecutivo: "6",
-      no_tubuladura: "TUB006",
+      no_hc: "TUB006",
       componente: "CRIO",
       causa: "Lipemia",
-      confirmacion: false,
+     
     },{
       id: 7,
       no_consecutivo: "7",
-      no_tubuladura: "TUB007",
+      no_hc: "TUB007",
       componente: "CP",
       causa: "Lipemia",
-      confirmacion: false,
+     
     },{
       id: 8,
       no_consecutivo: "8",
-      no_tubuladura: "TUB008",
+      no_hc: "TUB008",
       componente: "CEPL",
       causa: "Lipemia",
-      confirmacion: false,
+      
     },{
       id: 9,
       no_consecutivo: "9",
-      no_tubuladura: "TUB009",
+      no_hc: "TUB009",
       componente: "CEPL",
       causa: "Ictero",
-      confirmacion: false,
+      
     },{
       id: 10,
       no_consecutivo: "10",
-      no_tubuladura: "TUB0010",
+      no_hc: "TUB0010",
       componente: "PFC",
       causa: "Lipemia",
-      confirmacion: false,
+    
     },{
       id: 11,
       no_consecutivo: "11",
-      no_tubuladura: "TUB0011",
+      no_hc: "TUB0011",
       componente: "CEPL",
       causa: "Lipemia",
-      confirmacion: false,
+      
     },{
       id: 12,
       no_consecutivo: "12",
-      no_tubuladura: "TUB0012",
+      no_hc: "TUB0012",
       componente: "CEPL",
       causa: "Lipemia",
-      confirmacion: false,
+     
     }
     // Más filas de ejemplo...
   ];
   
-  export default function Bajas() {
-    const [rows, setRows] = useState(initialRows);
-    //const navigate = useNavigate();
-  
-    const handleSave = () => {
-      // Lógica para guardar en la base de datos
-      console.log("Bajas registradas:", rows);
-    };
-  
+ export default function Bajas() {
+  const [rows, setRows] = useState(initialRows);
+
+
+ 
     return (
       <>
         <Navbar />
@@ -144,13 +133,14 @@ const columns: GridColDef[] = [
           marginTop: "25",
           }}>
           <Typography 
-          sx={{fontSize: {xs: "2rem", md: "3rem"},mt:8, backgroundColor: "primary.dark", textAlign: "center", color: "white"}}>
+          sx={{fontSize: {xs: "2rem", md: "3rem"}, mt: 8, backgroundColor: "primary.dark", textAlign: "center", color: "white"}}>
             Registro de Bajas
           </Typography>
           
           <Box sx={{ 
               height: 450, 
-              width: "90%", mb: 2,
+              width: "90%", 
+              mb: 2,
               marginBlockEnd: 1, 
               marginLeft: 7,  
               display: "flex",
@@ -171,6 +161,7 @@ const columns: GridColDef[] = [
               }
               }
               pageSizeOptions={[10]}
+                 
               editMode="row"
               processRowUpdate={(newRow) => {
                 const updatedRows = rows.map((row) => 
@@ -181,19 +172,8 @@ const columns: GridColDef[] = [
               }}
             />
           </Box>
-  
-          <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
-            <BotonPersonalizado onClick={handleSave} sx={{ width: 200 }}>
-              Guardar Cambios
-            </BotonPersonalizado>
-            {/*<BotonPersonalizado 
-              onClick={() => navigate("/centrifugacion")} 
-              sx={{ width: 200 }}
-            >
-              Ir a centrifugacion
-            </BotonPersonalizado> */}
-          </Box>
-        </Box>
+          
+       </Box>
       </>
     );
   }

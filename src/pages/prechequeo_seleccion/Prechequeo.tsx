@@ -46,6 +46,24 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
 
   const [error, setError] = React.useState('');
 
+  const handleHemoglobinaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setHemoglobina(e.target.value);
+    // Si ya hay un valor, valida en cada cambio
+    if (e.target.value && Number(e.target.value) < 125) {
+      setError('La hemoglobina tiene que ser mayor a 125');
+    } else {
+      setError('');
+    }
+  };
+
+  const handleHemoglobinaBlur = () => {
+    if (examenP_hemoglobina && Number(examenP_hemoglobina) < 125) {
+      setError('La hemoglobina tiene que ser mayor a 125');
+    } else {
+      setError('');
+    }
+  };
+
   const handleOpen = () => {
     setApto(null); // ambos inactivos al abrir
     setGrupo('');
@@ -74,12 +92,6 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
       setErrorMsg("Por favor complete todos los campos y seleccione Apto o No Apto.");
       setModalType("error");
       setOpenModal(true);
-      return;
-    }
-
-    const hemoglobinaNum = Number(examenP_hemoglobina);
-    if (isNaN(hemoglobinaNum) || hemoglobinaNum < 125) {
-      setError('La hemoglobina tiene q ser mayor a 125');
       return;
     }
     try {
@@ -167,8 +179,8 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
                 onChange={(e) => setFactor(e.target.value)}
               >
                 <MenuItem value=""></MenuItem>
-                <MenuItem value="positivo">positivo</MenuItem>
-                <MenuItem value="negativo">negativo</MenuItem>
+                <MenuItem value="+">+</MenuItem>
+                <MenuItem value="-">-</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -177,7 +189,8 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
             label="Hemoglobina"
             variant="outlined"
             value={examenP_hemoglobina}
-            onChange={(e) => setHemoglobina(e.target.value)}
+            onChange={handleHemoglobinaChange}
+            onBlur={handleHemoglobinaBlur}
             size="small"
             sx={{
               width: 200,
@@ -340,12 +353,7 @@ export default function Prechequeo() {
           sexo: reg.historiaClinica?.sexo,
           grupo_sanguine: reg.historiaClinica?.grupo_sanguine,
           factor: reg.historiaClinica?.factor,
-          "donante de":
-            reg.historiaClinica?.es_donanteControlado
-              ? "Controlado"
-              : reg.historiaClinica?.es_posibleDonante
-                ? "Posible"
-                : "No",
+          "donante de": reg.componente?.nombreComponente || "", // <-- aquí el nombre del componente
         }));
         setRows(mappedRows);
       } catch (error) {

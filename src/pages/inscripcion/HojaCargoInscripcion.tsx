@@ -1,31 +1,42 @@
 import * as React from "react";
-import { DataGrid, GridRowsProp, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
-import { Box, Typography } from "@mui/material";
+import { Box, IconButton, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers";
-
-// Datos de ejemplo
-const rows: GridRowsProp = [
-  {
-    id: 1,
-    ci: "05090263232",
-    nombre: "Pedro Gonzalez Carballeda",
-    edad: 19,
-    sexo: "M",
-    grupo: "O",
-    rh: "+",
-    donante: "Sangre",
-  },
-  // Puedes agregar más filas aquí
-];
+import { Edit, Padding } from "@mui/icons-material";
+import axios from "axios";
 
 // Definición de las columnas
 const columns: GridColDef[] = [
-  { field: "ci", headerName: "CI", width: 200 },
+  {
+    field: "modificar",
+    headerName: "",
+    width: 80,
+    sortable: false,
+    filterable: false,
+    align: "center",
+    renderCell: (params) => {
+      const navigate = useNavigate();
+      return (
+        <IconButton
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/inscripcion/${params.row.id}`);
+          }}
+          aria-label="modificar"
+        >
+          <Edit sx={{ color: "red" }} />
+        </IconButton>
+      );
+    },
+  },
+  { field: "fechaR", headerName: "Fecha de Registro", width: 200 },
+  { field: "NoRegistro", headerName: "No. Registro", width: 150 },
+  { field: "ci_donante", headerName: "CI", width: 150 },
   { field: "nombre", headerName: "Nombres y Apellidos", width: 300 },
   { field: "edad", headerName: "Edad", width: 100 },
   { field: "sexo", headerName: "Sexo", width: 100 },
@@ -35,21 +46,103 @@ const columns: GridColDef[] = [
 ];
 
 export default function HojaCargo() {
-  const navigate = useNavigate(); // Hook para navegar entre páginas
-  const [fechaInicio, setFechaInicio] = React.useState<Dayjs | null>(null);
-  const [fechaFin, setFechaFin] = React.useState<Dayjs | null>(null);
+  const navigate = useNavigate();
+  const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(
+    null
+  );
+  const [errorFechaFin, setErrorFechaFin] = React.useState<string | null>(null);
+
+  // Inicializa fechas al primer y último día del mes actual
+  const primerDiaMes = dayjs().startOf("month");
+  const ultimoDiaMes = dayjs().endOf("month");
+
+  const [fechaInicio, setFechaInicio] = React.useState<Dayjs | null>(
+    primerDiaMes
+  );
+  const [fechaFin, setFechaFin] = React.useState<Dayjs | null>(ultimoDiaMes);
+  const [rows, setRows] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchRegistros = async () => {
+      if (fechaInicio && fechaFin) {
+        try {
+          const res = await axios.get(
+            "http://localhost:3000/registro-donacion",
+            {
+              params: {
+                inicio: fechaInicio.format("YYYY-MM-DD"),
+                fin: fechaFin.format("YYYY-MM-DD"),
+              },
+            }
+          );
+          // Agrega este log para ver la respuesta real del backend
+          console.log("Respuesta backend:", res.data);
+
+          // Mapea los datos para el DataGrid
+          const mappedRows = res.data.map((reg: any) => ({
+            id: reg.id || reg._id,
+            fechaR: reg.fechaR ? new Date(reg.fechaR).toLocaleString() : "",
+            NoRegistro: reg.no_registro || "", // <-- minúscula
+            ci_donante: reg.ci_donante || "", // <-- así lo devuelve el backend
+            nombre: reg.nombre || "",
+            edad: reg.edad || "",
+            sexo: reg.sexo || "",
+            grupo: reg.grupo || "",
+            rh: reg.rh || "",
+            donante: reg.donante || "",
+          }));
+          setRows(mappedRows);
+        } catch (error) {
+          setRows([]);
+        }
+      } else {
+        setRows([]);
+      }
+    };
+    fetchRegistros();
+  }, [fechaInicio, fechaFin]);
+
   const handleRowClick = () => {
-    // Navega a otra página con el ID de la fila seleccionada
     navigate(`/inscripcion/`);
   };
 
-  //   // Filtrar las filas según las fechas seleccionadas
-  //   const filteredRows = rows.filter((row) => {
-  //     const fecha = dayjs(row.fecha);
-  //     if (fechaInicio && fecha.isBefore(fechaInicio, "day")) return false;
-  //     if (fechaFin && fecha.isAfter(fechaFin, "day")) return false;
-  //     return true;
-  //   });
+  const handleFechaInicioChange = (newValue: Dayjs | null) => {
+    setFechaInicio(newValue);
+    if (!newValue) {
+      setErrorFechaInicio("La fecha de inicio es obligatoria");
+    } else if (fechaFin && newValue.isAfter(fechaFin)) {
+      setErrorFechaInicio(
+        "La fecha de inicio no puede ser posterior a la fecha fin"
+      );
+    } else {
+      setErrorFechaInicio(null);
+      if (fechaFin && fechaFin.isBefore(newValue)) {
+        setErrorFechaFin(
+          "La fecha fin no puede ser anterior a la fecha inicio"
+        );
+      } else {
+        setErrorFechaFin(null);
+      }
+    }
+  };
+
+  const handleFechaFinChange = (newValue: Dayjs | null) => {
+    setFechaFin(newValue);
+    if (!newValue) {
+      setErrorFechaFin("La fecha fin es obligatoria");
+    } else if (fechaInicio && newValue.isBefore(fechaInicio)) {
+      setErrorFechaFin("La fecha fin no puede ser anterior a la fecha inicio");
+    } else {
+      setErrorFechaFin(null);
+      if (fechaInicio && fechaInicio.isAfter(newValue)) {
+        setErrorFechaInicio(
+          "La fecha de inicio no puede ser posterior a la fecha fin"
+        );
+      } else {
+        setErrorFechaInicio(null);
+      }
+    }
+  };
 
   return (
     <>
@@ -82,17 +175,25 @@ export default function HojaCargo() {
           <DateTimePicker
             label="Fecha y Hora Inicio"
             value={fechaInicio}
-            onChange={(newValue) => setFechaInicio(newValue)}
+            onChange={handleFechaInicioChange}
             slotProps={{
-              textField: { sx: { width: 400 } },
+              textField: {
+                sx: { width: 400 },
+                error: !!errorFechaInicio,
+                helperText: errorFechaInicio,
+              },
             }}
           />
           <DateTimePicker
             label="Fecha y Hora Fin"
             value={fechaFin}
-            onChange={(newValue) => setFechaFin(newValue)}
+            onChange={handleFechaFinChange}
             slotProps={{
-              textField: { sx: { width: 400 } },
+              textField: {
+                sx: { width: 400 },
+                error: !!errorFechaFin,
+                helperText: errorFechaFin,
+              },
             }}
           />
         </Box>
@@ -108,19 +209,19 @@ export default function HojaCargo() {
         <Box
           style={{
             height: 450,
-            width: "80%", // Ajusta el ancho según sea necesario
+            width: "95%",
           }}
         >
           <DataGrid
             rows={rows}
             columns={columns}
-            onRowClick={handleRowClick} // Maneja el clic en la fila
+            onRowClick={handleRowClick}
             sx={{
               "& .MuiDataGrid-columnHeaders": {
-                position: "sticky", // Hace que los encabezados sean fijos
-                top: 0, // Los fija en la parte superior
-                zIndex: 1, // Asegura que estén por encima de las filas
-                backgroundColor: "#fff", // Fondo blanco para los encabezados
+                position: "sticky",
+                top: 0,
+                zIndex: 1,
+                backgroundColor: "#fff",
               },
               "& .MuiDataGrid-columnHeaderTitle": {
                 fontFamily: '"Open Sans"',

@@ -1,11 +1,12 @@
-import * as React from "react";
-import { DataGrid, GridRowsProp, GridColDef } from "@mui/x-data-grid";
+
+import { DataGrid, GridRowsProp, GridColDef, GridRowParams } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
 import { Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import BotonPersonalizado from "../../components/Button";
+import { useState } from "react";
 
-const rows: GridRowsProp = [
+const initialRows: GridRowsProp = [
   {
     id: 1,
     ci: "123456789",
@@ -124,10 +125,14 @@ const columns: GridColDef[] = [
 
 export default function ListaCitados() {
   const navigate = useNavigate(); // Hook para navegar entre páginas
+  const [rows, setRows] = useState(initialRows);
 
-  const handleRowClick = () => {
+  const handleRowClick = (params:GridRowParams) => {
+   // Elimina la fila seleccionada del estado
+    setRows((prevRows) => prevRows.filter((row) => row.id !== params.row.id));
+
     // Navega a otra página con el ID de la fila seleccionada
-    navigate(`/inscripcion/`);
+    navigate(`/inscripcion/${params.row.ci}`);
   };
 
   return (

@@ -1,126 +1,192 @@
-// Importaciones necesarias de React, Material UI y React Router
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, IconButton, TextField, Dialog, DialogActions, DialogContent, DialogTitle, Button } from '@mui/material';
+import { Box, Typography, IconButton, TextField, Dialog, DialogActions, DialogContent, DialogTitle, Button, Snackbar } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/navbar/Navbar';
+import axios from 'axios';
 
-// Clave para el localStorage
-const LOCAL_STORAGE_KEY = 'pacientesData';
-
-// Datos iniciales de ejemplo
-const initialPacientes = [
-  { id: 1, nombre: 'Albus Bryan Dumbledore' },
-  { id: 2, nombre: 'Pathy Halliwell' },
-  { id: 3, nombre: 'Fred Weasley' },
-  { id: 4, nombre: 'Will Turner' },
-  { id: 5, nombre: 'Maddie Buckley' },
-];
-
-// Componente principal
 const ListadoPacientes = () => {
   const navigate = useNavigate();
   const [pacientes, setPacientes] = useState([]);
-
-  // Cargar datos del localStorage al iniciar
-  useEffect(() => {
-    const savedPacientes = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedPacientes) {
-      setPacientes(JSON.parse(savedPacientes));
-    } else {
-      setPacientes(initialPacientes);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialPacientes));
-    }
-  }, []);
-
-  // Estado para el diálogo de nuevo paciente
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [nuevoPaciente, setNuevoPaciente] = useState({
     nombre: '',
+    primer_apellido: '',
+    segundo_apellido: '',
   });
 
-  // Función para guardar pacientes en el localStorage
-  const savePacientes = (pacientesToSave) => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(pacientesToSave));
-  };
+  // Cargar pacientes desde el backend
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/historia-clinica");
+        setPacientes(res.data);
+      } catch (error) {
+        setSnackbarMessage('Error al cargar pacientes');
+        setSnackbarOpen(true);
+      }
+    };
+    fetchPacientes();
+  }, []);
 
-  // Función para navegar a la vista de historia clínica
+  // Navegar a la vista de historia clínica
   const handleVerHistoriaClinica = (idPaciente) => {
     navigate(`/visualizarhc/${idPaciente}`);
   };
 
-  // Definición de las columnas para el DataGrid
-  const columns = [
-    {
-      field: 'id',
-      headerName: 'No.',
-      width: 70,
-      headerAlign: 'center',
-      align: 'center',
-    },
-    {
-      field: 'nombre',
-      headerName: 'Nombre y Apellidos:',
-      flex: 1,
-      minWidth: 250,
-    },
-    {
-      field: 'acciones',
-      headerName: '',
-      width: 80,
-      sortable: false,
-      filterable: false,
-      align: 'center',
-      renderCell: (params) => (
-        <IconButton
-          color="primary"
-          onClick={() => handleVerHistoriaClinica(params.row.id)}
-          title="Visualizar/VisualizarHC"
-        >
-          <EditIcon />
-        </IconButton>
-      ),
-    },
-  ];
+  // Navegar a la creación de historia clínica
+  const handleCrearHistoriaClinica = (idPaciente) => {
+    navigate(`/crearhc/${idPaciente}`);
+  };
 
-  // Función para abrir el diálogo de nuevo paciente
+  // Abrir diálogo
   const handleOpenDialog = () => {
     setOpenDialog(true);
   };
 
-  // Función para cerrar el diálogo
+  // Cerrar diálogo
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setNuevoPaciente({ nombre: '' });
+    setNuevoPaciente({ nombre: '', primer_apellido: '', segundo_apellido: '' });
   };
 
-  // Función para manejar cambios en el input
+  // Manejar cambios en los inputs
   const handleInputChange = (e) => {
     setNuevoPaciente({
       ...nuevoPaciente,
-      nombre: e.target.value,
+      [e.target.name]: e.target.value,
     });
   };
 
-  // Función para agregar nuevo paciente
-  const agregarPaciente = () => {
-    if (nuevoPaciente.nombre.trim() === '') return;
+  // Agregar paciente al backend
+  const agregarPaciente = async () => {
+    if (
+      nuevoPaciente.nombre.trim() === '' ||
+      nuevoPaciente.primer_apellido.trim() === '' ||
+      nuevoPaciente.segundo_apellido.trim() === ''
+    ) {
+      setSnackbarMessage('Todos los campos son obligatorios');
+      setSnackbarOpen(true);
+      return;
+    }
 
-    const nuevoId = pacientes.length > 0 ? Math.max(...pacientes.map(p => p.id)) + 1 : 1;
-    const nuevosPacientes = [
-      ...pacientes,
-      {
-        id: nuevoId,
+    try {
+      const res = await axios.post("http://localhost:3000/historia-clinica", {
         nombre: nuevoPaciente.nombre,
-      },
-    ];
-
-    setPacientes(nuevosPacientes);
-    savePacientes(nuevosPacientes);
-    handleCloseDialog();
+        primer_apellido: nuevoPaciente.primer_apellido,
+        segundo_apellido: nuevoPaciente.segundo_apellido,
+        ci: "N/A",
+        sexo: "N/A",
+        edad: 0,
+        estado_civil: "N/A",
+        municipio: "N/A",
+        color_piel: "N/A",
+        no_hc: "N/A",
+        grupo_sanguine: "N/A",
+        factor: "N/A",
+        consejo_popular: "N/A",
+        no_consultorio: "N/A",
+        ocupacion: "N/A",
+        telefono: "N/A",
+        telefonoLaboral: "N/A",
+        centro_laboral: "N/A",
+        otra_localizacion: "N/A",
+        cat_ocupacional: "N/A",
+        estilo_vida: "N/A",
+        alimentacion: "N/A",
+        genero_vida: "N/A",
+        es_donanteControlado: false,
+        es_posibleDonante: false,
+        alergias: "N/A",
+        antecedentesPersonales: [],
+      });
+      setPacientes([...pacientes, res.data]);
+      handleCloseDialog();
+      handleCrearHistoriaClinica(res.data._id); // Navega usando el id real del backend
+    } catch (error) {
+      setSnackbarMessage('Error al agregar paciente');
+      setSnackbarOpen(true);
+    }
   };
+
+  // Eliminar paciente del backend
+  const eliminarPaciente = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3000/historia-clinica/${id}`);
+      setPacientes(pacientes.filter(p => p._id !== id));
+      setSnackbarMessage('Paciente eliminado correctamente');
+      setSnackbarOpen(true);
+    } catch (error) {
+      setSnackbarMessage('Error al eliminar paciente');
+      setSnackbarOpen(true);
+    }
+  };
+
+  // Columnas del DataGrid
+  const columns = [
+    {
+      field: 'nombre',
+      headerName: 'Nombre',
+      width: 150,
+      renderCell: (params) => (
+        <Typography fontWeight={500} sx={{ fontSize: '1.1rem' }}>
+          {params.row.nombre}
+        </Typography>
+      ),
+    },
+    {
+      field: 'primer_apellido',
+      headerName: 'Primer Apellido',
+      width: 150,
+      renderCell: (params) => (
+        <Typography fontWeight={500} sx={{ fontSize: '1.1rem' }}>
+          {params.row.primer_apellido}
+        </Typography>
+      ),
+    },
+    {
+      field: 'segundo_apellido',
+      headerName: 'Segundo Apellido',
+      width: 150,
+      renderCell: (params) => (
+        <Typography fontWeight={500} sx={{ fontSize: '1.1rem' }}>
+          {params.row.segundo_apellido}
+        </Typography>
+      ),
+    },
+    {
+      field: 'acciones',
+      headerName: 'Acciones',
+      width: 150,
+      sortable: false,
+      filterable: false,
+      align: 'center',
+      renderCell: (params) => (
+        <Box>
+          <IconButton
+            color="primary"
+            onClick={() => handleCrearHistoriaClinica(params.row._id)}
+            title="Ver historia clínica"
+            sx={{ mr: 1 }}
+          >
+            <EditIcon />
+          </IconButton>
+          <IconButton
+            color="error"
+            onClick={() => eliminarPaciente(params.row._id)}
+            title="Eliminar paciente"
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -130,125 +196,181 @@ const ListadoPacientes = () => {
         variant="h4"
         component="h5"
         mt={8}
-        sx={{ fontSize: { xs: "2rem", md: "3rem" }, backgroundColor: "primary.dark", textAlign: "center", fontFamily: "sans-serif", color: "white" }}
+        sx={{
+          fontSize: { xs: "2rem", md: "3rem" },
+          backgroundColor: "#009688",
+          textAlign: "center",
+          fontFamily: "sans-serif",
+          color: "white",
+          py: 2
+        }}
       >
         Listado de Pacientes
       </Typography>
+
       <Box
         sx={{
           width: '100vw',
           minHeight: '100vh',
-          bgcolor: '',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           pt: 4,
+          bgcolor: '#e0eee6'
         }}
       >
-        {/* Encabezado de la aplicación */}
-        <Box
-          sx={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            bgcolor: '#fff',
-            mb: 4,
-            px: 2,
-            py: 1,
-            position: 'relative',
-          }}
-        >
-          {/* Botón de agregar paciente en la esquina superior derecha */}
-          <Box sx={{ position: 'absolute', right: 24, mt: 10 }}>
-            <IconButton sx={{ color: "#009688" }}
-
-              size="large"
-              onClick={handleOpenDialog}
-              title="Agregar nuevo paciente"
-            >
-              <AddIcon fontSize="large" />
-            </IconButton>
-          </Box>
-        </Box>
-
-        {/* Título de la tabla */}
-        <Box
-          sx={{
-            width: 600,
-            bgcolor: '#009688',
-            borderTopLeftRadius: 8,
-            borderTopRightRadius: 8,
-            px: 2,
-            py: 1,
-          }}
-        >
-          <Typography variant="h5" color="white" align="center">
-            Pacientes
-          </Typography>
+        {/* Botón de agregar paciente */}
+        <Box sx={{
+          width: '90%',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          mb: 2
+        }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenDialog}
+            sx={{
+              backgroundColor: '#009688',
+              color: 'white',
+              fontWeight: 'bold',
+              '&:hover': {
+                backgroundColor: '#00796b',
+              }
+            }}
+          >
+            Nuevo Paciente
+          </Button>
         </Box>
 
         {/* Tabla de pacientes */}
         <Box
           sx={{
-            width: 600,
-            bgcolor: '#fff',
-            border: '1px solid #ccc',
-            borderBottomLeftRadius: 8,
-            borderBottomRightRadius: 8,
-            boxShadow: 2,
+            width: '90%',
+            maxWidth: 900,
+            bgcolor: '#eed4d4',
+            borderRadius: 2,
+            boxShadow: 3,
+            overflow: 'hidden'
           }}
         >
           <DataGrid
             autoHeight
             rows={pacientes}
             columns={columns}
+            getRowId={(row) => row._id}
             hideFooter
             disableColumnMenu
             disableSelectionOnClick
-            
-            sx={{height: 400,
-              border: 'none',
-              '.MuiDataGrid-columnHeaders': {
-                bgcolor: '#f5f5f5',
+            sx={{
+              '& .MuiDataGrid-columnHeaders': {
+                bgcolor: '#009688',
+                color: '#009688',
                 fontWeight: 'bold',
-                fontSize: 16,
+                fontSize: '1.1rem',
               },
-              '.MuiDataGrid-cell': {
-                fontSize: 15,
+              '& .MuiDataGrid-cell': {
+                fontSize: '1rem',
               },
-              '.MuiDataGrid-row': {
-                minHeight: 48,
-                maxHeight: 48,
+              '& .MuiDataGrid-row': {
+                minHeight: 60,
+                maxHeight: 60,
+                '&:nth-of-type(even)': {
+                  backgroundColor: '#f9f9f9',
+                },
+                '&:hover': {
+                  backgroundColor: '#e0f7fa',
+                }
               },
             }}
           />
         </Box>
 
         {/* Diálogo para agregar nuevo paciente */}
-        <Dialog open={openDialog} onClose={handleCloseDialog}>
-          <DialogTitle>Agregar nuevo paciente</DialogTitle>
-          <DialogContent>
+        <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+          <DialogTitle sx={{ bgcolor: '#009688', color: '#fff' }}>
+            Agregar nuevo paciente
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
             <TextField
               autoFocus
               margin="dense"
-              label="Nombre completo"
+              label="Nombre"
+              name="nombre"
               type="text"
               fullWidth
-              variant="standard"
+              variant="outlined"
               value={nuevoPaciente.nombre}
               onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              margin="dense"
+              label="Primer Apellido"
+              name="primer_apellido"
+              type="text"
+              fullWidth
+              variant="outlined"
+              value={nuevoPaciente.primer_apellido}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              margin="dense"
+              label="Segundo Apellido"
+              name="segundo_apellido"
+              type="text"
+              fullWidth
+              variant="outlined"
+              value={nuevoPaciente.segundo_apellido}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
             />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancelar</Button>
-            <Button onClick={agregarPaciente}>Agregar</Button>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button
+              onClick={handleCloseDialog}
+              variant="outlined"
+              sx={{ color: '#009688', borderColor: '#009688' }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={agregarPaciente}
+              variant="contained"
+              sx={{
+                backgroundColor: '#009688',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#00796b',
+                }
+              }}
+            >
+              Aceptar
+            </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Mensajes de snackbar */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={() => setSnackbarOpen(false)}
+          message={snackbarMessage}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          sx={{
+            '& .MuiSnackbarContent-root': {
+              backgroundColor: '#009688',
+              color: 'white',
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              borderRadius: 2
+            }
+          }}
+        />
       </Box>
     </>
-
   );
 };
 
 export default ListadoPacientes;
-
