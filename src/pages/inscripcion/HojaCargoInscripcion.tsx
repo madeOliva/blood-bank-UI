@@ -43,19 +43,22 @@ const columns: GridColDef[] = [
   { field: "grupo", headerName: "Grupo", width: 100 },
   { field: "rh", headerName: "RH", width: 100 },
   { field: "donante", headerName: "Donante de", width: 150 },
-  
 ];
 
 export default function HojaCargo() {
   const navigate = useNavigate();
-  const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(null);
+  const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(
+    null
+  );
   const [errorFechaFin, setErrorFechaFin] = React.useState<string | null>(null);
 
   // Inicializa fechas al primer y último día del mes actual
   const primerDiaMes = dayjs().startOf("month");
   const ultimoDiaMes = dayjs().endOf("month");
 
-  const [fechaInicio, setFechaInicio] = React.useState<Dayjs | null>(primerDiaMes);
+  const [fechaInicio, setFechaInicio] = React.useState<Dayjs | null>(
+    primerDiaMes
+  );
   const [fechaFin, setFechaFin] = React.useState<Dayjs | null>(ultimoDiaMes);
   const [rows, setRows] = React.useState<any[]>([]);
 
@@ -64,7 +67,7 @@ export default function HojaCargo() {
       if (fechaInicio && fechaFin) {
         try {
           const res = await axios.get(
-            "http://localhost:3000/registro-donacion/rango-fechas",
+            "http://localhost:3000/registro-donacion",
             {
               params: {
                 inicio: fechaInicio.format("YYYY-MM-DD"),
@@ -72,7 +75,23 @@ export default function HojaCargo() {
               },
             }
           );
-          setRows(res.data);
+          // Agrega este log para ver la respuesta real del backend
+          console.log("Respuesta backend:", res.data);
+
+          // Mapea los datos para el DataGrid
+          const mappedRows = res.data.map((reg: any) => ({
+            id: reg.id || reg._id,
+            fechaR: reg.fechaR ? new Date(reg.fechaR).toLocaleString() : "",
+            NoRegistro: reg.no_registro || "", // <-- minúscula
+            ci_donante: reg.ci_donante || "", // <-- así lo devuelve el backend
+            nombre: reg.nombre || "",
+            edad: reg.edad || "",
+            sexo: reg.sexo || "",
+            grupo: reg.grupo || "",
+            rh: reg.rh || "",
+            donante: reg.donante || "",
+          }));
+          setRows(mappedRows);
         } catch (error) {
           setRows([]);
         }
@@ -92,11 +111,15 @@ export default function HojaCargo() {
     if (!newValue) {
       setErrorFechaInicio("La fecha de inicio es obligatoria");
     } else if (fechaFin && newValue.isAfter(fechaFin)) {
-      setErrorFechaInicio("La fecha de inicio no puede ser posterior a la fecha fin");
+      setErrorFechaInicio(
+        "La fecha de inicio no puede ser posterior a la fecha fin"
+      );
     } else {
       setErrorFechaInicio(null);
       if (fechaFin && fechaFin.isBefore(newValue)) {
-        setErrorFechaFin("La fecha fin no puede ser anterior a la fecha inicio");
+        setErrorFechaFin(
+          "La fecha fin no puede ser anterior a la fecha inicio"
+        );
       } else {
         setErrorFechaFin(null);
       }
@@ -112,7 +135,9 @@ export default function HojaCargo() {
     } else {
       setErrorFechaFin(null);
       if (fechaInicio && fechaInicio.isAfter(newValue)) {
-        setErrorFechaInicio("La fecha de inicio no puede ser posterior a la fecha fin");
+        setErrorFechaInicio(
+          "La fecha de inicio no puede ser posterior a la fecha fin"
+        );
       } else {
         setErrorFechaInicio(null);
       }
