@@ -1,32 +1,44 @@
 // src/components/VisualizarHC.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import {Box, Button, MenuItem, Select, TextField, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Grid, Paper} from '@mui/material';
+import Navbar from '../../components/navbar/Navbar';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+//import api from '../../api/client';
+import { AntecedentesPersonale } from '../../../../blood-bank-API/src/modules/antecedentes_personales/entities/antecedentes_personale.entity';
+import { AntecedentesPersonales } from '../../../../blood-bank-API/src/modules/antecedentes_personales/schema/antecedentes_personales.schema';
 
 // Datos iniciales ficticios para la historia clínica
 const initialHistoryData = {
   generalData: {
     ci: '87051214567',
-    colorPiel: 'Blanca',
-    noHC: 'HC12345',
-    consejoPopular: 'Centro',
-    noConsultorio: 'C-12',
-    ocupacion: 'Ingeniera',
-    telefono: '55561234',
+    nombre: 'Yudith',
+    primer_apellido: 'Carbó',
+    segundo_apellido: 'Fonte',
+    edad: '38',
+    sexo: 'F',
+    color_piel: 'Blanca',
+    no_hc: 'HC12345',
+    estado_civil: 'Casada',
     municipio: 'Pinar del Rio',
-    centroLaboral: 'Universidad Hermanos Saiz',
+    consejo_popular: 'Centro',
+    no_consultorio: 'C-12',
+    ocupacion: 'Ingeniera',
+    cat_ocupacional: 'Docente',
+    telefono: '55561234',
+    centro_laboral: 'Universidad Hermanos Saiz',
     telefonoLaboral: '55585678',
-    grupoSanguineo: 'A',
+    otra_localizacion: 'Sandino',
+    grupo_sanguineo: 'A',
     factor: '+',
-    categoriaOcupacional: 'Docente',
-    estiloVida: 'Activo',
+    estilo_vida: 'Activo',
     alimentacion: 'Buena',
-    generoVida: 'Vida Desordenada', 
+    genero_vida: 'Vida Desordenada', 
     donante: 'Donante Controlado', // Radio seleccionado
   },
 
   // Antecedentes Patológicos Personales (APP)
-  app: [
+  AntecedentesPersonales: [
   { id: 1, antecedente: 'Hipertensión arterial', año: '2015' },
   { id: 2, antecedente: 'Diabetes', año: '2018' },
 ],
@@ -71,6 +83,85 @@ const initialHistoryData = {
 export default function VisualizarHC() {
   // Estado principal que contiene toda la historia clínica
   const [historyData, setHistoryData] = useState(initialHistoryData);
+
+
+// Funciones para agregar nuevas filas (corregidas y optimizadas)
+  const addAppRow = () => {
+    setHistoryData(prev => {
+      const newId = prev.AntecedentesPersonales.length > 0 ? Math.max(...prev.AntecedentesPersonales.map(r => r.id)) + 1 : 1;
+      return {
+        ...prev,
+        AntecedentesPersonales: [...prev.AntecedentesPersonales, { id: newId, antecedente: '', año: '' }]
+      };
+    });
+  };
+
+   const addApfRow = () => {
+    setHistoryData(prev => {
+      const newId = prev.apf.length > 0 ? Math.max(...prev.apf.map(r => r.id)) + 1 : 1;
+      return {
+        ...prev,
+        apf: [...prev.apf, { id: newId, antecedente: '', parentesco: '' }]
+      };
+    });
+  };
+
+const addAlergiaRow = () => {
+    setHistoryData(prev => {
+      const newId = prev.alergias.length > 0 ? Math.max(...prev.alergias.map(r => r.id)) + 1 : 1;
+      return {
+        ...prev,
+        alergias: [...prev.alergias, { id: newId, alergia: '' }]
+      };
+    });
+  };
+
+  const addHabitoRow = () => {
+    setHistoryData(prev => {
+      const newId = prev.habitos.length > 0 ? Math.max(...prev.habitos.map(r => r.id)) + 1 : 1;
+      return {
+        ...prev,
+        habitos: [...prev.habitos, { id: newId, habito: '', intensidad: 'Leve' }]
+      };
+    });
+  };
+
+   const addEstanciaRow = () => {
+    setHistoryData(prev => {
+      const newId = prev.estanciaExtranjero.length > 0 ? Math.max(...prev.estanciaExtranjero.map(r => r.id)) + 1 : 1;
+      return {
+        ...prev,
+        estanciaExtranjero: [...prev.estanciaExtranjero, { id: newId, fecha: '', pais: '', estadia: '', motivo: '' }]
+      };
+    });
+  };
+
+  const addDonacionRow = () => {
+    setHistoryData(prev => {
+      const newId = prev.donacionesPrevias.length > 0 ? Math.max(...prev.donacionesPrevias.map(r => r.id)) + 1 : 1;
+      return {
+        ...prev,
+        donacionesPrevias: [...prev.donacionesPrevias, { id: newId, fecha: '', lugar: '', reaccion: '', motivo: '' }]
+      };
+    });
+  };
+
+  const addTransfusionRow = () => {
+    setHistoryData(prev => {
+      const newId = prev.transfusionesPrevias.length > 0 ? Math.max(...prev.transfusionesPrevias.map(r => r.id)) + 1 : 1;
+      return {
+        ...prev,
+        transfusionesPrevias: [...prev.transfusionesPrevias, { 
+          id: newId, 
+          fecha: '', 
+          lugar: '', 
+          diagnostico: '', 
+          reaccion: '', 
+          observaciones: '' 
+        }]
+      };
+    });
+  };
 
   // Maneja cambios en los campos de texto y select en Datos Generales
   const handleGeneralChange = (field, value) => {
@@ -159,8 +250,28 @@ export default function VisualizarHC() {
     { field: 'observaciones', headerName: 'Observaciones', flex: 1, editable: true },
   ];
 
+// Componente para los encabezados de sección con estilo
+const SectionHeader = ({ title }) => (
+    <Box
+      sx={{
+        backgroundColor: '#009688',
+        color: '#fff',
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontSize: 18,
+        py: 1,
+        mb: 1,
+        borderRadius: 1,
+      }}
+    >
+      {title}
+    </Box>
+  );
+  
   return (
-    <Box sx={{ p: 3, maxWidth: 1100, margin: 'auto' }}>
+     <>
+    <Navbar/> 
+     <Box sx={{ p: 3, maxWidth: 1100, margin: 'auto', mt: 8 }}>
       {/* Título general */}
       <Typography variant="h4" align="center" gutterBottom sx={{ mb: 3, fontWeight: 'bold', color: '#13b09e' }}>
         Historia Clínica
@@ -181,20 +292,73 @@ export default function VisualizarHC() {
           </Grid>
           <Grid item xs={12} sm={3}>
             <TextField
-              label="Color Piel"
-              value={historyData.generalData.colorPiel}
-              onChange={(e) => handleGeneralChange('colorPiel', e.target.value)}
+              label="Nombre"
+              value={historyData.generalData.nombre}
+              onChange={(e) => handleGeneralChange('nombre', e.target.value)}
               fullWidth
             />
           </Grid>
           <Grid item xs={12} sm={3}>
-            <TextField label="No. HC" value={historyData.generalData.noHC} disabled fullWidth />
+            <TextField
+              label="Primer Apellido"
+              value={historyData.generalData.primer_apellido}
+              onChange={(e) => handleGeneralChange('primer_apellido', e.target.value)}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              label="Segundo Apellido"
+              value={historyData.generalData.segundo_apellido}
+              onChange={(e) => handleGeneralChange('segundo_apellido', e.target.value)}
+              fullWidth
+            />
+          </Grid>
+           <Grid item xs={12} sm={3}>
+            <TextField
+              label="Sexo"
+              value={historyData.generalData.sexo}
+              onChange={(e) => handleGeneralChange('sexo', e.target.value)}
+              fullWidth
+            />
+          </Grid>
+           <Grid item xs={12} sm={3}>
+            <TextField
+              label="Edad"
+              value={historyData.generalData.edad}
+              onChange={(e) => handleGeneralChange('edad', e.target.value)}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              label="Color Piel"
+              value={historyData.generalData.color_piel}
+              onChange={(e) => handleGeneralChange('color_piel', e.target.value)}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              label="Estado Civil"
+              value={historyData.generalData.estado_civil}
+              onChange={(e) => handleGeneralChange('estado_civil', e.target.value)}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField 
+            label="No. HC"
+            value={historyData.generalData.no_hc}
+            onChange={(e) => handleGeneralChange('no_hc', e.target.value)}
+            fullWidth
+             />
           </Grid>
           <Grid item xs={12} sm={3}>
             <TextField
               label="Consejo Popular"
-              value={historyData.generalData.consejoPopular}
-              onChange={(e) => handleGeneralChange('consejoPopular', e.target.value)}
+              value={historyData.generalData.consejo_popular}
+              onChange={(e) => handleGeneralChange('consejo_Popular', e.target.value)}
               fullWidth
             />
           </Grid>
@@ -202,7 +366,7 @@ export default function VisualizarHC() {
           <Grid item xs={12} sm={3}>
             <TextField
               label="No. Consultorio"
-              value={historyData.generalData.noConsultorio}
+              value={historyData.generalData.no_consultorio}
               onChange={(e) => handleGeneralChange('noConsultorio', e.target.value)}
               fullWidth
             />
@@ -235,8 +399,8 @@ export default function VisualizarHC() {
           <Grid item xs={12} sm={3}>
             <TextField
               label="Centro Laboral"
-              value={historyData.generalData.centroLaboral}
-              onChange={(e) => handleGeneralChange('centroLaboral', e.target.value)}
+              value={historyData.generalData.centro_laboral}
+              onChange={(e) => handleGeneralChange('centro_laboral', e.target.value)}
               fullWidth
             />
           </Grid>
@@ -248,15 +412,23 @@ export default function VisualizarHC() {
               fullWidth
             />
           </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              label="Otra Localización"
+              value={historyData.generalData.otra_localizacion}
+              onChange={(e) => handleGeneralChange('otra_localizacion', e.target.value)}
+              fullWidth
+            />
+          </Grid>
 
           {/* Select Grupo Sanguíneo */}
           <Grid item xs={12} sm={3}>
             <FormControl fullWidth>
               <FormLabel>Grupo Sanguíneo</FormLabel>
               <Select
-                name="grupoSanguineo"
-                value={historyData.generalData.grupoSanguineo}
-                onChange={(e) => handleGeneralChange('grupoSanguineo', e.target.value)}
+                name="grupo_sanguineo"
+                value={historyData.generalData.grupo_sanguineo}
+                onChange={(e) => handleGeneralChange('grupo_sanguineo', e.target.value)}
               >
                 <MenuItem value="A">A</MenuItem>
                 <MenuItem value="B">B</MenuItem>
@@ -286,9 +458,9 @@ export default function VisualizarHC() {
             <FormControl fullWidth>
               <FormLabel>Categoría Ocupacional</FormLabel>
               <Select
-                name="categoriaOcupacional"
-                value={historyData.generalData.categoriaOcupacional}
-                onChange={(e) => handleGeneralChange('categoriaOcupacional', e.target.value)}
+                name="categoria_ocupacional"
+                value={historyData.generalData.cat_ocupacional}
+                onChange={(e) => handleGeneralChange('cat_ocupacional', e.target.value)}
               >
                 {/* Opciones para que completes */}
                 <MenuItem value="Empleador">Empleador</MenuItem>
@@ -304,9 +476,9 @@ export default function VisualizarHC() {
             <FormControl fullWidth>
               <FormLabel>Estilo de Vida</FormLabel>
               <Select
-                name="estiloVida"
-                value={historyData.generalData.estiloVida}
-                onChange={(e) => handleGeneralChange('estiloVida', e.target.value)}
+                name="estilo_vida"
+                value={historyData.generalData.estilo_vida}
+                onChange={(e) => handleGeneralChange('estilo_vida', e.target.value)}
               >
                 {/* Opciones para que completes */}
                 <MenuItem value="Activo">Activo</MenuItem>
@@ -338,9 +510,9 @@ export default function VisualizarHC() {
             <FormControl fullWidth>
               <FormLabel>Género de Vida</FormLabel>
               <Select
-                name="generoVida"
-                value={historyData.generalData.generoVida}
-                onChange={(e) => handleGeneralChange('generoVida', e.target.value)}
+                name="genero_vida"
+                value={historyData.generalData.genero_vida}
+                onChange={(e) => handleGeneralChange('genero_vida', e.target.value)}
               >
                 <MenuItem value="Vida desordenada">Vida desordenada</MenuItem>
                 <MenuItem value="Abusa de sus fuerzas">Abusa de sus fuerzas</MenuItem>
@@ -370,9 +542,12 @@ export default function VisualizarHC() {
 
       {/* Sección Antecedentes Patológicos Personales (APP) */}
       <SectionHeader title="Antecedentes Patologicos Personales (APP)" />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <Button variant="outlined" onClick={addAppRow}>Agregar Antecedente</Button>
+        </Box>
       <Paper sx={{ height: 250, mb: 4 }}>
         <DataGrid
-          rows={historyData.app}
+          rows={historyData.AntecedentesPersonales}
           columns={appColumns}
           pageSize={5}
           rowsPerPageOptions={[5]}
@@ -382,7 +557,10 @@ export default function VisualizarHC() {
       </Paper>
 
       {/* Sección Antecedentes Patológicos Familiares (APF) */}
-      <SectionHeader title="Antecdentes Patologicos Familiares (APF)" />
+       <SectionHeader title="Antecdentes Patologicos Familiares (APF)" />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <Button variant="outlined" onClick={addApfRow}>Agregar Antecedente</Button>
+      </Box>
       <Paper sx={{ height: 250, mb: 4 }}>
         <DataGrid
           rows={historyData.apf}
@@ -396,6 +574,9 @@ export default function VisualizarHC() {
 
       {/* Sección Alergias */}
       <SectionHeader title="Alergias" />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <Button variant="outlined" onClick={addAlergiaRow}>Agregar Alergia</Button>
+      </Box>
       <Paper sx={{ height: 200, mb: 4 }}>
         <DataGrid
           rows={historyData.alergias}
@@ -409,6 +590,9 @@ export default function VisualizarHC() {
 
       {/* Sección Hábitos Tóxicos */}
       <SectionHeader title="Habitos Toxicos" />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <Button variant="outlined" onClick={addHabitoRow}>Agregar Hábito</Button>
+       </Box>
       <Paper sx={{ height: 250, mb: 4 }}>
         <DataGrid
           rows={historyData.habitos}
@@ -424,6 +608,9 @@ export default function VisualizarHC() {
 
       {/* Sección Estancia en el Extranjero */}
       <SectionHeader title="Estancia en el Extranjero" />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <Button variant="outlined" onClick={addEstanciaRow}>Agregar Estancia</Button>
+      </Box>
       <Paper sx={{ height: 250, mb: 4 }}>
         <DataGrid
           rows={historyData.estanciaExtranjero}
@@ -435,8 +622,11 @@ export default function VisualizarHC() {
         />
       </Paper>
 
-      {/*Sección Transfusiones Previas*/}
+      {/*Sección Donaciones Previas*/}
       <SectionHeader title="Donaciones Previas" />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+       <Button variant="outlined" onClick={addDonacionRow}>Agregar Donación</Button>
+      </Box>
       <Paper sx={{ height: 250, mb: 4 }}>
         <DataGrid
           rows={historyData.donacionesPrevias}
@@ -450,6 +640,9 @@ export default function VisualizarHC() {
 
       {/*Sección Transfusiones Previas*/}
       <SectionHeader title="Transfusiones Previas" />
+       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <Button variant="outlined" onClick={addTransfusionRow}>Agregar Transfusión</Button>
+      </Box>
       <Paper sx={{ height: 250, mb: 4 }}>
         <DataGrid
           rows={historyData.transfusionesPrevias}
@@ -461,34 +654,32 @@ export default function VisualizarHC() {
         />
       </Paper>
 
+
       {/* Botón Aceptar */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 6 }}>
-        <Button variant="contained" color="success" size="large" onClick={handleGuardar}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', 
+          mt: 4,
+          bottom: 20,
+          zIndex: 1 }}>
+        <Button variant="contained" sx={{
+              background: '#009688',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: '1.1rem',
+              px: 6,
+              py: 1.5,
+              borderRadius: 2,
+              boxShadow: 3,
+              '&:hover': { 
+                background: '#00796b',
+                transform: 'scale(1.05)',
+                transition: 'transform 0.3s'
+              },
+            }}  onClick={handleGuardar}>
           Aceptar
         </Button>
       </Box>
-    </Box>
+     </Box>
+
+    </>
   );
 }
-
-// Componente para los encabezados de sección con estilo
-function SectionHeader({ title }) {
-  return (
-    <Box
-      sx={{
-        backgroundColor: '#1db6a4',
-        color: '#fff',
-        textAlign: 'center',
-        fontWeight: 'bold',
-        fontSize: 18,
-        py: 1,
-        mb: 1,
-        borderRadius: 1,
-      }}
-    >
-      {title}
-    </Box>
-  );
-}
-
- 

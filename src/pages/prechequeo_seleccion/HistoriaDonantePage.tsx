@@ -4,14 +4,14 @@ import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BotonPersonalizado from "../../components/Button";
 import { useNavigate, useParams } from "react-router-dom";
-import  { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import axios from "axios";
 
 
 export default function HistoriaDonante() {
-    const [ examenP_grupo, setExamenP_grupo] = useState('');
+    const [examenP_grupo, setExamenP_grupo] = useState('');
     const [examenP_factor, setExamenP_factor] = useState('');
     const [examenP_hemoglobina, setExamenP_hemoglobina] = useState('');
     const [examenF_hemoglobina, setExamenF_hemoglobina] = useState('');
@@ -25,13 +25,82 @@ export default function HistoriaDonante() {
     const [apto_examenFisico, setAptoExamenFisico] = useState<boolean | null>(null);
 
     // Estados para modal de éxito/alerta
-      const [openModal, setOpenModal] = useState(false);
-      const [modalType, setModalType] = useState<"success" | "error">("success");
-      const [errorMsg, setErrorMsg] = useState("");
+    const [openModal, setOpenModal] = useState(false);
+    const [modalType, setModalType] = useState<"success" | "error">("success");
+    const [errorMsg, setErrorMsg] = useState("");
 
     const [showBox, setShowBox] = useState(false);
 
+    const [errorHemoglobina, setErrorHemoglobina] = useState("");
+    const [errorPulso, setErrorPulso] = useState("");
+    const [errorPeso, setErrorPeso] = useState("");
+    const [errorTempAxilar, setErrorTempAxilar] = useState("");
+    const [errorTempSublingual, setErrorTempSublingual] = useState("");
+
     const { id } = useParams();
+
+    // Solo números enteros
+    const onlyIntegers = (value: string) => value.replace(/[^0-9]/g, "");
+
+    // Números con decimales (solo un punto)
+    const onlyDecimals = (value: string) => value.replace(/[^0-9.]/g, "").replace(/^([^.]*\.)|\./g, '$1');
+
+    const handleHemoglobinaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = onlyIntegers(e.target.value);
+        setExamenF_hemoglobina(value);
+        if (value && Number(value) < 125) {
+            setErrorHemoglobina("La hemoglobina no puede ser menor de 125");
+        } else {
+            setErrorHemoglobina("");
+        }
+    };
+
+    // Pulso (solo enteros)
+    const handlePulsoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = onlyIntegers(e.target.value);
+        setExamenF_pulso(value);
+        const pulso = Number(value);
+        if (value && (pulso < 50 || pulso > 100)) {
+            setErrorPulso("El pulso debe estar entre 50 y 100");
+        } else {
+            setErrorPulso("");
+        }
+    };
+
+    // Peso (solo enteros)
+    const handlePesoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = onlyIntegers(e.target.value);
+        setExamenF_peso(value);
+        if (value && Number(value) < 50) {
+            setErrorPeso("El peso no puede ser menor de 50 kg (110 lb)");
+        } else {
+            setErrorPeso("");
+        }
+    };
+
+    // Temperatura Axilar (decimales permitidos)
+    const handleTempAxilarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = onlyDecimals(e.target.value);
+        setExamenF_temAxilar(value);
+        const temp = Number(value);
+        if (value && (temp < 35 || temp > 37)) {
+            setErrorTempAxilar("La temperatura axilar debe estar entre 35 y 37 °C");
+        } else {
+            setErrorTempAxilar("");
+        }
+    };
+
+    // Temperatura Sublingual (decimales permitidos)
+    const handleTempSublingualChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = onlyDecimals(e.target.value);
+        setExamenF_temSublingual(value);
+        const temp = Number(value);
+        if (value && (temp < 35 || temp > 37.5)) {
+            setErrorTempSublingual("La temperatura sublingual debe estar entre 35 y 37.5 °C");
+        } else {
+            setErrorTempSublingual("");
+        }
+    };
 
 
     useEffect(() => {
@@ -57,10 +126,6 @@ export default function HistoriaDonante() {
 
     const navigate = useNavigate();
 
-    const handleHc = () => {
-        // Aquí puedes poner lógica de autenticación si lo deseas
-        navigate("/historiadonante", { replace: true }); // Redirige a la vista de ....
-    };
 
     const [resp1, setResp1] = useState<boolean | null>(null);
     const [resp2, setResp2] = useState<boolean | null>(null);
@@ -156,38 +221,38 @@ export default function HistoriaDonante() {
 
 
     // Validación simple
-  const hayCamposVacios = () => {
-    return !examenF_peso || !examenF_pulso || !examenF_temSublingual || !examenF_temAxilar || !examenF_hemoglobina || !getRespuestasInterrogatorio || apto_examenFisico === null || apto_interrogatorio === null;
-  };
-    
+    const hayCamposVacios = () => {
+        return !examenF_peso || !examenF_pulso || !examenF_temSublingual || !examenF_temAxilar || !examenF_hemoglobina || !getRespuestasInterrogatorio || apto_examenFisico === null || apto_interrogatorio === null;
+    };
+
 
     const handleSubmit = async () => {
         if (hayCamposVacios()) {
-      setErrorMsg("Por favor complete todos los campos.");
-      setModalType("error");
-      setOpenModal(true);
-      return;
-    }
-    try {
-    const payload = {
-        examenF_peso,
-        examenF_pulso,
-        examenF_temSublingual,
-        examenF_temAxilar,
-        examenF_hemoglobina,
-        apto_examenFisico,
-        respuestas_interrogatorio: getRespuestasInterrogatorio(),
-        apto_interrogatorio,
-        observacion_interrogatorio,
+            setErrorMsg("Por favor complete todos los campos.");
+            setModalType("error");
+            setOpenModal(true);
+            return;
+        }
+        try {
+            const payload = {
+                examenF_peso,
+                examenF_pulso,
+                examenF_temSublingual,
+                examenF_temAxilar,
+                examenF_hemoglobina,
+                apto_examenFisico,
+                respuestas_interrogatorio: getRespuestasInterrogatorio(),
+                apto_interrogatorio,
+                observacion_interrogatorio,
+            };
+            await axios.put(`http://localhost:3000/registro-donacion/${id}`, payload);
+            // Puedes mostrar un mensaje de éxito aquí si lo deseas
+        } catch (error) {
+            setErrorMsg("Ocurrió un error al enviar los datos.");
+            setModalType("error");
+            setOpenModal(true);
+        }
     };
-        await axios.put(`http://localhost:3000/registro-donacion/${id}`, payload);
-        // Puedes mostrar un mensaje de éxito aquí si lo deseas
-    } catch (error) {
-      setErrorMsg("Ocurrió un error al enviar los datos.");
-      setModalType("error");
-      setOpenModal(true);
-    }
-};
 
 
     const textFieldSx = {
@@ -346,78 +411,88 @@ export default function HistoriaDonante() {
 
                     </Box>
 
-                    
 
-                        <Box sx={{ p: 2, width: 600 }}>
-                            <Typography sx={{ mb: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5">
-                                Examen Físico
-                            </Typography>
-                            <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
-                                <TextField
-                                    label="Peso"
-                                    variant="outlined"
-                                    size="small"
-                                    value={examenF_peso}
-                                    onChange={e => setExamenF_peso(e.target.value)}
-                                    sx={textFieldSx}
-                                />
-                                <TextField
-                                    label="Pulso"
-                                    variant="outlined"
-                                    size="small"
-                                    value={examenF_pulso}
-                                    onChange={e => setExamenF_pulso(e.target.value)}
-                                    sx={textFieldSx}
-                                />
-                                <TextField
-                                    label="Temperatura sublingual"
-                                    variant="outlined"
-                                    size="small"
-                                    value={examenF_temSublingual}
-                                    onChange={e => setExamenF_temSublingual(e.target.value)}
-                                    sx={textFieldSx}
-                                />
-                                <TextField
-                                    label="Temperatura axilar"
-                                    variant="outlined"
-                                    size="small"
-                                    value={examenF_temAxilar}
-                                    onChange={e => setExamenF_temAxilar(e.target.value)}
-                                    sx={textFieldSx}
-                                />
-                                <TextField
-                                    label="Hemoglobina"
-                                    variant="outlined"
-                                    size="small"
-                                    value={examenF_hemoglobina}
-                                    onChange={e => setExamenF_hemoglobina(e.target.value)}
-                                    sx={textFieldSx}
-                                />
-                                <Box>
-                                    <FormGroup row>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={apto_examenFisico === true}
-                                                    onChange={() => setAptoExamenFisico(true)}
-                                                />
-                                            }
-                                            label="Apto"
-                                        />
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={apto_examenFisico === false}
-                                                    onChange={() => setAptoExamenFisico(false)}
-                                                />
-                                            }
-                                            label="No Apto"
-                                        />
-                                    </FormGroup>
-                                </Box>
+
+                    <Box sx={{ p: 2, width: 600 }}>
+                        <Typography sx={{ mb: 2, textAlign: "center", backgroundColor: "primary.dark", color: "white" }} variant="h6" component="h5">
+                            Examen Físico
+                        </Typography>
+                        <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+                            <TextField
+                                label="Peso"
+                                variant="outlined"
+                                size="small"
+                                value={examenF_peso}
+                                onChange={handlePesoChange}
+                                error={!!errorPeso}
+                                helperText={errorPeso}
+                                sx={textFieldSx}
+                            />
+                            <TextField
+                                label="Pulso"
+                                variant="outlined"
+                                size="small"
+                                value={examenF_pulso}
+                                onChange={handlePulsoChange}
+                                error={!!errorPulso}
+                                helperText={errorPulso}
+                                sx={textFieldSx}
+                            />
+                            <TextField
+                                label="Temperatura sublingual"
+                                variant="outlined"
+                                size="small"
+                                value={examenF_temSublingual}
+                                onChange={handleTempSublingualChange}
+                                error={!!errorTempSublingual}
+                                helperText={errorTempSublingual}
+                                sx={textFieldSx}
+                            />
+                            <TextField
+                                label="Temperatura axilar"
+                                variant="outlined"
+                                size="small"
+                                value={examenF_temAxilar}
+                                onChange={handleTempAxilarChange}
+                                error={!!errorTempAxilar}
+                                helperText={errorTempAxilar}
+                                sx={textFieldSx}
+                            />
+                            <TextField
+                                label="Hemoglobina"
+                                variant="outlined"
+                                size="small"
+                                value={examenF_hemoglobina}
+                                onChange={handleHemoglobinaChange}
+                                error={!!errorHemoglobina}
+                                helperText={errorHemoglobina}
+                                sx={textFieldSx}
+                            />
+                            <Box>
+                                <FormGroup row>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={apto_examenFisico === true}
+                                                onChange={() => setAptoExamenFisico(true)}
+                                            />
+                                        }
+                                        label="Apto"
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={apto_examenFisico === false}
+                                                onChange={() => setAptoExamenFisico(false)}
+                                            />
+                                        }
+                                        label="No Apto"
+                                    />
+                                </FormGroup>
                             </Box>
                         </Box>
                     </Box>
+                </Box>
             )
             }
 
@@ -440,7 +515,7 @@ export default function HistoriaDonante() {
                                     </Typography>
                                 </Box>
 
-                                <Box mr={1}>
+                                <Box mr={1} mt={1}>
                                     <RadioGroup
                                         row
                                         value={resp1 === null ? "" : resp1 ? "SI" : "NO"}
@@ -466,8 +541,9 @@ export default function HistoriaDonante() {
                                             size="small"
                                             value={texto2}
                                             onChange={e => setTexto2(e.target.value)}
+                                            disabled={resp2 !== true}
                                             sx={{
-                                                width: 300, ml: 3,
+                                                width: 300, ml: 2,
                                                 // Cambia el color del texto
                                                 "& .MuiOutlinedInput-root": {
                                                     color: "#000",
@@ -524,8 +600,9 @@ export default function HistoriaDonante() {
                                             size="small"
                                             value={texto3}
                                             onChange={e => setTexto3(e.target.value)}
+                                            disabled={resp3 !== true}
                                             sx={{
-                                                width: 300, ml: 3,
+                                                width: 300, ml: 2,
                                                 // Cambia el color del texto
                                                 "& .MuiOutlinedInput-root": {
                                                     color: "#000",
@@ -579,8 +656,9 @@ export default function HistoriaDonante() {
                                             size="small"
                                             value={text4}
                                             onChange={e => setTexto4(e.target.value)}
+                                            disabled={resp4 !== true}
                                             sx={{
-                                                width: 300, ml: 3,
+                                                width: 300, ml: 2,
                                                 // Cambia el color del texto
                                                 "& .MuiOutlinedInput-root": {
                                                     color: "#000",
@@ -693,6 +771,7 @@ export default function HistoriaDonante() {
                                             size="small"
                                             value={texto8}
                                             onChange={e => setTexto8(e.target.value)}
+                                            disabled={resp8 !== true}
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -765,6 +844,7 @@ export default function HistoriaDonante() {
                                             size="small"
                                             value={texto10}
                                             onChange={e => setTexto10(e.target.value)}
+                                            disabled={resp10 !== true}
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -1058,6 +1138,7 @@ export default function HistoriaDonante() {
                                             size="small"
                                             value={texto23}
                                             onChange={e => setTexto23(e.target.value)}
+                                            disabled={resp23 !== true}
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -1109,6 +1190,7 @@ export default function HistoriaDonante() {
                                             size="small"
                                             value={texto24}
                                             onChange={e => setTexto24(e.target.value)}
+                                            disabled={resp24 !== true}
                                             sx={{
                                                 width: 300, ml: 5,
                                                 // Cambia el color del texto
@@ -1220,6 +1302,7 @@ export default function HistoriaDonante() {
                                             size="small"
                                             value={texto28}
                                             onChange={e => setTexto28(e.target.value)}
+                                            disabled={resp28 !== true}
                                             sx={{
                                                 width: 300, ml: 2,
                                                 // Cambia el color del texto
@@ -1553,50 +1636,50 @@ export default function HistoriaDonante() {
                 </AccordionDetails>
             </Accordion>
 
-             {/* Modal de éxito/alerta */}
-                  <Dialog
-                    open={openModal}
-                    onClose={() => setOpenModal(false)}
-                    PaperProps={{
-                      sx: {
+            {/* Modal de éxito/alerta */}
+            <Dialog
+                open={openModal}
+                onClose={() => setOpenModal(false)}
+                PaperProps={{
+                    sx: {
                         borderRadius: 3,
                         padding: 3,
                         minWidth: 320,
                         boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-                      },
-                    }}
-                  >
-                    <DialogTitle sx={{ textAlign: "center", pb: 0 }}>
-                      <Stack direction="column" alignItems="center" spacing={1}>
+                    },
+                }}
+            >
+                <DialogTitle sx={{ textAlign: "center", pb: 0 }}>
+                    <Stack direction="column" alignItems="center" spacing={1}>
                         {modalType === "success" ? (
-                          <>
-                            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
-                            <Typography variant="h5" fontWeight="bold" color="success.main">
-                              ¡Éxito!
-                            </Typography>
-                          </>
+                            <>
+                                <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
+                                <Typography variant="h5" fontWeight="bold" color="success.main">
+                                    ¡Éxito!
+                                </Typography>
+                            </>
                         ) : (
-                          <>
-                            <ErrorOutlineIcon sx={{ fontSize: 60, color: "error.main" }} />
-                            <Typography variant="h5" fontWeight="bold" color="error.main">
-                              Atención
-                            </Typography>
-                          </>
+                            <>
+                                <ErrorOutlineIcon sx={{ fontSize: 60, color: "error.main" }} />
+                                <Typography variant="h5" fontWeight="bold" color="error.main">
+                                    Atención
+                                </Typography>
+                            </>
                         )}
-                      </Stack>
-                    </DialogTitle>
-                    <DialogContent>
-                      <Typography
+                    </Stack>
+                </DialogTitle>
+                <DialogContent>
+                    <Typography
                         variant="body1"
                         textAlign="center"
                         sx={{ mt: 1, fontSize: "1.1rem" }}
-                      >
+                    >
                         {modalType === "success"
-                          ? "Se guardó correctamente"
-                          : errorMsg}
-                      </Typography>
-                    </DialogContent>
-                  </Dialog>
+                            ? "Se guardó correctamente"
+                            : errorMsg}
+                    </Typography>
+                </DialogContent>
+            </Dialog>
         </>
     )
 }
