@@ -7,6 +7,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
+import axios from 'axios';
 
 // Definición de interfaces
 interface Componentes {
@@ -41,6 +42,27 @@ interface SolicitudRow {
   cantidad: number;
   prioridad: string;
 }
+
+const API_CENTRIFUGACION = 'http://localhost:3000/centrifugacion';
+const API_COMPONENTES = 'http://localhost:3000/componentes-obtenidos';
+
+const guardarCentrifugacion = async (centrifugacionData: any) => {
+  try {
+    const response = await axios.post(API_CENTRIFUGACION, centrifugacionData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const guardarComponentesObtenidos = async (componentes: any[], no_hc: string) => {
+  try {
+    const response = await axios.post(API_COMPONENTES, { no_hc, componentes });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 const solicitudColumns: GridColDef[] = [
   { field: 'componente', headerName: 'Componente', width: 150, valueOptions: ["CEPL", "CP", "PFC", "CRIO"], editable: false },
@@ -90,7 +112,6 @@ const initialActaRows: ActaRow[] = [
     estado_obtencion: '',
     componentes: []
   }
-   
 ];
 
 export default function EntradaProduccion() {
@@ -103,7 +124,6 @@ export default function EntradaProduccion() {
   const [componentesRowId, setComponentesRowId] = useState<number | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<number, string[]>>({});
 
-  // Efectos para cerrar modales automáticamente
   useEffect(() => {
     if (openModal) {
       const timer = setTimeout(() => setOpenModal(false), 3000);
@@ -119,26 +139,20 @@ export default function EntradaProduccion() {
   }, [openEmptyFieldsModal]);
 
   // Funciones de validación
- // Función de validación de fecha
-const isValidDate = (dateString: string): boolean => {
-  return !isNaN(Date.parse(dateString));
-};
+  const isValidDate = (dateString: string): boolean => {
+    return !isNaN(Date.parse(dateString));
+  };
 
-// Función para validar que la fecha es hoy o en el futuro
-const isTodayOrFutureDate = (dateString: string): boolean => {
-  if (!isValidDate(dateString)) return false;
-  
-  const inputDate = new Date(dateString);
-  const today = new Date();
-  
-  // Normalizamos las fechas para comparar solo día, mes y año
-  const normalizedInput = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
-  const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  
-  return normalizedInput.getTime() >= normalizedToday.getTime();
-};
+  const isTodayOrFutureDate = (dateString: string): boolean => {
+    if (!isValidDate(dateString)) return false;
+    const inputDate = new Date(dateString);
+    const today = new Date();
+    const normalizedInput = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
+    const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return normalizedInput.getTime() >= normalizedToday.getTime();
+  };
 
-  const isEmpty = (value: any) => 
+  const isEmpty = (value: any) =>
     value === null || value === undefined || value === '';
 
   const validateRow = (row: ActaRow): string[] => {
@@ -189,14 +203,14 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
             errors.push(`Componente obtenido ${index + 1}: Volumen debe ser un número positivo`);
           }
           if (isEmpty(comp.fecha_obtencion)) {
-          errors.push(`Componente obtenido ${index + 1}: Fecha es requerida`);
-        } else if (!isTodayOrFutureDate(comp.fecha_obtencion)) {
-          errors.push(`Componente obtenido ${index + 1}: La fecha no puede ser anterior al día actual`);
-        }
-      });
+            errors.push(`Componente obtenido ${index + 1}: Fecha es requerida`);
+          } else if (!isTodayOrFutureDate(comp.fecha_obtencion)) {
+            errors.push(`Componente obtenido ${index + 1}: La fecha no puede ser anterior al día actual`);
+          }
+        });
+      }
     }
-  }
-  
+
     // Validar causa si estado es "Baja"
     if (row.estado_obtencion === "Baja" && isEmpty(row.causa_baja)) {
       errors.push("Causa de baja es requerida");
@@ -231,14 +245,39 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
     return newRow;
   }, []);
 
-  // Guardar datos
-  const handleSave = useCallback(() => {
+  // Guardar datos en backend
+  const handleSave = useCallback(async () => {
     if (hasInvalidFields()) {
       setOpenEmptyFieldsModal(true);
     } else {
-      // Lógica para guardar en la base de datos
-      console.log("Componentes guardados:", rows);
-      setOpenModal(true);
+      try {
+        for (const row of rows) {
+          // 1. Guarda la centrifugación
+          await guardarCentrifugacion({
+            no_consecutivo: row.no_consecutivo,
+            no_hc: row.no_hc,
+            grupo_acta: row.grupo_acta,
+            factor_acta: row.factor_acta,
+            sexo: row.sexo,
+            edad: row.edad,
+            volumen_acta: row.volumen_acta,
+            componente_a_obtener: row.componente_a_obtener,
+            no_centrifuga: row.no_centrifuga,
+            temperatura: row.temperatura,
+            velocidad: row.velocidad,
+            estado_obtencion: row.estado_obtencion,
+            causa_baja: row.causa_baja,
+          });
+
+          // 2. Si tiene componentes obtenidos, guárdalos
+          if (row.estado_obtencion === "Obtenido" && row.componentes && row.componentes.length > 0) {
+            await guardarComponentesObtenidos(row.componentes, row.no_hc);
+          }
+        }
+        setOpenModal(true);
+      } catch (error) {
+        alert('Error al guardar en la base de datos');
+      }
     }
   }, [hasInvalidFields, rows]);
 
@@ -270,7 +309,7 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
 
   const handleSaveComponentes = useCallback(() => {
     if (componentesRowId === null) return;
-    
+
     const row = rows.find(r => r.id === componentesRowId);
     if (!row || row.estado_obtencion !== "Obtenido") {
       // Mostrar error si el estado no es "Obtenido"
@@ -280,7 +319,7 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
     setRows(prevRows =>
       prevRows.map(row =>
         row.id === componentesRowId
-          ? { ...row, componentes_obtenidos: [...componentesTemp] }
+          ? { ...row, componentes: [...componentesTemp] }
           : row
       )
     );
@@ -292,74 +331,74 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
   }, []);
 
   // Memoizar las columnas para mejorar rendimiento
- const procesoColumns = useMemo(() => {
-  const baseColumns: GridColDef[] = [
-    { field: "no_consecutivo", headerName: "No", width: 70 },
-    { field: 'no_hc', headerName: 'No. HC', width: 100, editable: false },
-    { field: 'grupo_acta', headerName: 'Grupo', width: 60, editable: false },
-    { field: 'factor_acta', headerName: 'Factor', width: 60, editable: false },
-    { field: "sexo", headerName: "Sexo", width: 50 },
-    { field: "edad", headerName: "Edad", width: 60, type: "number" },
-    { field: 'volumen_acta', headerName: 'Vol.(ml)', width: 70, type: 'number', editable: false },
-    { 
-      field: 'componente_a_obtener', 
-      headerName: 'Comp. a Obtener', 
-      width: 140, 
-      editable: true, 
-      type: 'singleSelect', 
-      valueOptions: ['CEPL','CEAD','CE','CP','SP','SC','PC', 'PFC', 'CRIO'] 
-    },
-    { field: 'no_centrifuga', headerName: 'No. Centrífuga', type: 'number', width: 120, editable: true },
-    { field: 'temperatura', headerName: 'Temp.(°C)', type: 'number', width: 90, editable: true },
-    { field: 'velocidad', headerName: 'Velocidad(rev)', type: 'number', width: 120, editable: true },
-    { 
-      field: "estado_obtencion", 
-      headerName: "Estado Obtencion", 
-      width: 140, 
-      editable: true, 
-      type: "singleSelect", 
-      valueOptions: ["Obtenido", "Baja", "Pendiente"] 
+  const procesoColumns = useMemo(() => {
+    const baseColumns: GridColDef[] = [
+      { field: "no_consecutivo", headerName: "No", width: 70 },
+      { field: 'no_hc', headerName: 'No. HC', width: 100, editable: false },
+      { field: 'grupo_acta', headerName: 'Grupo', width: 60, editable: false },
+      { field: 'factor_acta', headerName: 'Factor', width: 60, editable: false },
+      { field: "sexo", headerName: "Sexo", width: 50 },
+      { field: "edad", headerName: "Edad", width: 60, type: "number" },
+      { field: 'volumen_acta', headerName: 'Vol.(ml)', width: 70, type: 'number', editable: false },
+      {
+        field: 'componente_a_obtener',
+        headerName: 'Comp. a Obtener',
+        width: 140,
+        editable: true,
+        type: 'singleSelect',
+        valueOptions: ['CEPL', 'CEAD', 'CE', 'CP', 'SP', 'SC', 'PC', 'PFC', 'CRIO']
+      },
+      { field: 'no_centrifuga', headerName: 'No. Centrífuga', type: 'number', width: 120, editable: true },
+      { field: 'temperatura', headerName: 'Temp.(°C)', type: 'number', width: 90, editable: true },
+      { field: 'velocidad', headerName: 'Velocidad(rev)', type: 'number', width: 120, editable: true },
+      {
+        field: "estado_obtencion",
+        headerName: "Estado Obtencion",
+        width: 140,
+        editable: true,
+        type: "singleSelect",
+        valueOptions: ["Obtenido", "Baja", "Pendiente"]
+      }
+    ];
+
+    if (!selectedRow) return baseColumns;
+
+    const rowData = rows.find(row => row.id === selectedRow);
+
+    // Columnas adicionales según el estado
+    const additionalColumns: GridColDef[] = [];
+
+    if (rowData?.estado_obtencion === "Baja") {
+      additionalColumns.push({
+        field: "causa_baja",
+        headerName: "Causa Baja",
+        width: 100,
+        editable: true,
+        type: "singleSelect",
+        valueOptions: ["Ictero", "Lipemia", "Hemolisis", "Rotura"]
+      });
     }
-  ];
 
-  if (!selectedRow) return baseColumns;
+    if (rowData?.estado_obtencion === "Obtenido") {
+      additionalColumns.push({
+        field: "acciones",
+        headerName: "Comp. Obtenidos",
+        width: 150,
+        renderCell: (params) => (
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<AddCircleOutlineIcon />}
+            onClick={() => handleAddComponentesObtenidos(params.row.id)}
+          >
+            Agregar/Ver
+          </Button>
+        )
+      });
+    }
 
-  const rowData = rows.find(row => row.id === selectedRow);
-
-  // Columnas adicionales según el estado
-  const additionalColumns: GridColDef[] = [];
-
-  if (rowData?.estado_obtencion === "Baja") {
-    additionalColumns.push({
-      field: "causa_baja",
-      headerName: "Causa Baja",
-      width: 100,
-      editable: true,
-      type: "singleSelect",
-      valueOptions: ["Ictero", "Lipemia", "Hemolisis", "Rotura"]
-    });
-  }
-
-  if (rowData?.estado_obtencion === "Obtenido") {
-    additionalColumns.push({
-      field: "acciones",
-      headerName: "Comp. Obtenidos",
-      width: 150,
-      renderCell: (params) => (
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<AddCircleOutlineIcon />}
-          onClick={() => handleAddComponentesObtenidos(params.row.id)}
-        >
-          Agregar/Ver
-        </Button>
-      )
-    });
-  }
-
-  return [...baseColumns, ...additionalColumns];
-}, [selectedRow, rows, handleAddComponentesObtenidos]);
+    return [...baseColumns, ...additionalColumns];
+  }, [selectedRow, rows, handleAddComponentesObtenidos]);
 
   return (
     <>
@@ -368,7 +407,6 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
         p: 1,
         display: 'flex',
         flexDirection: 'column',
-        //gap: 0,
         height: 'calc(100vh - 0px)',
         overflow: 'hidden'
       }}>
@@ -379,11 +417,10 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
           alignItems: 'flex-start',
           flexWrap: 'wrap',
           minWidth: '1000px',
-         zIndex: 2,
-         backgroundColor: 'background.paper',
-         pt: 1,
-         pb: 0,
-       
+          zIndex: 2,
+          backgroundColor: 'background.paper',
+          pt: 1,
+          pb: 0,
         }}>
           {/* Tabla Solicitud */}
           <Paper sx={{
@@ -404,7 +441,7 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
             >
               Solicitud de Componentes
             </Typography>
-            <Box sx={{  width: 'fit-content' }}>
+            <Box sx={{ width: 'fit-content' }}>
               <DataGrid
                 rows={solicitudRows}
                 columns={solicitudColumns}
@@ -429,19 +466,17 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
               mr: { xs: 1, md: 7 },
               mb: 1,
               alignSelf: 'flex-end',
-       
             }}
           >
             Guardar
           </BotonPersonalizado>
         </Box>
-          
+
         {/* Tabla Proceso */}
         <Paper sx={{
-           overflow: 'auto',
+          overflow: 'auto',
           width: '100%',
           minWidth: 'fit-content',
-        
         }}>
           <Typography
             variant="h4"
@@ -450,38 +485,37 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
               backgroundColor: 'primary.dark',
               textAlign: 'center',
               color: 'white',
-               position: 'sticky',
-               top: 0,
-               zIndex: 1
+              position: 'sticky',
+              top: 0,
+              zIndex: 1
             }}
           >
             Proceso de Componentes
           </Typography>
           <Box>
             <DataGrid
-               rows={rows}
-                columns={procesoColumns} // Usamos las columnas memorizadas
-                processRowUpdate={handleProcessRowUpdate}
-                onRowClick={handleRowClick}
-                slots={{ toolbar: GridToolbar }}
-                slotProps={{
+              rows={rows}
+              columns={procesoColumns}
+              processRowUpdate={handleProcessRowUpdate}
+              onRowClick={handleRowClick}
+              slots={{ toolbar: GridToolbar }}
+              slotProps={{
                 toolbar: {
-                showQuickFilter: true,
+                  showQuickFilter: true,
                 }
-             }}
-               initialState={{
-               pagination: { paginationModel: { pageSize: 10 } }
-                }}
-               pageSizeOptions={[10]}
-               editMode="row"
-               getRowClassName={(params) => 
-               validationErrors[params.id as number]?.length > 0 ? 'error-row' : ''
-               }
+              }}
+              initialState={{
+                pagination: { paginationModel: { pageSize: 10 } }
+              }}
+              pageSizeOptions={[10]}
+              editMode="row"
+              getRowClassName={(params) =>
+                validationErrors[params.id as number]?.length > 0 ? 'error-row' : ''
+              }
             />
           </Box>
         </Paper>
-      
-</Box>
+      </Box>
       {/* Modal para agregar/ver componentes obtenidos */}
       <Dialog open={openComponentesModal} onClose={() => setOpenComponentesModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Componentes Obtenidos (máx. 3)</DialogTitle>
@@ -492,7 +526,7 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
                 select
                 label="Componente"
                 value={comp.componente}
-                onChange={e => handleComponentesChange(idx, 'componente_obtenido', e.target.value)}
+                onChange={e => handleComponentesChange(idx, 'componente', e.target.value)}
                 SelectProps={{ native: true }}
                 sx={{ minWidth: 120 }}
                 error={!comp.componente}
@@ -517,23 +551,23 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
                 sx={{ minWidth: 120 }}
                 error={!comp.volumen || isNaN(Number(comp.volumen)) || Number(comp.volumen) <= 0}
                 helperText={
-                  !comp.volumen ? "Requerido" : 
-                  isNaN(Number(comp.volumen)) || Number(comp.volumen) <= 0 ? "Debe ser > 0" : ""
+                  !comp.volumen ? "Requerido" :
+                    isNaN(Number(comp.volumen)) || Number(comp.volumen) <= 0 ? "Debe ser > 0" : ""
                 }
               />
-            <TextField
-          label="Fecha Obtención"
-          type="date"
-          value={comp.fecha_obtencion}
-          onChange={e => handleComponentesChange(idx, 'fecha_obtencion', e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          sx={{ minWidth: 150 }}
-          error={!comp.fecha_obtencion || !isTodayOrFutureDate(comp.fecha_obtencion)}
-          helperText={
-            !comp.fecha_obtencion ? "Requerido" : 
-            !isTodayOrFutureDate(comp.fecha_obtencion) ? 
-            "La fecha no puede ser anterior al día actual" : ""
-          }
+              <TextField
+                label="Fecha Obtención"
+                type="date"
+                value={comp.fecha_obtencion}
+                onChange={e => handleComponentesChange(idx, 'fecha_obtencion', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ minWidth: 150 }}
+                error={!comp.fecha_obtencion || !isTodayOrFutureDate(comp.fecha_obtencion)}
+                helperText={
+                  !comp.fecha_obtencion ? "Requerido" :
+                    !isTodayOrFutureDate(comp.fecha_obtencion) ?
+                      "La fecha no puede ser anterior al día actual" : ""
+                }
               />
               <IconButton color="error" onClick={() => handleRemoveComponente(idx)}>
                 <DeleteIcon />
@@ -551,19 +585,19 @@ const isTodayOrFutureDate = (dateString: string): boolean => {
           </Button>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
             <Button onClick={() => setOpenComponentesModal(false)} sx={{ mr: 2 }}>Cancelar</Button>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={handleSaveComponentes}
               disabled={
                 componentesTemp.length === 0 ||
-                componentesTemp.some(comp => 
-                  !comp.componente|| 
-                  !comp.volumen || 
+                componentesTemp.some(comp =>
+                  !comp.componente ||
+                  !comp.volumen ||
                   !comp.fecha_obtencion ||
-                   isNaN(Number(comp.volumen)) || 
-                   Number(comp.volumen) <= 0 ||
+                  isNaN(Number(comp.volumen)) ||
+                  Number(comp.volumen) <= 0 ||
                   !isTodayOrFutureDate(comp.fecha_obtencion)
-              )}
+                )}
             >
               Guardar
             </Button>

@@ -37,6 +37,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UsuarioActivo from "./pages/auth/Usuario";
 import CitadosPS from "./pages/prechequeo_seleccion/CitadosPage";
 import NuevaHistoriaClinica from "./pages/historia_clinica/CrearHC";
+import DesechosPro from "./pages/calidad/ConfirmacionDesechoProPage";
 
 export default function App() {
   return (
@@ -55,7 +56,7 @@ export default function App() {
         }
       />
 
-        <Route path="/citadosps" element={<CitadosPS />} />
+      <Route path="/citadosps" element={<CitadosPS />} />
 
       <Route
         path="/resultadosprechequeo"
@@ -76,7 +77,7 @@ export default function App() {
 
       {/* Inscripcion */}
       <Route
-        path="/inscripcion/:ci"
+        path="/inscripcion/:id"
         element={
           <ProtectedRoute allowedRoles={["tecnico_inscripcion"]}>
             <FormularioInscripcion />
@@ -220,6 +221,14 @@ export default function App() {
         element={
           <ProtectedRoute allowedRoles={["tecnico_aseguramiento_calidad"]}>
             <Desechos />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/desechospro"
+        element={
+          <ProtectedRoute allowedRoles={["tecnico_aseguramiento_calidad"]}>
+            <DesechosPro />
           </ProtectedRoute>
         }
       />

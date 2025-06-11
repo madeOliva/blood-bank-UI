@@ -26,15 +26,10 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import BotonPersonalizado from "../../components/Button";
+
 
 export default function RecepciondiariasEntidad() {
   const [entidad, setEntidad] = useState("");
-  const [selectedDate, setSelectedDate] = useState<any>(null);
-
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -47,33 +42,42 @@ export default function RecepciondiariasEntidad() {
   const [openSuccess, setOpenSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // NUEVO: Para advertencia si no hay selección
-  const [selectionModel, setSelectionModel] = useState<any[]>([]);
   const [openWarning, setOpenWarning] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    fetch("http://localhost:3000/registro-donacion/donaciones-diarias")
-      .then(res => res.json())
-      .then(data => {
-        setRows(
-          Array.isArray(data)
-            ? data
-                .filter(row => !!row)
-                .map((row: any, idx: number) => ({
-                  ...row,
-                  id:
-                    typeof row.id === "string" ? row.id
-                    : typeof row._id === "string" ? row._id
-                    : (row._id && typeof row._id === "object" && row._id.$oid) ? row._id.$oid
-                    : String(idx),
-                }))
-            : []
-        );
-      })
-      .catch(() => setRows([]))
-      .finally(() => setLoading(false));
-  }, []);
+  setLoading(true);
+  fetch("http://localhost:3000/registro-donacion/donaciones-diarias")
+    .then(res => res.json())
+    .then(data => {
+      setRows(
+        Array.isArray(data)
+          ? data
+              .filter(row => !!row && (
+                (typeof row.estado === "string" && row.estado.trim().toLowerCase() === "procesando") ||
+                (row.estado && row.estado.nombre && row.estado.nombre.trim().toLowerCase() === "procesando")
+              ))
+              .map((row: any, idx: number) => ({
+                ...row,
+                id:
+                  typeof row.id === "string" ? row.id
+                  : typeof row._id === "string" ? row._id
+                  : (row._id && typeof row._id === "object" && row._id.$oid) ? row._id.$oid
+                  : String(idx),
+                no: row.no ?? idx + 1,
+                hc: row.hc ?? "",
+                sexo: row.sexo ?? "",
+                edad: row.edad ?? "",
+                volumen: row.volumen ?? "",
+                grupo: row.grupo ?? "",
+                factor: row.factor ?? "",
+                estado: row.estado ?? "",
+              }))
+          : []
+      );
+    })
+    .catch(() => setRows([]))
+    .finally(() => setLoading(false));
+}, []);
 
   const handleChangeE = (event: SelectChangeEvent) => {
     setEntidad(event.target.value as string);
@@ -92,7 +96,6 @@ export default function RecepciondiariasEntidad() {
     setMotivoDesecho("");
   };
 
-  // Desechar (soft delete: solo cambia el estado en backend)
   const handleConfirmDesechar = async () => {
     if (!selectedRowId) return;
     try {
@@ -108,7 +111,6 @@ export default function RecepciondiariasEntidad() {
       });
 
       if (res.ok) {
-        // Recarga los datos desde el backend para reflejar el cambio
         fetch("http://localhost:3000/registro-donacion/donaciones-diarias")
           .then(res => res.json())
           .then(data => {
@@ -123,6 +125,14 @@ export default function RecepciondiariasEntidad() {
                         : typeof row._id === "string" ? row._id
                         : (row._id && typeof row._id === "object" && row._id.$oid) ? row._id.$oid
                         : String(idx),
+                      no: row.no ?? idx + 1,
+                      hc: row.hc ?? "",
+                      sexo: row.sexo ?? "",
+                      edad: row.edad ?? "",
+                      volumen: row.volumen ?? "",
+                      grupo: row.grupo ?? "",
+                      factor: row.factor ?? "",
+                      estado: row.estado ?? "",
                     }))
                 : []
             );
@@ -141,17 +151,55 @@ export default function RecepciondiariasEntidad() {
     setOpenModal(false);
   };
 
-  // NUEVO: Función para enviar y advertir si no hay selección
-  const handleEnviar = () => {
-    if (!selectionModel || selectionModel.length === 0) {
-      setSuccessMessage("Debe seleccionar al menos una bolsa.");
+  // FUNCIÓN PARA ENVIAR INDIVIDUAL Y OCULTAR LAS ACEPTADAS
+  const handleEnviarIndividual = async (id: string | number) => {
+    try {
+      await fetch(`http://localhost:3000/registro-donacion/updatee/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          estado: "aceptada",
+        }),
+      });
+
+      // Recarga los datos para actualizar la vista
+      fetch("http://localhost:3000/registro-donacion/donaciones-diarias")
+        .then(res => res.json())
+        .then(data => {
+          setRows(
+            Array.isArray(data)
+              ? data
+                  .filter(row => !!row)
+                  .map((row: any, idx: number) => ({
+                    ...row,
+                    id:
+                      typeof row.id === "string" ? row.id
+                      : typeof row._id === "string" ? row._id
+                      : (row._id && typeof row._id === "object" && row._id.$oid) ? row._id.$oid
+                      : String(idx),
+                    no: row.no ?? idx + 1,
+                    hc: row.hc ?? "",
+                    sexo: row.sexo ?? "",
+                    edad: row.edad ?? "",
+                    volumen: row.volumen ?? "",
+                    grupo: row.grupo ?? "",
+                    factor: row.factor ?? "",
+                    estado: row.estado ?? "",
+                  }))
+              : []
+          );
+        });
+
+      setSuccessMessage("¡Donación enviada correctamente!");
+      setOpenSuccess(true);
+      setTimeout(() => setOpenSuccess(false), 2000);
+    } catch (error) {
+      setSuccessMessage("Error al enviar donación.");
       setOpenWarning(true);
       setTimeout(() => setOpenWarning(false), 2000);
-      return;
     }
-    setSuccessMessage("¡Donaciones enviadas correctamente!");
-    setOpenSuccess(true);
-    setTimeout(() => setOpenSuccess(false), 2000);
   };
 
   const columns: GridColDef<any>[] = [
@@ -165,16 +213,26 @@ export default function RecepciondiariasEntidad() {
     {
       field: "accion",
       headerName: "",
-      width: 150,
+      width: 250,
       editable: false,
       renderCell: (params) => (
-        <Button
-          onClick={() => handleOpenModal(params.id)}
-          color="error"
-          variant="contained"
-        >
-          Desechar
-        </Button>
+        <>
+          <Button
+            onClick={() => handleOpenModal(params.id)}
+            color="error"
+            variant="contained"
+            sx={{ mr: 1 }}
+          >
+            Desechar
+          </Button>
+          <Button
+            onClick={() => handleEnviarIndividual(params.id)}
+            color="success"
+            variant="contained"
+          >
+            Enviar
+          </Button>
+        </>
       ),
     },
   ];
@@ -196,7 +254,7 @@ export default function RecepciondiariasEntidad() {
       >
         Recepción de Donaciones por Entidades
       </Typography>
-      <Container>
+      <Container >
         <Box sx={{ marginTop: "20px", width: "90%", marginBlockEnd: 1, marginLeft: 7 }}>
           <Box
             sx={{
@@ -230,14 +288,6 @@ export default function RecepciondiariasEntidad() {
                 <MenuItem value={130}>15-Abel Santamaria</MenuItem>
               </Select>
             </FormControl>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label="Fecha"
-                value={selectedDate}
-                onChange={setSelectedDate}
-                slotProps={{ textField: { width: 200 } }}
-              />
-            </LocalizationProvider>
           </Box>
 
           <DataGrid
@@ -252,7 +302,7 @@ export default function RecepciondiariasEntidad() {
                 color: "#000",
               },
             }}
-            rows={rows.filter(row => row.estado !== "desechada")}
+            rows={rows.filter(row => row.estado !== "desechada" && row.estado !== "aceptada")}
             columns={columns}
             loading={loading}
             initialState={{
@@ -263,8 +313,6 @@ export default function RecepciondiariasEntidad() {
               },
             }}
             pageSizeOptions={[10]}
-            checkboxSelection
-         onRowSelectionModelChange={(newSelection) => setSelectionModel(newSelection)}
             disableRowSelectionOnClick
           />
         </Box>
@@ -423,18 +471,6 @@ export default function RecepciondiariasEntidad() {
           </Typography>
         </DialogContent>
       </Dialog>
-
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-       <BotonPersonalizado onClick={handleEnviar} sx={{ width: 225, marginRight: 2 }}>
-  ENVIAR
-</BotonPersonalizado>
-      </Box>
     </>
   );
 }
