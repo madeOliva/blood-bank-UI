@@ -13,27 +13,25 @@ export default function DesechosPro() {
 
   // Cargar solo los componentes con estado_obtencion "baja"
   useEffect(() => {
-    axios.get("http://localhost:3000/componentes-obtenidos/bajas")
-      .then(response => {
-        const bajas = Array.isArray(response.data)
-          ? response.data.map((item: any, idx: number) => ({
-              id: item.id || item._id || idx,
-              no: item.no ?? idx + 1,
-              hc: item.no_hc ?? "",
-              desecho: item.desecho ?? "",
-              motivo: item.causa_baja ?? "",
-              componente:
-                item.nombre_componente
-                ?? (item.componentes && Array.isArray(item.componentes) && item.componentes[0] && item.componentes[0].tipo)
-                ?? "",
-            }))
-          : [];
-        setRows(bajas);
-      })
-      .catch(error => {
-        console.error("Error fetching data:", error);
-      });
-  }, []);
+  axios.get("http://localhost:3000/componentes-obtenidos/bajas")
+    .then(response => {
+       console.log("DATOS RECIBIDOS:", response.data); // <-- AGREGA ESTO
+      const bajas = Array.isArray(response.data)
+  ? response.data.map((item: any, idx: number) => ({
+      id: item._id || idx,
+      no: item.no_consecutivo ?? idx + 1,
+      hc: item.historia_clinica?.no_hc ?? "",
+      desecho: "Componente",
+      causa_baja: item.causa_baja ?? "",
+      componente: item.componentes?.[0]?.tipo ?? "",
+    }))
+  : [];
+      setRows(bajas);
+    })
+    .catch(error => {
+      console.error("Error fetching data:", error);
+    });
+}, []);
 
   const handleOpenModal = (id: string | number) => {
     setSelectedRowId(id);
@@ -78,19 +76,16 @@ export default function DesechosPro() {
       });
       // Actualiza la tabla después del cambio
       const response = await axios.get("http://localhost:3000/componentes-obtenidos/bajas");
-      const bajas = Array.isArray(response.data)
-        ? response.data.map((item: any, idx: number) => ({
-            id: item.id || item._id || idx,
-            no: item.no ?? idx + 1,
-            hc: item.no_hc ?? "",
-            desecho: item.desecho ?? "",
-            motivo: item.causa_baja ?? "",
-            componente:
-              item.nombre_componente
-              ?? (item.componentes && Array.isArray(item.componentes) && item.componentes[0] && item.componentes[0].tipo)
-              ?? "",
-          }))
-        : [];
+     const bajas = Array.isArray(response.data)
+  ? response.data.map((item: any, idx: number) => ({
+      id: item._id || idx,
+      no: item.no_consecutivo ?? idx + 1,
+      hc: item.historia_clinica?.no_hc ?? "",
+      desecho: "Componente",
+      causa_baja: item.causa_baja ?? "",
+      componente: item.componentes?.[0]?.tipo ?? "",
+    }))
+  : [];
       setRows(bajas);
     } catch (error) {
       alert("Error al actualizar el estado.");
@@ -101,7 +96,7 @@ export default function DesechosPro() {
     { field: "no", headerName: "NO", width: 90 },
     { field: "hc", headerName: "HC-donación", width: 150 },
     { field: "desecho", headerName: "Desecho", width: 150 },
-    { field: "motivo", headerName: "Motivo", width: 250 },
+    { field: "causa_baja", headerName: "Causa de baja", width: 180 },
  
     {
       field: "accion",
