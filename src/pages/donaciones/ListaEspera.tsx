@@ -1,115 +1,17 @@
-import { DataGrid, GridRowsProp, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridRowsProp, GridColDef, GridRowParams } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
 import { Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-const rows: GridRowsProp = [
-  {
-    id: 1,
-    ci: "123456789",
-    "nombres y aplelidos": "Juan Pérez",
-    edad: 25,
-    sexo: "Masculino",
-    grupo: "A",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 2,
-    ci: "987654321",
-    "nombres y aplelidos": "María López",
-    edad: 30,
-    sexo: "Femenino",
-    grupo: "B",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-  {
-    id: 3,
-    ci: "456789123",
-    "nombres y aplelidos": "Carlos García",
-    edad: 40,
-    sexo: "Masculino",
-    grupo: "O",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 4,
-    ci: "789123456",
-    "nombres y aplelidos": "Ana Martínez",
-    edad: 35,
-    sexo: "Femenino",
-    grupo: "AB",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-  {
-    id: 5,
-    ci: "321654987",
-    "nombres y aplelidos": "Luis Fernández",
-    edad: 28,
-    sexo: "Masculino",
-    grupo: "A",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 6,
-    ci: "654987321",
-    "nombres y aplelidos": "Sofía Ramírez",
-    edad: 22,
-    sexo: "Femenino",
-    grupo: "B",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-  {
-    id: 7,
-    ci: "147258369",
-    "nombres y aplelidos": "Miguel Torres",
-    edad: 45,
-    sexo: "Masculino",
-    grupo: "O",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 8,
-    ci: "369258147",
-    "nombres y aplelidos": "Laura Gómez",
-    edad: 29,
-    sexo: "Femenino",
-    grupo: "AB",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-  {
-    id: 9,
-    ci: "258369147",
-    "nombres y aplelidos": "Pedro Sánchez",
-    edad: 33,
-    sexo: "Masculino",
-    grupo: "A",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 10,
-    ci: "963852741",
-    "nombres y aplelidos": "Elena Ruiz",
-    edad: 27,
-    sexo: "Femenino",
-    grupo: "B",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-];
 
-const columns: GridColDef[] = [
+
+
+ const columns: GridColDef[] = [
   { field: "ci", headerName: "CI", width: 200 },
   {
-    field: "nombres y aplelidos",
+    field: "nombre",
     headerName: "Nombres y Apellidos",
     width: 300,
   },
@@ -117,13 +19,47 @@ const columns: GridColDef[] = [
   { field: "sexo", headerName: "Sexo", width: 100 },
   { field: "grupo", headerName: "Grupo", width: 100 },
   { field: "rh", headerName: "Rh", width: 100 },
-  { field: "donante de", headerName: "Donante de", width: 100 },
+  { field: "donante", headerName: "Donante de", width: 100 },
 ];
 
 export default function ListaEspera() {
   const navigate = useNavigate(); // Hook para navegar entre páginas
+  const [rows, setRows] = useState<any[]>([]);
 
-  const handleRowClick = () => {};
+   useEffect(() => {
+    const fetchAptos = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/registro-donacion/aptos-interrogatorio");
+        // Mapea los datos para el DataGrid
+        const mappedRows = res.data.map((reg: any, idx: number) => ({
+           id: reg._id || reg.id || idx, // Usa _id, id o el índice como último recurso
+          ci: reg.ci,
+          nombre: `${reg.nombre || ""} ${reg.primer_apellido || ""} ${reg.segundo_apellido || ""}`.trim(),
+          edad: reg.edad,
+          sexo: reg.sexo,
+          grupo: reg.grupo,
+          rh: reg.rh,
+          donante: reg.donante,
+          // agrega aquí otros campos si los necesitas
+        }));
+        setRows(mappedRows);
+      } catch (error) {
+        setRows([]);
+      }
+    };
+    fetchAptos();
+  }, []);
+
+  const handleRowClick = (params:GridRowParams) => {
+    const componente = params.row.donante; 
+    if(componente == "Plasma") {
+      // Si el donante es de Plasma, navega a la página de donación de plasma
+      navigate(`/donaciones-plasma/` , { state: { datosDonante: params.row } });
+    }
+    if(componente == "Sangre Total"  )
+    // Puedes pasar el nombre del componente como parte de la ruta o como query param
+    navigate(`/donaciones-sangre/`, { state: { datosDonante: params.row } });
+  };
 
   return (
     <>
@@ -179,8 +115,6 @@ export default function ListaEspera() {
                 color: "#000",
               },
 
-              // border: 1,
-              // borderRadius: 2,
             }}
             initialState={{
               pagination: {

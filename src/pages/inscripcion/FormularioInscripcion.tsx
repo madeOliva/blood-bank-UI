@@ -24,6 +24,27 @@ const FormularioInscripcion: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
 
+  const camposVacios = {
+  no_hc: "",
+  nombre: "",
+  primer_apellido: "",
+  segundo_apellido: "",
+  sexo: "",
+  edad: "",
+  municipio: "",
+  provincia: "",
+  color_piel: "",
+  grupo_sanguine: "",
+  factor: "",
+  consejo_popular: "",
+  no_consultorio: "",
+  ocupacion: "",
+  telefono: "",
+  telefonoLaboral: "",
+  centroLaboral: "",
+  otraLocalizacion: "",
+};
+
   // Estado para los campos del formulario
   const [form, setForm] = useState({
     ci: "",
@@ -85,6 +106,48 @@ const FormularioInscripcion: React.FC = () => {
   // Estado para el modal de éxito
   const [openSuccess, setOpenSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    // Solo buscar si el CI tiene 11 dígitos
+    if (/^\d{11}$/.test(form.ci)) {
+      axios
+        .get(`http://localhost:3000/historia-clinica/ci/${form.ci}`)
+        .then((res) => {
+          if (res.data) {
+            // Llena los campos del formulario con los datos encontrados
+            setForm((prev) => ({
+              ...prev,
+              no_hc: res.data.no_hc || "",
+              nombre: res.data.nombre || "",
+              primer_apellido: res.data.primer_apellido || "",
+              segundo_apellido: res.data.segundo_apellido || "",
+              sexo: res.data.sexo?._id || res.data.sexo || "",
+              edad: res.data.edad ? String(res.data.edad) : "",
+              municipio: res.data.municipio || "",
+              provincia: res.data.provincia?._id || res.data.provincia || "",
+              color_piel: res.data.color_piel || "",
+              grupo_sanguine:
+                res.data.grupo_sanguine?._id || res.data.grupo_sanguine || "",
+              factor: res.data.factor?._id || res.data.factor || "",
+              consejo_popular: res.data.consejo_popular || "",
+              no_consultorio: res.data.no_consultorio || "",
+              ocupacion: res.data.ocupacion || "",
+              telefono: res.data.telefono || "",
+              telefonoLaboral: res.data.telefonoLaboral || "",
+              centroLaboral: res.data.centro_laboral || "",
+              otraLocalizacion: res.data.otra_localizacion || "",
+            }));
+            setIdHistoriaClinica(res.data._id || "");
+          }
+        })
+        .catch(() => {
+          // Si no existe, limpia los campos (opcional)
+           setForm({ ...form, ...camposVacios });
+          setIdHistoriaClinica("");
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.ci]);
 
   // Cargar datos del registro si hay id
   useEffect(() => {
