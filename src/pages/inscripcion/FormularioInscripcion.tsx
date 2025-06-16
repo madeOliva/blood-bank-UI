@@ -25,25 +25,25 @@ const FormularioInscripcion: React.FC = () => {
   const navigate = useNavigate();
 
   const camposVacios = {
-  no_hc: "",
-  nombre: "",
-  primer_apellido: "",
-  segundo_apellido: "",
-  sexo: "",
-  edad: "",
-  municipio: "",
-  provincia: "",
-  color_piel: "",
-  grupo_sanguine: "",
-  factor: "",
-  consejo_popular: "",
-  no_consultorio: "",
-  ocupacion: "",
-  telefono: "",
-  telefonoLaboral: "",
-  centroLaboral: "",
-  otraLocalizacion: "",
-};
+    no_hc: "",
+    nombre: "",
+    primer_apellido: "",
+    segundo_apellido: "",
+    sexo: "",
+    edad: "",
+    municipio: "",
+    provincia: "",
+    color_piel: "",
+    grupo_sanguine: "",
+    factor: "",
+    consejo_popular: "",
+    no_consultorio: "",
+    ocupacion: "",
+    telefono: "",
+    telefonoLaboral: "",
+    centroLaboral: "",
+    otraLocalizacion: "",
+  };
 
   // Estado para los campos del formulario
   const [form, setForm] = useState({
@@ -103,9 +103,13 @@ const FormularioInscripcion: React.FC = () => {
     no_consultorio: "",
   });
 
-  // Estado para el modal de éxito
+  // Estados para el modal de éxito
   const [openSuccess, setOpenSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Estados para el modal de error
+  const [openError, setOpenError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     // Solo buscar si el CI tiene 11 dígitos
@@ -142,10 +146,18 @@ const FormularioInscripcion: React.FC = () => {
         })
         .catch(() => {
           // Si no existe, limpia los campos (opcional)
-           setForm({ ...form, ...camposVacios });
+          setForm({ ...form, ...camposVacios });
           setIdHistoriaClinica("");
         });
-    }
+    }else {
+    // Si el CI no tiene 11 dígitos, limpia los campos dependientes
+    setForm((prev) => ({
+      ...prev,
+      ...camposVacios,
+      ci: prev.ci, // Mantén el valor actual del CI
+    }));
+    setIdHistoriaClinica("");
+  }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.ci]);
 
@@ -413,9 +425,12 @@ const FormularioInscripcion: React.FC = () => {
           navigate("/citados");
         }, 1800);
       }
-    } catch (error) {
-      alert("Error al registrar");
-      console.error(error);
+    } catch (error: any) {
+      setErrorMessage(
+        error?.response?.data?.message ||
+          "Ocurrió un error al registrar. Intente nuevamente."
+      );
+      setOpenError(true);
     }
   };
 
@@ -915,6 +930,46 @@ const FormularioInscripcion: React.FC = () => {
             sx={{ mt: 1, fontSize: "1.1rem" }}
           >
             {successMessage}
+          </Typography>
+        </DialogContent>
+      </Dialog>
+      {/* Modal Error Registro/Modificación */}
+      <Dialog
+        open={openError}
+        onClose={() => setOpenError(false)}
+        aria-labelledby="error-dialog-title"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 3,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{ textAlign: "center", pb: 0 }}
+          id="error-dialog-title"
+        >
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap={1}
+          >
+            <span style={{ color: "#d32f2f", fontSize: 60 }}>✖</span>
+            <Typography variant="h5" fontWeight="bold" color="error">
+              Error
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="body1"
+            textAlign="center"
+            sx={{ mt: 1, fontSize: "1.1rem" }}
+          >
+            {errorMessage}
           </Typography>
         </DialogContent>
       </Dialog>

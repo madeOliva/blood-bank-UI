@@ -1,15 +1,25 @@
 import * as React from "react";
 import { DataGrid, GridRowsProp, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
-import { Box, Typography, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { Dayjs } from "dayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DateTimePicker } from "@mui/x-date-pickers";
 
-// Columnas para donación de sangre
+// Columnas base (las de la lista de espera, ajusta los nombres según tu backend)
+const columnasBase: GridColDef[] = [
+  { field: "noRegistro", headerName: "No. Registro", width: 120 },
+  { field: "fechaD", headerName: "Fecha D", width: 140 },
+  { field: "nombreTecnico", headerName: "Nombre Técnico", width: 180 },
+  { field: "ci", headerName: "CI", width: 120 },
+  { field: "nombre", headerName: "Nombre", width: 180 },
+  { field: "sexo", headerName: "Sexo", width: 80 },
+  { field: "edad", headerName: "Edad", width: 80 },
+  { field: "grupo", headerName: "Grupo", width: 80 },
+  { field: "rh", headerName: "Rh", width: 60 },
+];
+
+// Columnas específicas de sangre (incluyendo No.Tubuladura al principio)
 const columnasSangre: GridColDef[] = [
+  { field: "noTubuladura", headerName: "No.Tubuladura", width: 140 },
   { field: "noBolsa", headerName: "NO. Bolsa", width: 120 },
   { field: "tipoBolsa", headerName: "Tipo de Bolsa", width: 150 },
   { field: "volumen", headerName: "Volumen", width: 100 },
@@ -17,7 +27,7 @@ const columnasSangre: GridColDef[] = [
   { field: "otraReaccion", headerName: "Otra Reacción", width: 150 },
 ];
 
-// Columnas para donación de plasma
+// Columnas específicas de plasma
 const columnasPlasma: GridColDef[] = [
   { field: "tcm", headerName: "TCM", width: 80 },
   { field: "tp", headerName: "TP", width: 80 },
@@ -26,25 +36,36 @@ const columnasPlasma: GridColDef[] = [
   { field: "acd", headerName: "ACD", width: 80 },
   { field: "loteAcd", headerName: "Lote Kit ACD", width: 150 },
   { field: "loteBach", headerName: "Lote Kit Bach", width: 150 },
-  { field: "reacciones", headerName: "Reacciones", width: 150 },
-  { field: "otraReaccion", headerName: "Otra Reacción", width: 150 },
+  { field: "reaccionesPlasma", headerName: "Reacciones Plasma", width: 150 },
+  { field: "otraReaccionPlasma", headerName: "Otra Reacción Plasma", width: 150 },
 ];
 
-// Ejemplo de datos registrados
-const rowsSangre: GridRowsProp = [
+// Unimos todas las columnas
+const columnas: GridColDef[] = [
+  ...columnasBase,
+  ...columnasSangre,
+  ...columnasPlasma,
+];
+
+// Ejemplo de datos (ajusta los nombres de los campos según tu backend)
+const rows: GridRowsProp = [
   {
     id: 1,
+    noRegistro: "001",
+    fechaD: "2024-06-15",
+    nombreTecnico: "Lic. Pérez",
+    ci: "99010112345",
+    nombre: "Juan Pérez",
+    sexo: "M",
+    edad: 30,
+    grupo: "A",
+    rh: "+",
+    noTubuladura: "TUB123",
     noBolsa: "12345",
     tipoBolsa: "Cuádruple",
     volumen: "450ml",
     reacciones: "Ninguna",
     otraReaccion: "",
-  },
-];
-
-const rowsPlasma: GridRowsProp = [
-  {
-    id: 1,
     tcm: "10",
     tp: "12",
     tmin: "30",
@@ -52,16 +73,14 @@ const rowsPlasma: GridRowsProp = [
     acd: "ACD1",
     loteAcd: "L123",
     loteBach: "B456",
-    reacciones: "Mareo",
-    otraReaccion: "",
+    reaccionesPlasma: "Mareo",
+    otraReaccionPlasma: "",
   },
+  // ...más filas
 ];
 
 export default function HojaCargoDonaciones() {
   const navigate = useNavigate();
-  const [fechaInicio, setFechaInicio] = React.useState<Dayjs | null>(null);
-  const [fechaFin, setFechaFin] = React.useState<Dayjs | null>(null);
-  const [tipoDonacion, setTipoDonacion] = React.useState<"sangre" | "plasma">("sangre");
 
   const handleRowClick = () => {
     navigate(`/inscripcion/`);
@@ -85,49 +104,6 @@ export default function HojaCargoDonaciones() {
       >
         Hoja de Cargo
       </Typography>
-      {/* Selector de tipo de donación */}
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Tipo de Donación</InputLabel>
-          <Select
-            value={tipoDonacion}
-            label="Tipo de Donación"
-            onChange={(e) => setTipoDonacion(e.target.value as "sangre" | "plasma")}
-          >
-            <MenuItem value="sangre">Sangre</MenuItem>
-            <MenuItem value="plasma">Plasma</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-      {/* Contenedor para los campos de fecha */}
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <Box
-          sx={{
-            display: "flex",
-            gap: 10,
-            marginTop: 2,
-            justifyContent: "center",
-          }}
-        >
-          <DateTimePicker
-            label="Fecha y Hora Inicio"
-            value={fechaInicio}
-            onChange={(newValue) => setFechaInicio(newValue)}
-            slotProps={{
-              textField: { sx: { width: 400 } },
-            }}
-          />
-          <DateTimePicker
-            label="Fecha y Hora Fin"
-            value={fechaFin}
-            onChange={(newValue) => setFechaFin(newValue)}
-            slotProps={{
-              textField: { sx: { width: 400 } },
-            }}
-          />
-        </Box>
-      </LocalizationProvider>
-      {/* Contenedor para centrar el DataGrid */}
       <Box
         style={{
           display: "flex",
@@ -138,12 +114,12 @@ export default function HojaCargoDonaciones() {
         <Box
           style={{
             height: 450,
-            width: "80%",
+            width: "98%",
           }}
         >
           <DataGrid
-            rows={tipoDonacion === "sangre" ? rowsSangre : rowsPlasma}
-            columns={tipoDonacion === "sangre" ? columnasSangre : columnasPlasma}
+            rows={rows}
+            columns={columnas}
             onRowClick={handleRowClick}
             sx={{
               "& .MuiDataGrid-columnHeaders": {

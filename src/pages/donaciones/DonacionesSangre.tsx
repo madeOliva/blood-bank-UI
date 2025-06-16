@@ -25,16 +25,19 @@ const DonacionesSangre: React.FC = () => {
   const navigate = useNavigate(); // Hook para navegar entre páginas
 
   const [form, setForm] = useState({
+    no_tubuladura: "",
     no_fabricacion_bolsa: "",
     tipo_bolsa: "",
     volumen: "",
     reaccion: "",
     otra_reaccion: "",
     estado: "", // Estado por defecto
+    fechaD: new Date(), // Fecha y hora actual
   });
 
   // Estado de errores por campo
   const [errors, setErrors] = useState({
+    no_tubuladura: "",
     no_fabricacion_bolsa: "",
     tipo_bolsa: "",
     volumen: "",
@@ -42,17 +45,18 @@ const DonacionesSangre: React.FC = () => {
     otra_reaccion: "",
   });
 
+  const [showReacciones, setShowReacciones] = useState(false); // Estado para controlar la visibilidad
+  const [showOtraReaccion, setShowOtraReaccion] = useState(false); // Estado para controlar la visibilidad
+
   // Estados para el modal de éxito
   const [openSuccess, setOpenSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  const [showReacciones, setShowReacciones] = useState(false); // Estado para controlar la visibilidad
-  const [showOtraReaccion, setShowOtraReaccion] = useState(false); // Estado para controlar la visibilidad
-
   //Validación de campos
   const validateFields = () => {
     const newErrors: typeof errors = { ...errors };
-
+    if (!form.no_tubuladura.trim())
+      newErrors.no_tubuladura = "Campo obligatorio";
     if (!form.no_fabricacion_bolsa.trim())
       newErrors.no_fabricacion_bolsa = "Campo obligatorio";
     if (!form.tipo_bolsa.trim()) newErrors.tipo_bolsa = "Campo obligatorio";
@@ -85,11 +89,15 @@ const DonacionesSangre: React.FC = () => {
   // Registrar (actualizar) donación
   const handleRegistrar = async () => {
     if (validateFields()) return;
-    form.estado = "procesando"; 
     try {
+      const datosAEnviar = {
+        ...form,
+        estado: "procesando",
+        fechaD: new Date(), // <-- Esto guarda la fecha y hora actual
+      };
       await axios.put(
         `http://localhost:3000/registro-donacion/${idRegistroDonacion}`,
-        form
+        datosAEnviar
       );
       setSuccessMessage("¡Donacion registrada satisfactoriamente!");
       setOpenSuccess(true);
@@ -170,6 +178,19 @@ const DonacionesSangre: React.FC = () => {
               flexDirection={"column"}
               sx={{ width: { xs: "100%", md: "80%" } }}
             >
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="No.Tubuladura"
+                  variant="outlined"
+                  name="no_tubuladura"
+                  value={form.no_tubuladura}
+                  onChange={handleChange}
+                  error={!!errors.no_tubuladura}
+                  helperText={errors.no_tubuladura}
+                />
+              </Grid>
+
               <Grid item xs={12}>
                 <TextField
                   fullWidth
