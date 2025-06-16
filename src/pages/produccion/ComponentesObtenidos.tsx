@@ -47,28 +47,29 @@ type ComponenteObtenidoRow = {
 export default function ComponentesObtenidos() {
   const [rows, setRows] = useState<ComponenteObtenidoRow[]>([]);
 
- useEffect(() => {
+useEffect(() => {
   axios.get("http://localhost:3000/componentes-obtenidos/componentes_obtenidos")
     .then(res => {
-      console.log("Respuesta backend:", res.data);
-      // NO filtrar, solo mapear
-const data = res.data.map((item: any, idx: number) => ({
-  id: item._id || idx + 1,
-  no_consecutivo: idx + 1,
-  no_hc: item.historia_clinica?.no_hc || "",
-  sexo: item.historia_clinica?.sexo || "",
-  edad: item.historia_clinica?.edad || "",
-  grupo: item.historia_clinica?.grupo || "",
-  factor: item.historia_clinica?.factor || "",
-  tipo_componente: item.componentes?.[0]?.tipo || "",
-  volumen: item.componentes?.[0]?.volumen || "",
-  fecha_obtencion: item.fecha_obtencion,
-}));
+      const data = Array.isArray(res.data)
+        ? res.data
+            .filter((item: any) => item.estado_obtencion === "liberado")
+            .map((item: any, idx: number) => ({
+              id: item._id || idx + 1,
+              no_consecutivo: Number(item.no_consecutivo) || idx + 1,
+              no_hc: item.historia_clinica?.no_hc || "",
+              sexo: item.historia_clinica?.sexo || "",
+              edad: Number(item.historia_clinica?.edad) || "",
+              grupo: item.historia_clinica?.grupo || "",
+              factor: item.historia_clinica?.factor || "",
+              tipo_componente: item.componentes?.[0]?.tipo || "",
+              volumen: item.componentes?.[0]?.volumen || "",
+              fecha_obtencion: item.fecha_obtencion,
+            }))
+        : [];
       setRows(data);
     })
     .catch(() => setRows([]));
 }, []);
-
   return (
     <>
       <Navbar />
