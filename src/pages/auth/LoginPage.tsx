@@ -72,29 +72,29 @@ export default function Login() {
       const decoded = jwtDecode<JwtPayload>(access_token);
       localStorage.setItem('token', access_token);
       localStorage.setItem('userRole', decoded.role);
-      if (decoded.role === 'medico') {
+      if (decoded.role === 'Médico de selección') {
         navigate('/resultadosprechequeo');
-      } else if (decoded.role === 'tecnico_aseguramiento_calidad') {
+      } else if (decoded.role === 'Técnico de aseguramiento de calidad') {
         navigate('/vizualizar');
-      } else if(decoded.role === 'medico_hospital') {
+      } else if(decoded.role === 'Médico del hospital') {
         navigate('/');
-      }else if(decoded.role === 'medico_consultorio') {
+      }else if(decoded.role === 'Médico del consultorio') {
         navigate('/listadop');
-      }else if(decoded.role === 'tecnico_prechequeo'){
+      }else if(decoded.role === 'Técnico de prechequeo'){
         navigate('/prechequeo');
-      }else if (decoded.role === 'jefe_extraccion_movil'){
+      }else if (decoded.role === 'Jefe de extracción móvil'){
         navigate('/planDonaciones')
-      }else if (decoded.role === 'tecnico_movil'){
+      }else if (decoded.role === 'Técnico de móvil'){
         navigate('/planDonaciones')
-      }else if (decoded.role === 'tecnico_inscripcion'){
+      }else if (decoded.role === 'Técnico de inscripción'){
         navigate('/citados')
-      }else if (decoded.role === 'tecnico_transfusion'){
+      }else if (decoded.role === 'Técnico de transfusión'){
         navigate('/pageone')
-      }else if (decoded.role === 'tecnico_donacion'){
+      }else if (decoded.role === 'Técnico de donación'){
         navigate('/lista-espera')
-      }else if (decoded.role === 'tecnico_laboratorio_suma' || decoded.role === 'tecnico_laboratorio_inmuno' || decoded.role === 'tecnico_laboratorio_calidad'){
+      }else if (decoded.role === 'Técnico de laboratorio suma' || decoded.role === 'Técnico de laboratorio inmuno' || decoded.role === 'Técnico de laboratorio calidad'){
         navigate('/principal_lab')
-      }else if (decoded.role === 'tecnico_produccion'){
+      }else if (decoded.role === 'Técnico de producción'){
         navigate('/entrada_produccion')
       }
        else {

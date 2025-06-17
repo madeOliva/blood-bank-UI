@@ -338,30 +338,33 @@ export default function Prechequeo() {
     navigate("/resultadosprechequeo", { replace: true });
   };
 
-  useEffect(() => {
-    const fetchRows = async () => {
-      try {
-        const res = await axios.get("http://localhost:3000/registro-donacion/find");
-        // Mapea los datos para la tabla
-        const mappedRows = res.data.map((reg: any) => ({
-          id: reg._id,
-          ci: reg.historiaClinica?.ci,
-          nombre: reg.historiaClinica?.nombre,
-          primer_apellido: reg.historiaClinica?.primer_apellido,
-          segundo_apellido: reg.historiaClinica?.segundo_apellido,
-          edad: reg.historiaClinica?.edad,
-          sexo: reg.historiaClinica?.sexo,
-          grupo_sanguine: reg.historiaClinica?.grupo_sanguine,
-          factor: reg.historiaClinica?.factor,
-          "donante de": reg.componente?.nombreComponente || "", // <-- aquí el nombre del componente
-        }));
-        setRows(mappedRows);
-      } catch (error) {
-        console.error("Error al cargar los registros:", error);
-      }
-    };
-    fetchRows();
-  }, []);
+useEffect(() => {
+  const fetchRows = async () => {
+    try {
+      const res = await axios.get("http://localhost:3000/registro-donacion/find");
+      console.log("Datos recibidos del backend:", res.data); // Para validar estructura
+
+      const mappedRows = res.data.map((reg: any) => ({
+        id: reg._id,
+        ci: reg.ci || "",
+        nombre: reg.nombre || '',
+        primer_apellido: reg.primer_apellido || '',
+        segundo_apellido: reg.segundo_apellido || '',
+        edad: reg.edad || '',
+        sexo: reg.sexo || '',
+        grupo_sanguine: reg.grupo_sanguine || '',
+        factor: reg.factor || '', // Aquí accedes directamente porque backend ya lo devuelve plano
+        "donante de": reg.componente?.nombreComponente || reg.componente?.nombre_componente || "", 
+      }));
+
+      setRows(mappedRows);
+    } catch (error) {
+      console.error("Error al cargar los registros:", error);
+    }
+  };
+  fetchRows();
+}, []);
+
 
   return (
     <>

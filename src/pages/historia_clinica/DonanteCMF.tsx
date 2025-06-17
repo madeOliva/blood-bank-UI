@@ -15,7 +15,6 @@ interface Donante {
   direccion: string;
   grupo: string;
   ultimaDonacion: string;
-  ultimoChequeo: string;
 }
 
 // Datos de ejemplo
@@ -29,7 +28,6 @@ const initialDonantes: Donante[] = [
     direccion: "Calle 3era Reparto 26 julio Edif 26 Apartamento 4",
     grupo: "A+",
     ultimaDonacion: "2025-01-14",
-    ultimoChequeo: "2024-12-20",
   },
   {
     id: 2,
@@ -40,7 +38,6 @@ const initialDonantes: Donante[] = [
     direccion: "Calle 5ta Reparto 26 julio Bloque 5 bajos",
     grupo: "O+",
     ultimaDonacion: "2025-02-06",
-    ultimoChequeo: "2025-03-15",
   },
 ];
 
@@ -113,12 +110,6 @@ const DonantesCMF: React.FC = () => {
     {
       field: "ultimaDonacion",
       headerName: "Última Donación",
-      width: 140,
-      valueFormatter: (params) => dayjs(params.value).format("DD-MM-YYYY"),
-    },
-    {
-      field: "ultimoChequeo",
-      headerName: "Último Chequeo",
       width: 140,
       valueFormatter: (params) => dayjs(params.value).format("DD-MM-YYYY"),
     },

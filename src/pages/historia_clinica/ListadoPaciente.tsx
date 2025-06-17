@@ -15,6 +15,7 @@ const ListadoPacientes = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [nuevoPaciente, setNuevoPaciente] = useState({
+    ci: '',
     nombre: '',
     primer_apellido: '',
     segundo_apellido: '',
@@ -51,9 +52,9 @@ const ListadoPacientes = () => {
 
   // Cerrar diálogo
   const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setNuevoPaciente({ nombre: '', primer_apellido: '', segundo_apellido: '' });
-  };
+  setOpenDialog(false);
+  setNuevoPaciente({ ci: '', nombre: '', primer_apellido: '', segundo_apellido: '' });
+};
 
   // Manejar cambios en los inputs
   const handleInputChange = (e) => {
@@ -66,6 +67,7 @@ const ListadoPacientes = () => {
   // Agregar paciente al backend
   const agregarPaciente = async () => {
     if (
+      nuevoPaciente.ci.trim() === '' ||
       nuevoPaciente.nombre.trim() === '' ||
       nuevoPaciente.primer_apellido.trim() === '' ||
       nuevoPaciente.segundo_apellido.trim() === ''
@@ -80,36 +82,17 @@ const ListadoPacientes = () => {
         nombre: nuevoPaciente.nombre,
         primer_apellido: nuevoPaciente.primer_apellido,
         segundo_apellido: nuevoPaciente.segundo_apellido,
-        ci: "N/A",
-        sexo: "N/A",
-        edad: 0,
-        estado_civil: "N/A",
-        municipio: "N/A",
-        color_piel: "N/A",
-        no_hc: "N/A",
-        grupo_sanguine: "N/A",
-        factor: "N/A",
-        consejo_popular: "N/A",
-        no_consultorio: "N/A",
-        ocupacion: "N/A",
-        telefono: "N/A",
-        telefonoLaboral: "N/A",
-        centro_laboral: "N/A",
-        otra_localizacion: "N/A",
-        cat_ocupacional: "N/A",
-        estilo_vida: "N/A",
-        alimentacion: "N/A",
-        genero_vida: "N/A",
-        es_donanteControlado: false,
-        es_posibleDonante: false,
-        alergias: "N/A",
-        antecedentesPersonales: [],
+        ci: nuevoPaciente.ci,
       });
       setPacientes([...pacientes, res.data]);
       handleCloseDialog();
       handleCrearHistoriaClinica(res.data._id); // Navega usando el id real del backend
     } catch (error) {
+       if (error.response?.status === 409) {
+      setSnackbarMessage('El CI ya existe. No se puede repetir.');
+    } else {
       setSnackbarMessage('Error al agregar paciente');
+    }
       setSnackbarOpen(true);
     }
   };
@@ -132,7 +115,7 @@ const ListadoPacientes = () => {
     {
       field: 'nombre',
       headerName: 'Nombre',
-      width: 150,
+      width: 200,
       renderCell: (params) => (
         <Typography fontWeight={500} sx={{ fontSize: '1.1rem' }}>
           {params.row.nombre}
@@ -142,7 +125,7 @@ const ListadoPacientes = () => {
     {
       field: 'primer_apellido',
       headerName: 'Primer Apellido',
-      width: 150,
+      width: 200,
       renderCell: (params) => (
         <Typography fontWeight={500} sx={{ fontSize: '1.1rem' }}>
           {params.row.primer_apellido}
@@ -152,7 +135,7 @@ const ListadoPacientes = () => {
     {
       field: 'segundo_apellido',
       headerName: 'Segundo Apellido',
-      width: 150,
+      width: 200,
       renderCell: (params) => (
         <Typography fontWeight={500} sx={{ fontSize: '1.1rem' }}>
           {params.row.segundo_apellido}
@@ -162,7 +145,7 @@ const ListadoPacientes = () => {
     {
       field: 'acciones',
       headerName: 'Acciones',
-      width: 150,
+      width: 200,
       sortable: false,
       filterable: false,
       align: 'center',
@@ -170,7 +153,7 @@ const ListadoPacientes = () => {
         <Box>
           <IconButton
             color="primary"
-            onClick={() => handleCrearHistoriaClinica(params.row._id)}
+            onClick={() => handleVerHistoriaClinica(params.row._id)}
             title="Ver historia clínica"
             sx={{ mr: 1 }}
           >
@@ -216,7 +199,6 @@ const ListadoPacientes = () => {
           flexDirection: 'column',
           alignItems: 'center',
           pt: 4,
-          bgcolor: '#e0eee6'
         }}
       >
         {/* Botón de agregar paciente */}
@@ -292,6 +274,17 @@ const ListadoPacientes = () => {
             Agregar nuevo paciente
           </DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
+            <TextField
+              margin="dense"
+              label="CI"
+              name="ci"
+              type="text"
+              fullWidth
+              variant="outlined"
+              value={nuevoPaciente.ci}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            />
             <TextField
               autoFocus
               margin="dense"
