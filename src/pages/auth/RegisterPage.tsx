@@ -71,7 +71,7 @@ export default function Register() {
       } else if (decoded.role === 'Técnico de aseguramiento de calidad') {
         navigate('/vizualizar');
       } else if(decoded.role === 'Médico del hospital') {
-        navigate('/');
+        navigate('/listadoPacientes');
       }else if(decoded.role === 'Médico del consultorio') {
         navigate('/listadop');
       }else if(decoded.role === 'Técnico de prechequeo'){

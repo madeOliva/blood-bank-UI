@@ -40,6 +40,9 @@ import NuevaHistoriaClinica from "./pages/historia_clinica/CrearHC";
 import DesechosPro from "./pages/calidad/ConfirmacionDesechoProPage";
 import DietaPacientes from "./pages/historia_clinica/Dieta";
 import DonantesCMF from "./pages/historia_clinica/DonanteCMF";
+import ListadoHospital from "./pages/hospitalizacion/listadoHospital";
+import CrearOrdenTransfusion from "./pages/hospitalizacion/crearOrden";
+import ModficarOrdenTransfusion from "./pages/hospitalizacion/modificarOrden";
 
 export default function App() {
   return (
@@ -58,7 +61,15 @@ export default function App() {
         }
       />
 
-      <Route path="/citadosps" element={<CitadosPS />} />
+      <Route path="/citadosps" element={
+        <ProtectedRoute allowedRoles={["Médico de selección"]}>
+          <CitadosPS />
+        </ProtectedRoute>} />
+
+      <Route path="/historiadonante/:id" element={
+        <ProtectedRoute allowedRoles={["Médico de selección"]}>
+          <HistoriaDonante />
+        </ProtectedRoute>} />
 
       <Route
         path="/resultadosprechequeo"
@@ -145,11 +156,14 @@ export default function App() {
         }
       />
 
-      <Route path="/historiadonante/:id" element={<HistoriaDonante />} />
 
       {/* Transfusiones */}
-      <Route path="/pageone" element={<PageOne />} />
-      <Route path="/transfusionpage" element={<TransfusionPage />} />
+      <Route path="/pageone" element={<ProtectedRoute allowedRoles={["Técnico de transfusión"]}>
+        <PageOne />
+      </ProtectedRoute>} />
+      <Route path="/transfusionpage" element={<ProtectedRoute allowedRoles={["Técnico de transfusión"]}>
+        <TransfusionPage />
+      </ProtectedRoute>} />
 
       {/* Centro Movil */}
       <Route
@@ -350,9 +364,8 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-    
 
-    <Route
+      <Route
         path="/donantesCMF"
         element={
           <ProtectedRoute allowedRoles={["Médico del consultorio"]}>
@@ -360,6 +373,36 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
+      { /* Hospitalizacion */}
+      <Route
+        path="/listadoPacientes"
+        element={
+          <ProtectedRoute allowedRoles={["Médico del hospital"]}>
+            <ListadoHospital />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/crearOrden"
+        element={
+          <ProtectedRoute allowedRoles={["Médico del hospital"]}>
+            <CrearOrdenTransfusion />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/modificarOrden"
+        element={
+          <ProtectedRoute allowedRoles={["Médico del hospital"]}>
+            <ModficarOrdenTransfusion />
+          </ProtectedRoute>
+        }
+      />
+
+
     </Routes >
   );
 }

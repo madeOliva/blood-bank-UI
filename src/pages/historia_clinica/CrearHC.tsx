@@ -64,22 +64,13 @@ const emptyHistoryData = {
   antecedentesPersonales: [],
   antecedentesFamiliares: [],
   alergias: [],
-  habitos: [],
+  habitosToxicos: [],
   estanciaExtranjero: [],
   donacionesPrevias: [],
   transfusionesPrevias: [],
 };
 
-type HabitoToxico = {
-  habito: string;
-  intensidad: string;
-};
-type EstanciaExtranjero = {
-  fecha: string;
-  pais: string;
-  estadia: string;
-  motivo: string;
-};
+
 
 // Componente para los encabezados de sección con estilo
 function SectionHeader({ title }) {
@@ -197,7 +188,7 @@ export default function NuevaHistoriaClinica() {
       { rows: historyData.antecedentesPersonales, requiredFields: ['antecedente', 'año'] },
       { rows: historyData.antecedentesFamiliares, requiredFields: ['antecedente', 'parentesco'] },
       { rows: historyData.alergias, requiredFields: ['alergia'] },
-      { rows: historyData.habitos, requiredFields: ['habito', 'intensidad'] },
+      { rows: historyData.habitosToxicos, requiredFields: ['habito', 'intensidad'] },
       { rows: historyData.estanciaExtranjero, requiredFields: ['fecha', 'pais', 'estadia', 'motivo'] },
       { rows: historyData.donacionesPrevias, requiredFields: ['fecha', 'lugar', 'reaccion', 'motivo'] },
       { rows: historyData.transfusionesPrevias, requiredFields: ['fecha', 'lugar', 'diagnostico', 'reaccion', 'observaciones'] },
@@ -221,7 +212,7 @@ export default function NuevaHistoriaClinica() {
       antecedentesPersonales: "Antecedentes Patológicos Personales (APP)",
       antecedentesFamiliares: "Antecedentes Patológicos Familiares (APF)",
       alergias: "Alergias",
-      habitos: "Hábitos Tóxicos",
+      habitosToxicos: "Hábitos Tóxicos",
       estanciaExtranjero: "Estancia en el Extranjero",
       donacionesPrevias: "Donaciones Previas",
       transfusionesPrevias: "Transfusiones Previas"
@@ -248,33 +239,9 @@ export default function NuevaHistoriaClinica() {
     return errors;
   };
 
-  // Función para guardar los hábitos tóxicos directamente
-  const guardarHabitosToxicos = async (habitos: HabitoToxico[]) => {
-    try {
-      const cleanHabitos = habitos.map(({ id, ...rest }) => rest);
-      if (cleanHabitos.length > 0) {
-        await axios.post('http://localhost:3000/habitos-toxicos', cleanHabitos);
-      }
-    } catch (error) {
-      setErrorMessage('Error al guardar los hábitos tóxicos');
-      setOpenErrorModal(true);
-      console.error(error);
-    }
-  };
 
-  //Funcion para guardar la estancia en el extranjero
-  const guardarEstanciasExtranjero = async (estancias: EstanciaExtranjero[]) => {
-    try {
-      const cleanEstancias = estancias.map(({ id, ...rest }) => rest);
-      if (cleanEstancias.length > 0) {
-        await axios.post('http://localhost:3000/estancia-extranjero', cleanEstancias);
-      }
-    } catch (error) {
-      setErrorMessage('Error al guardar las estancias en el extranjero');
-      setOpenErrorModal(true);
-      console.error(error);
-    }
-  };
+
+
 
   const handleGuardar = async () => {
     const errors = validateForm();
@@ -337,6 +304,20 @@ export default function NuevaHistoriaClinica() {
           .map(af => ({
             antecedente: af.antecedente,
             parentesco: af.parentesco
+          })),
+        habitosToxicos: historyData.habitosToxicos
+          .filter(ht => ht.habito && ht.intensidad)
+          .map(ht => ({
+            habito: ht.habito,
+            intensidad: ht.intensidad
+          })),
+        estanciaExtranjero: historyData.estanciaExtranjero
+          .filter(ee => ee.fecha && ee.pais && ee.estadia && ee.motivo)
+          .map(ee => ({
+            fecha: ee.fecha,
+            pais: ee.pais,
+            estadia: ee.estadia,
+            motivo: ee.motivo
           }))
       };
 
@@ -495,24 +476,29 @@ export default function NuevaHistoriaClinica() {
     });
   };
 
-
-
   const addHabitoRow = () => {
     setHistoryData(prev => {
-      const newId = prev.habitos.length > 0 ? Math.max(...prev.habitos.map(r => r.id)) + 1 : 1;
+      const habitosToxicos = Array.isArray(prev.habitosToxicos) ? prev.habitosToxicos : [];
+      const newId = habitosToxicos.length > 0
+        ? Math.max(...habitosToxicos.map(r => Number(r.id) || 0)) + 1
+        : 1;
       return {
         ...prev,
-        habitos: [...prev.habitos, { id: newId, habito: '', intensidad: 'Leve' }]
+        habitosToxicos: [...habitosToxicos, { id: newId, habito: '', intensidad: '' }]
       };
     });
   };
 
+
   const addEstanciaRow = () => {
     setHistoryData(prev => {
-      const newId = prev.estanciaExtranjero.length > 0 ? Math.max(...prev.estanciaExtranjero.map(r => r.id)) + 1 : 1;
+      const estanciaExtranjero = Array.isArray(prev.estanciaExtranjero) ? prev.estanciaExtranjero : [];
+      const newId = estanciaExtranjero.length > 0
+        ? Math.max(...prev.estanciaExtranjero.map(r => r.id || 0)) + 1
+        : 1;
       return {
         ...prev,
-        estanciaExtranjero: [...prev.estanciaExtranjero, { id: newId, fecha: '', pais: '', estadia: '', motivo: '' }]
+        estanciaExtranjero: [...estanciaExtranjero, { id: newId, fecha: '', pais: '', estadia: '', motivo: '' }]
       };
     });
   };
@@ -988,7 +974,6 @@ export default function NuevaHistoriaClinica() {
           />
         </Paper>
 
-        {/* Sección Alergias con botón Agregar */}
         <SectionHeader title="Alergias" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addAlergiaRow}>Agregar Alergia</Button>
@@ -1014,25 +999,31 @@ export default function NuevaHistoriaClinica() {
           />
         </Paper>
 
-        {/* Sección Hábitos con botón Agregar */}
         <SectionHeader title="Habitos Toxicos" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addHabitoRow}>Agregar Hábito</Button>
         </Box>
         <Paper sx={{ height: 250, mb: 4 }}>
           <DataGrid
-            rows={historyData.habitos}
+            rows={historyData.habitosToxicos}
             columns={habitosColumns}
             pageSize={5}
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
-            editMode="cell"
-            onCellEditCommit={(params) => handleTableEdit('habitos', params)}
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                habitosToxicos: prev.habitosToxicos.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Estancia con botón Agregar */}
         <SectionHeader title="Estancia en el Extranjero" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addEstanciaRow}>Agregar Estancia</Button>
@@ -1045,10 +1036,19 @@ export default function NuevaHistoriaClinica() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                estanciaExtranjero: prev.estanciaExtranjero.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Donaciones con botón Agregar */}
         <SectionHeader title="Donaciones Previas" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addDonacionRow}>Agregar Donación</Button>
@@ -1061,10 +1061,19 @@ export default function NuevaHistoriaClinica() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                donacionesPrevias: prev.donacionesPrevias.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Transfusiones con botón Agregar */}
         <SectionHeader title="Transfusiones Previas" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addTransfusionRow}>Agregar Transfusión</Button>
@@ -1077,6 +1086,16 @@ export default function NuevaHistoriaClinica() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                transfusionesPrevias: prev.transfusionesPrevias.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
