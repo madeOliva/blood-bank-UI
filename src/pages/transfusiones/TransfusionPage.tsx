@@ -86,7 +86,7 @@ export default function TransfusionPage() {
         })));
       });
   }, [id_orden]);
-  
+
   const navigate = useNavigate();
 
   const [columnVisibilityModel, setColumnVisibilityModel] = React.useState<GridColumnVisibilityModel>({
@@ -352,7 +352,9 @@ export default function TransfusionPage() {
                 >
                   Stock de Neonato
                 </Typography>
+
                 <DataGridNeonato />
+
               </Box>
             </TabPanel>
             <TabPanel value={tab} index={1}>
@@ -370,7 +372,6 @@ export default function TransfusionPage() {
                   Stock de Materna
                 </Typography>
                 <DataGridMaterna />
-              </Box>
             </TabPanel>
             <TabPanel value={tab} index={2}>
               <Box sx={{ marginTop: "5px", width: "100%" }}>

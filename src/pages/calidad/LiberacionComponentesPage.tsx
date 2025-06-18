@@ -1,16 +1,10 @@
-import { useNavigate } from "react-router-dom";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import BotonPersonalizado from "../../components/Button";
 import Navbar from "../../components/navbar/Navbar";
 import {
   Box,
   Container,
   FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
   Typography,
   Button,
   Dialog,
@@ -24,45 +18,43 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Slide,
 } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
-
-
-const rows = [
-  { id: 1, sexo: "F", hc: "02022562246", edad: 14, volumen: 444, grupo: "A", factor: "+", no: "1" },
-  { id: 2, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo: "A", factor: "+", no: "2" },
-  { id: 3, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo: "A", factor: "+", no: "3" },
-  { id: 4, sexo: "M", hc: "02022562246", edad: 31, volumen: 444, grupo: "A", factor: "+", no: "4" },
-  { id: 5, sexo: "F", hc: "02022562246", edad: 11, volumen: 444, grupo: "A", factor: "+", no: "5" },
-  { id: 6, hc: "02022562246", sexo: "F", edad: 23, volumen: 444, grupo: "A", factor: "+", no: "6" },
-  { id: 7, hc: "02022562246", sexo: "F", edad: 150, volumen: 444, grupo: "A", factor: "+", no: "7" },
-  { id: 8, hc: "02022562246", sexo: "M", edad: 44, volumen: 444, grupo: "A", factor: "+", no: "8" },
-  { id: 9, hc: "02022562246", sexo: "M", edad: 36, volumen: 444, grupo: "A", factor: "+", no: "9" },
-  { id: 10, hc: "02022562246", sexo: "F", edad: 65, volumen: 444, grupo: "A", factor: "+", no: "10" },
-  { id: 11, hc: "02022562246", sexo: "F", edad: 65, volumen: 444, grupo: "A", factor: "+", no: "11" },
-];
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DoneOutlineIcon from "@mui/icons-material/DoneOutline";
 
 export default function LiberacionComponentes() {
-  const navigate = useNavigate();
+  const [rows, setRows] = useState<any[]>([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
+  const [motivoDesecho, setMotivoDesecho] = useState("");
+  const [openSuccess, setOpenSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleLogin = () => {
-    navigate("/register", { replace: true }); // Redirige a la vista de Prechequeo
-  };
-
-  const [entidad, setEntidad] = React.useState("");
-  const [selectedDate, setSelectedDate] = React.useState(null);
-
-  // Estado para el modal
-  const [openModal, setOpenModal] = React.useState(false);
-  const [selectedRowId, setSelectedRowId] = React.useState<number | null>(null);
-
-  // Estado para el acordeón (selección)
-  const [motivoDesecho, setMotivoDesecho] = React.useState("");
-
-  const handleChangeE = (event: SelectChangeEvent) => {
-    setEntidad(event.target.value as string);
-  };
+ useEffect(() => {
+  fetch("http://localhost:3000/componentes-obtenidos/obtenidos")
+    .then(res => res.json())
+    .then(data => {
+      setRows(
+         Array.isArray(data)
+    ? data.map((item: any, idx: number) => ({
+        id: item._id || idx,
+        no: item.no_consecutivo ?? idx + 1,
+        hc: item.historia_clinica?.no_hc ?? "",
+        sexo: item.historia_clinica?.sexo ?? "",
+        edad: Number(item.historia_clinica?.edad) || 0,
+        volumen: Number(item.componentes?.[0]?.volumen) || 0,
+        grupo: item.historia_clinica?.grupo ?? "",
+        factor: item.historia_clinica?.factor ?? "",
+        fecha_obtencion: item.fecha_obtencion ?? "",
+        componente: item.componentes?.[0]?.tipo ?? "",
+      }))
+    : []
+);
+    })
+    .catch(() => setRows([]));
+}, []);
 
   const handleOpenModal = (id: number) => {
     setSelectedRowId(id);
@@ -75,14 +67,46 @@ export default function LiberacionComponentes() {
     setMotivoDesecho("");
   };
 
-  const handleConfirmDesechar = () => {
-    alert(`Desechada la fila con ID: ${selectedRowId} por motivo: ${motivoDesecho}`);
+  const handleSuccessClose = () => {
+    setOpenSuccess(false);
+    setSuccessMessage("");
+  };
+
+  const handleConfirmDesechar = async () => {
+  if (!selectedRowId) return;
+  try {
+    await fetch(`http://localhost:3000/componentes-obtenidos/${selectedRowId}/desechar`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ motivo_desecho: motivoDesecho }),
+    });
+    setRows(rows => rows.filter(row => row.id !== selectedRowId));
     setOpenModal(false);
     setSelectedRowId(null);
     setMotivoDesecho("");
-  };
+    setSuccessMessage("Componente desechado exitosamente.");
+    setOpenSuccess(true);
+    setTimeout(() => setOpenSuccess(false), 3000); // Oculta el modal a los 3 segundos
+  } catch (e) {
+    alert("Error al desechar el componente");
+  }
+};
 
-  const columns: GridColDef<(typeof rows)[number]>[] = [
+const handleLiberar = async (id: number) => {
+  try {
+    await fetch(`http://localhost:3000/componentes-obtenidos/${id}/liberar`, {
+      method: "PATCH",
+    });
+    setRows(rows => rows.filter(row => row.id !== id));
+    setSuccessMessage("Componente liberado exitosamente.");
+    setOpenSuccess(true);
+    setTimeout(() => setOpenSuccess(false), 3000); // Oculta el modal a los 3 segundos
+  } catch (e) {
+    alert("Error al liberar el componente");
+  }
+};
+
+  const columns: GridColDef[] = [
     { field: "no", headerName: "NO", width: 90 },
     { field: "hc", headerName: "HC-donacion", width: 150, editable: false },
     { field: "sexo", headerName: "Sexo", width: 70, editable: false },
@@ -91,19 +115,34 @@ export default function LiberacionComponentes() {
     { field: "grupo", headerName: "Grupo", width: 70, editable: false },
     { field: "factor", headerName: "Factor", width: 70, editable: false },
     {
+  field: "fecha_obtencion",
+  headerName: "Fecha Obtención",
+  width: 140,
+},,
+    { field: "componente", headerName: "Componente", width: 130 },
+    {
       field: "accion",
       headerName: "",
-      width: 150,
+      width: 220,
       editable: false,
       renderCell: (params) => (
-        <Button
-                        onClick={() => handleOpenModal(params.id as number)}
-                        color="error"
-                        variant="contained"
-                        
-                      >
-                        Desechar
-                      </Button>
+        <>
+          <Button
+            onClick={() => handleOpenModal(params.id as number)}
+            color="error"
+            variant="contained"
+            sx={{ mr: 1 }}
+          >
+            Desechar
+          </Button>
+          <Button
+            onClick={() => handleLiberar(params.id as number)}
+            color="success"
+            variant="contained"
+          >
+            Liberar
+          </Button>
+        </>
       ),
     },
   ];
@@ -112,105 +151,106 @@ export default function LiberacionComponentes() {
     <>
       <Navbar />
       <Typography
-          variant="h4"
-          component="h5"
-          mt={8}
-          sx={{ fontSize: { xs: "2rem", md: "3rem" },backgroundColor:"primary.dark", textAlign: "center", color:"white" }}
-        >
-          Liberación de Componentes
-        </Typography>
-      <Container>
-        
-
+        variant="h4"
+        component="h5"
+        mt={8}
+        sx={{
+          fontSize: { xs: "2rem", md: "3rem" },
+          backgroundColor: "primary.dark",
+          textAlign: "center",
+          color: "white",
+        }}
+      >
+        Liberación de Componentes
+      </Typography>
+      <Container maxWidth={false}>
         <Box sx={{ marginTop: "20px", width: "90%", marginBlockEnd: 1, marginLeft: 7 }}>
-          {/* Entidad a la izquierda, calendario a la derecha */}
-          <Box
+          <DataGrid
             sx={{
-              display: "flex",
-              mb: 2,
-              alignItems: "center",
-              justifyContent: "space-between",
+              height: 500,
+              "& .MuiDataGrid-columnHeaderTitle": {
+                fontFamily: '"Open Sans"',
+                fontWeight: 600,
+              },
+              "& .MuiDataGrid-cellContent": {
+                fontFamily: '"Open Sans"',
+                color: "#000",
+              },
             }}
-          >
-          
-            
-          </Box>
-
-          {/* ACORDEONES CON EL NUEVO DATAGRID */}
-          {["Concentrado de Eritrocitos Pobres en Leucocitos(CEPL)", "Concentrados de Plaquetas(CP)"," Plasma Fresco Congelado(PFC)"," Crioprecipitado(Crio)"].map((nomb) => (
-            <Accordion key={nomb} sx={{ mb: 2 , color:"primary.main"}}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: 600 }}>
-                 {nomb}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <DataGrid
-                  sx={{
-                    height: 400,
-                    "& .MuiDataGrid-columnHeaderTitle": {
-                      fontFamily: '"Open Sans"',
-                      fontWeight: 600,
-                    },
-                    "& .MuiDataGrid-cellContent": {
-                      fontFamily: '"Open Sans"',
-                      color: "#000",
-                    },
-                  }}
-                  rows={rows}
-                  columns={columns}
-                  initialState={{
-                    pagination: {
-                      paginationModel: {
-                        pageSize: 10,
-                      },
-                    },
-                  }}
-                  pageSizeOptions={[10]}
-                  checkboxSelection
-                  disableRowSelectionOnClick
-                />
-              </AccordionDetails>
-            </Accordion>
-          ))}
+            rows={rows}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 10,
+                },
+              },
+            }}
+            pageSizeOptions={[10]}
+            disableRowSelectionOnClick
+          />
         </Box>
       </Container>
 
-      {/* Modal de confirmación con Accordion */}
+      {/* Modal de desecho */}
       <Dialog
         open={openModal}
         onClose={handleCloseModal}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 2,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+        TransitionComponent={Slide}
+        transitionDuration={400}
+        keepMounted
       >
-        <DialogTitle>Confirmar acción</DialogTitle>
+        <DialogTitle id="alert-dialog-title" sx={{ textAlign: "center" }}>
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 50, color: "error.main" }} />
+            <Typography variant="h6" fontWeight="bold" color="error.main">
+              ¿Desea desechar el componente?
+            </Typography>
+          </Box>
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            ¿Estás seguro que deseas desechar la fila con ID: {selectedRowId}?
+          <DialogContentText id="alert-dialog-description" sx={{ textAlign: "center" }}>
+            <Accordion sx={{ mt: 2 }}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="panel1a-content"
+                id="panel1a-header"
+              >
+                <Typography>Selecciona el motivo por el cual va a desechar el componente</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    value={motivoDesecho}
+                    onChange={e => setMotivoDesecho(e.target.value)}
+                  >
+                    <FormControlLabel value="Lipemia" control={<Radio />} label="Lipemia" />
+                    <FormControlLabel value="Hemolisis" control={<Radio />} label="Hemolisis" />
+                    <FormControlLabel value="Bajo Volumen" control={<Radio />} label="Bajo Volumen" />
+                    <FormControlLabel value="Sobre Volumen" control={<Radio />} label="Sobre Volumen" />
+                    <FormControlLabel value="Venipunción" control={<Radio />} label="Venipunción" />
+                    <FormControlLabel value="Return" control={<Radio />} label="Return" />
+                    <FormControlLabel value="No tener muestra(los dos tubos del laboratorio)" control={<Radio />} label="No tener muestra(los dos tubos del laboratorio)" />
+                  </RadioGroup>
+                </FormControl>
+              </AccordionDetails>
+            </Accordion>
           </DialogContentText>
-          <Accordion sx={{ mt: 2 }}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls="panel1a-content"
-              id="panel1a-header"
-            >
-              <Typography>Selecciona el motivo de desecho</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <FormControl component="fieldset">
-                <RadioGroup
-                  value={motivoDesecho}
-                  onChange={e => setMotivoDesecho(e.target.value)}
-                >
-                  <FormControlLabel value="Coloración inadecuada Verde" control={<Radio />} label="Coloración inadecuada Verde" />
-                  <FormControlLabel value="Coloración inadecuada Naranja" control={<Radio />} label="Coloración inadecuada Naranja" />
-                  <FormControlLabel value="Bajon Volumen" control={<Radio />} label="Bajon Volumen" />
-                  <FormControlLabel value="Otro" control={<Radio />} label="Otro" />
-                </RadioGroup>
-              </FormControl>
-            </AccordionDetails>
-          </Accordion>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal}>Cancelar</Button>
+        <DialogActions sx={{ justifyContent: "center", pb: 2 }}>
+          <Button onClick={handleCloseModal} variant="outlined">
+            Cancelar
+          </Button>
           <Button
             onClick={handleConfirmDesechar}
             color="error"
@@ -222,17 +262,33 @@ export default function LiberacionComponentes() {
         </DialogActions>
       </Dialog>
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <BotonPersonalizado onClick={handleLogin} sx={{ width: 225, marginRight: 2 }}>
-          Liberar
-        </BotonPersonalizado>
-      </Box>
+     {/* Modal Éxito Envío */}
+<Dialog
+  open={openSuccess}
+  aria-labelledby="success-dialog-title"
+  PaperProps={{
+    sx: {
+      borderRadius: 3,
+      padding: 3,
+      minWidth: 320,
+      boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+    },
+  }}
+>
+  <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="success-dialog-title">
+    <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+      <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
+      <Typography variant="h5" fontWeight="bold" color="success.main">
+        ¡Éxito!
+      </Typography>
+    </Box>
+  </DialogTitle>
+  <DialogContent>
+    <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
+      {successMessage}
+    </Typography>
+  </DialogContent>
+</Dialog>
     </>
   );
 }

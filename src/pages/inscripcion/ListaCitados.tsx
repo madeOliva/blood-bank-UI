@@ -1,11 +1,12 @@
-import * as React from "react";
-import { DataGrid, GridRowsProp, GridColDef } from "@mui/x-data-grid";
+
+import { DataGrid, GridRowsProp, GridColDef, GridRowParams } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
 import { Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import BotonPersonalizado from "../../components/Button";
+import { useState } from "react";
 
-const rows: GridRowsProp = [
+const initialRows: GridRowsProp = [
   {
     id: 1,
     ci: "123456789",
@@ -124,10 +125,14 @@ const columns: GridColDef[] = [
 
 export default function ListaCitados() {
   const navigate = useNavigate(); // Hook para navegar entre páginas
+  const [rows, setRows] = useState(initialRows);
 
-  const handleRowClick = () => {
+  const handleRowClick = (params:GridRowParams) => {
+   // Elimina la fila seleccionada del estado
+    setRows((prevRows) => prevRows.filter((row) => row.id !== params.row.id));
+
     // Navega a otra página con el ID de la fila seleccionada
-    navigate(`/inscripcion/`);
+    navigate(`/inscripcion/${params.row.ci}`);
   };
 
   return (
@@ -140,7 +145,9 @@ export default function ListaCitados() {
         sx={{
           fontSize: { xs: "2rem", md: "3rem" },
           textAlign: "center",
-          paddingTop: 2,
+          backgroundColor: "#00796B",
+          color: "white",
+          marginTop: 10,
           fontFamily: '"Open Sans"',
         }}
       >
@@ -148,7 +155,13 @@ export default function ListaCitados() {
       </Typography>
       {/* Contenedor para centrar el DataGrid */}
       <Box
-        style={{ display: "flex", justifyContent: "center", marginTop: "20px",flexDirection:"column",alignItems:"center" }}
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "20px",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
       >
         <Box
           style={{
@@ -175,7 +188,7 @@ export default function ListaCitados() {
                 fontFamily: '"Open Sans"',
                 color: "#000",
               },
-              
+
               // border: 1,
               // borderRadius: 2,
             }}
@@ -189,7 +202,7 @@ export default function ListaCitados() {
             pageSizeOptions={[10]}
           />
         </Box>
-        <Box sx={ { marginTop: 2 } }>
+        <Box sx={{ marginTop: 2 }}>
           <BotonPersonalizado onClick={() => navigate("/inscripcion/")}>
             Agregar Nuevo
           </BotonPersonalizado>
