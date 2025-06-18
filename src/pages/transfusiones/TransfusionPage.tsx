@@ -14,6 +14,7 @@ import DataGridServicio from "../../components/DataGridStockServicio";
 import DisabledByDefaultRoundedIcon from '@mui/icons-material/DisabledByDefaultRounded';
 import { useLocation } from "react-router-dom";
 import axios from "axios";
+import DataGridComponentesTransfundidos from "../../components/DataGridComponentesTransfundidos";
 
 const columns: GridColDef<(typeof rows)[number]>[] = [
   { field: "id", headerName: "#", width: 70 },
@@ -372,6 +373,7 @@ export default function TransfusionPage() {
                   Stock de Materna
                 </Typography>
                 <DataGridMaterna />
+              </Box>
             </TabPanel>
             <TabPanel value={tab} index={2}>
               <Box sx={{ marginTop: "5px", width: "100%" }}>
@@ -428,6 +430,22 @@ export default function TransfusionPage() {
           </Box>
         </Container>
       </Modal>
+      <Box sx={{ mt: "20px" }}>
+        <Container><Typography
+          padding={1}
+          sx={{
+            width: "100%",
+            fontSize: "20px",
+            textAlign: "center",
+            bgcolor: "primary.dark",
+            color: "white",
+          }}
+        >
+          Componentes a Transfundir
+        </Typography>
+          <DataGridComponentesTransfundidos />
+        </Container>
+      </Box>
     </>
   );
 }
