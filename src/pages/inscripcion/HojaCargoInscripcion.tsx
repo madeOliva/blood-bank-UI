@@ -9,8 +9,33 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers";
 import { Edit, Padding } from "@mui/icons-material";
 import axios from "axios";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from "@mui/material";
+
+
+export default function HojaCargo() {
+const navigate = useNavigate();
+const [openModifyConfirm, setOpenModifyConfirm] = React.useState(false);
+const [rowToModify, setRowToModify] = React.useState<any>(null);
+
+const handleModifyClick = (row: any) => {
+  setRowToModify(row);
+  setOpenModifyConfirm(true);
+};
+
+const handleConfirmModify = () => {
+  // Aquí navegas o haces la acción de modificar
+  navigate(`/inscripcion/${rowToModify.id}`);
+  setOpenModifyConfirm(false);
+};
 
 // Definición de las columnas
+
 const columns: GridColDef[] = [
   {
     field: "modificar",
@@ -19,23 +44,21 @@ const columns: GridColDef[] = [
     sortable: false,
     filterable: false,
     align: "center",
-    renderCell: (params) => {
-      const navigate = useNavigate();
-      return (
-        <IconButton
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/inscripcion/${params.row.id}`);
-          }}
-          aria-label="modificar"
-        >
-          <Edit sx={{ color: "red" }} />
-        </IconButton>
-      );
-    },
+    renderCell: (params) => (
+      <IconButton
+        onClick={(e) => {
+          e.stopPropagation();
+          handleModifyClick(params.row);
+        }}
+        aria-label="modificar"
+      >
+        <Edit sx={{ color: "red" }} />
+      </IconButton>
+    ),
   },
   { field: "fechaR", headerName: "Fecha de Registro", width: 200 },
   { field: "NoRegistro", headerName: "No. Registro", width: 150 },
+  { field: "no_hc", headerName: "No. HC", width: 120 },
   { field: "ci_donante", headerName: "CI", width: 150 },
   { field: "nombre", headerName: "Nombres y Apellidos", width: 300 },
   { field: "edad", headerName: "Edad", width: 100 },
@@ -43,13 +66,22 @@ const columns: GridColDef[] = [
   { field: "grupo", headerName: "Grupo", width: 100 },
   { field: "rh", headerName: "RH", width: 100 },
   { field: "donante", headerName: "Donante de", width: 150 },
+  { field: "municipio", headerName: "Municipio", width: 120 },
+  { field: "provincia", headerName: "Provincia", width: 120 },
+  { field: "consejo_popular", headerName: "Consejo Popular", width: 140 },
+  { field: "no_consultorio", headerName: "No. Consultorio", width: 140 },
+  { field: "ocupacion", headerName: "Ocupación", width: 120 },
+  { field: "telefono", headerName: "Teléfono", width: 120 },
+  { field: "telefonoLaboral", headerName: "Teléfono Laboral", width: 140 },
+  { field: "centro_laboral", headerName: "Centro Laboral", width: 140 },
+  { field: "otra_localizacion", headerName: "Otra Localización", width: 140 },
 ];
 
-export default function HojaCargo() {
-  const navigate = useNavigate();
+
   const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(
     null
   );
+
   const [errorFechaFin, setErrorFechaFin] = React.useState<string | null>(null);
 
   // Inicializa fechas al primer y último día del mes actual
@@ -83,6 +115,7 @@ export default function HojaCargo() {
             id: reg.id || reg._id,
             fechaR: reg.fechaR ? new Date(reg.fechaR).toLocaleString() : "",
             NoRegistro: reg.no_registro || "", // <-- minúscula
+            no_hc: reg.no_hc || "",
             ci_donante: reg.ci_donante || "", // <-- así lo devuelve el backend
             nombre: reg.nombre || "",
             edad: reg.edad || "",
@@ -90,6 +123,15 @@ export default function HojaCargo() {
             grupo: reg.grupo || "",
             rh: reg.rh || "",
             donante: reg.donante || "",
+            municipio: reg.municipio || "",
+            provincia: reg.provincia || "",
+            consejo_popular: reg.consejo_popular || "",
+            no_consultorio: reg.no_consultorio || "",
+            ocupacion: reg.ocupacion || "",
+            telefono: reg.telefono || "",
+            telefonoLaboral: reg.telefonoLaboral || "",
+            centro_laboral: reg.centro_laboral || "",
+            otra_localizacion: reg.otra_localizacion || "",
           }));
           setRows(mappedRows);
         } catch (error) {
@@ -212,6 +254,33 @@ export default function HojaCargo() {
             width: "95%",
           }}
         >
+          <Dialog
+            open={openModifyConfirm}
+            onClose={() => setOpenModifyConfirm(false)}
+            aria-labelledby="modify-confirm-dialog-title"
+          >
+            <DialogTitle id="modify-confirm-dialog-title">
+              Confirmación
+            </DialogTitle>
+            <DialogContent>
+              ¿Está seguro que desea modificar el registro de{" "}
+              <strong>
+                {rowToModify?.responsableSalud || rowToModify?.nombre}
+              </strong>
+              ?
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => setOpenModifyConfirm(false)}
+                color="primary"
+              >
+                No
+              </Button>
+              <Button onClick={handleConfirmModify} color="primary" autoFocus>
+                Sí
+              </Button>
+            </DialogActions>
+          </Dialog>
           <DataGrid
             rows={rows}
             columns={columns}

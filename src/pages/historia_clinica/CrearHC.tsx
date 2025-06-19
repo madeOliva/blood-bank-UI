@@ -45,6 +45,7 @@ const emptyHistoryData = {
     no_hc: '',
     estado_civil: '',
     municipio: '',
+    provincia: '',
     consejo_popular: '',
     no_consultorio: '',
     ocupacion: '',
@@ -60,25 +61,16 @@ const emptyHistoryData = {
     genero_vida: '',
     donante: '',
   },
-  AntecedentesPersonales: [],
-  apf: [],
+  antecedentesPersonales: [],
+  antecedentesFamiliares: [],
   alergias: [],
-  habitos: [],
+  habitosToxicos: [],
   estanciaExtranjero: [],
   donacionesPrevias: [],
   transfusionesPrevias: [],
 };
 
-type HabitoToxico = {
-  habito: string;
-  intensidad: string;
-};
-type EstanciaExtranjero = {
-  fecha: string;
-  pais: string;
-  estadia: string;
-  motivo: string;
-};
+
 
 // Componente para los encabezados de sección con estilo
 function SectionHeader({ title }) {
@@ -107,6 +99,35 @@ export default function NuevaHistoriaClinica() {
   const [openErrorModal, setOpenErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [sexos, setSexos] = useState([]);
+  const [coloresPiel, setColoresPiel] = useState([]);
+  const [provincias, setProvincias] = useState([]);
+  const [gruposSanguineos, setGruposSanguineos] = useState([]);
+  const [factores, setFactores] = useState([]);
+
+  useEffect(() => {
+    const fetchCatalogos = async () => {
+      try {
+        const [sexosRes, coloresRes, provinciasRes, gruposRes, factoresRes] = await Promise.all([
+          axios.get('http://localhost:3000/sexo'),
+          axios.get('http://localhost:3000/color-piel'),
+          axios.get('http://localhost:3000/provincia'),
+          axios.get('http://localhost:3000/grupos-sanguineos'),
+          axios.get('http://localhost:3000/factores'),
+        ]);
+        setSexos(sexosRes.data);
+        setColoresPiel(coloresRes.data);
+        setProvincias(provinciasRes.data);
+        setGruposSanguineos(gruposRes.data);
+        setFactores(factoresRes.data);
+      } catch (error) {
+        setErrorMessage('Error al cargar catálogos');
+        setOpenErrorModal(true);
+      }
+    };
+    fetchCatalogos();
+  }, []);
+
   useEffect(() => {
     const fetchPaciente = async () => {
       try {
@@ -118,6 +139,7 @@ export default function NuevaHistoriaClinica() {
             nombre: res.data.nombre || "",
             primer_apellido: res.data.primer_apellido || "",
             segundo_apellido: res.data.segundo_apellido || "",
+            ci: res.data.ci || "",
           }
         }));
       } catch (error) {
@@ -127,6 +149,8 @@ export default function NuevaHistoriaClinica() {
     };
     if (id) fetchPaciente();
   }, [id]);
+
+
 
   // Función para verificar campos vacíos en datos generales
   const hasEmptyGeneralFields = () => {
@@ -139,6 +163,7 @@ export default function NuevaHistoriaClinica() {
       gd.edad.trim() === '' ||
       gd.sexo.trim() === '' ||
       gd.color_piel.trim() === '' ||
+      gd.no_hc.trim() === '' ||
       gd.estado_civil.trim() === '' ||
       gd.consejo_popular.trim() === '' ||
       gd.no_consultorio.trim() === '' ||
@@ -160,10 +185,10 @@ export default function NuevaHistoriaClinica() {
   // Función para validar filas incompletas en tablas
   const hasEmptyTableRows = () => {
     const tables = [
-      { rows: historyData.AntecedentesPersonales, requiredFields: ['antecedente', 'año'] },
-      { rows: historyData.apf, requiredFields: ['antecedente', 'parentesco'] },
+      { rows: historyData.antecedentesPersonales, requiredFields: ['antecedente', 'año'] },
+      { rows: historyData.antecedentesFamiliares, requiredFields: ['antecedente', 'parentesco'] },
       { rows: historyData.alergias, requiredFields: ['alergia'] },
-      { rows: historyData.habitos, requiredFields: ['habito', 'intensidad'] },
+      { rows: historyData.habitosToxicos, requiredFields: ['habito', 'intensidad'] },
       { rows: historyData.estanciaExtranjero, requiredFields: ['fecha', 'pais', 'estadia', 'motivo'] },
       { rows: historyData.donacionesPrevias, requiredFields: ['fecha', 'lugar', 'reaccion', 'motivo'] },
       { rows: historyData.transfusionesPrevias, requiredFields: ['fecha', 'lugar', 'diagnostico', 'reaccion', 'observaciones'] },
@@ -184,10 +209,10 @@ export default function NuevaHistoriaClinica() {
   // Función para validar tablas vacías
   const hasEmptyTables = () => {
     const requiredTables = {
-      AntecedentesPersonales: "Antecedentes Patológicos Personales (APP)",
-      apf: "Antecedentes Patológicos Familiares (APF)",
+      antecedentesPersonales: "Antecedentes Patológicos Personales (APP)",
+      antecedentesFamiliares: "Antecedentes Patológicos Familiares (APF)",
       alergias: "Alergias",
-      habitos: "Hábitos Tóxicos",
+      habitosToxicos: "Hábitos Tóxicos",
       estanciaExtranjero: "Estancia en el Extranjero",
       donacionesPrevias: "Donaciones Previas",
       transfusionesPrevias: "Transfusiones Previas"
@@ -214,64 +239,99 @@ export default function NuevaHistoriaClinica() {
     return errors;
   };
 
-  // Función para guardar los hábitos tóxicos directamente
-  const guardarHabitosToxicos = async (habitos: HabitoToxico[]) => {
-    try {
-      const cleanHabitos = habitos.map(({ id, ...rest }) => rest);
-      if (cleanHabitos.length > 0) {
-        await axios.post('http://localhost:3000/habitos-toxicos', cleanHabitos);
-      }
-    } catch (error) {
-      setErrorMessage('Error al guardar los hábitos tóxicos');
-      setOpenErrorModal(true);
-      console.error(error);
-    }
-  };
 
-  //Funcion para guardar la estancia en el extranjero
-  const guardarEstanciasExtranjero = async (estancias: EstanciaExtranjero[]) => {
-    try {
-      const cleanEstancias = estancias.map(({ id, ...rest }) => rest);
-      if (cleanEstancias.length > 0) {
-        await axios.post('http://localhost:3000/estancia-extranjero', cleanEstancias);
-      }
-    } catch (error) {
-      setErrorMessage('Error al guardar las estancias en el extranjero');
-      setOpenErrorModal(true);
-      console.error(error);
-    }
-  };
 
-  // Función para guardar con validación y mostrar modales
+
+
   const handleGuardar = async () => {
     const errors = validateForm();
     if (errors.length > 0) {
       setErrorMessage(errors.join('\n'));
       setOpenErrorModal(true);
-    } else {
-      try {
-        // Solo envía los datos que corresponden al esquema del backend
-        const cleanHistoryData = {
-          ...historyData.generalData,
-          alergias: historyData.alergias.map(a => a.alergia),
-          antecedentesPersonales: historyData.AntecedentesPersonales.map(a => a.antecedente),
-          // Si tu backend espera apf como string[], agrega aquí: apf: historyData.apf.map(a => a.antecedente)
-        };
+      return;
+    }
 
-        await guardarHabitosToxicos(historyData.habitos);
-        await guardarEstanciasExtranjero(historyData.estanciaExtranjero);
-        await axios.put(`http://localhost:3000/historia-clinica/${id}`, cleanHistoryData);
-        setOpenSuccessModal(true);
-        console.log('Historia clínica guardada:', cleanHistoryData);
-      } catch (error) {
-        setErrorMessage('Error al guardar la historia clínica');
-        setOpenErrorModal(true);
-        console.error('Error al guardar:', error.response?.data || error.message || error);
+    try {
+      // Validación adicional para la edad
+      const edad = parseInt(historyData.generalData.edad);
+      if (isNaN(edad)) {
+        throw new Error('La edad debe ser un número válido');
       }
+
+      const dataToSend = {
+        ci: historyData.generalData.ci,
+        nombre: historyData.generalData.nombre,
+        primer_apellido: historyData.generalData.primer_apellido,
+        segundo_apellido: historyData.generalData.segundo_apellido,
+        sexo: historyData.generalData.sexo,
+        edad: edad,
+        estado_civil: historyData.generalData.estado_civil,
+        municipio: historyData.generalData.municipio,
+        provincia: historyData.generalData.provincia,
+        color_piel: historyData.generalData.color_piel,
+        no_hc: historyData.generalData.no_hc,
+        grupo_sanguine: historyData.generalData.grupo_sanguine,
+        factor: historyData.generalData.factor,
+        consejo_popular: historyData.generalData.consejo_popular,
+        no_consultorio: historyData.generalData.no_consultorio,
+        ocupacion: historyData.generalData.ocupacion,
+        telefono: historyData.generalData.telefono,
+        telefonoLaboral: historyData.generalData.telefonoLaboral,
+        centro_laboral: historyData.generalData.centro_laboral,
+        otra_localizacion: historyData.generalData.otra_localizacion,
+        cat_ocupacional: historyData.generalData.cat_ocupacional,
+        estilo_vida: historyData.generalData.estilo_vida,
+        alimentacion: historyData.generalData.alimentacion,
+        genero_vida: historyData.generalData.genero_vida,
+        es_donanteControlado: historyData.generalData.donante === 'Donante Controlado',
+        es_posibleDonante: historyData.generalData.donante === 'Posible Donante',
+        es_donanteActivo: historyData.generalData.donante === 'Donante Activo',
+
+        // Alergias - transformamos de singular a plural para el backend
+        alergias: historyData.alergias
+          .filter(item => item.alergia && item.alergia.trim() !== '')
+          .map(item => item.alergia),
+
+        antecedentesPersonales: historyData.antecedentesPersonales
+          .filter(ap => ap.antecedente && ap.año)
+          .map(ap => ({
+            antecedente: ap.antecedente,
+            año: ap.año
+          })),
+
+        antecedentesFamiliares: historyData.antecedentesFamiliares
+          .filter(af => af.antecedente && af.parentesco)
+          .map(af => ({
+            antecedente: af.antecedente,
+            parentesco: af.parentesco
+          })),
+        habitosToxicos: historyData.habitosToxicos
+          .filter(ht => ht.habito && ht.intensidad)
+          .map(ht => ({
+            habito: ht.habito,
+            intensidad: ht.intensidad
+          })),
+        estanciaExtranjero: historyData.estanciaExtranjero
+          .filter(ee => ee.fecha && ee.pais && ee.estadia && ee.motivo)
+          .map(ee => ({
+            fecha: ee.fecha,
+            pais: ee.pais,
+            estadia: ee.estadia,
+            motivo: ee.motivo
+          }))
+      };
+
+      console.log("Datos a enviar:", JSON.stringify(dataToSend, null, 2));
+
+      const response = await axios.put(`http://localhost:3000/historia-clinica/${id}`, dataToSend);
+      console.log('Respuesta del servidor:', response.data);
+      setOpenSuccessModal(true);
+    } catch (error) {
+      console.error('Error detallado:', error.response?.data || error.message || error);
+      setErrorMessage(error.response?.data?.message || 'Error al guardar la historia clínica');
+      setOpenErrorModal(true);
     }
   };
-
-
   useEffect(() => {
     const fetchTransfusiones = async () => {
       try {
@@ -302,12 +362,69 @@ export default function NuevaHistoriaClinica() {
 
 
   // Maneja cambios en los campos de texto y select en Datos Generales
+  // Modificar handleGeneralChange para incluir validaciones
   const handleGeneralChange = (field, value) => {
-    setHistoryData((prev) => ({
-      ...prev,
-      generalData: { ...prev.generalData, [field]: value },
-    }));
+    // Validaciones específicas por campo
+    switch (field) {
+      case 'edad':
+        // Solo permite números y borrado
+        if (value === '' || /^\d+$/.test(value)) {
+          setHistoryData(prev => ({
+            ...prev,
+            generalData: { ...prev.generalData, [field]: value }
+          }));
+        }
+        break;
+
+      case 'telefono':
+      case 'telefonoLaboral':
+        // Permite números, espacios, guiones y paréntesis (formato de teléfono)
+        if (value === '' || /^[\d\s\(\)\-]+$/.test(value)) {
+          setHistoryData(prev => ({
+            ...prev,
+            generalData: { ...prev.generalData, [field]: value }
+          }));
+        }
+        break;
+
+      case 'no_hc':
+      case 'no_consultorio':
+        // Solo números para estos campos
+        if (value === '' || /^\d+$/.test(value)) {
+          setHistoryData(prev => ({
+            ...prev,
+            generalData: { ...prev.generalData, [field]: value }
+          }));
+        }
+        break;
+
+      default:
+        // Para los demás campos, permite cualquier cambio
+        setHistoryData(prev => ({
+          ...prev,
+          generalData: { ...prev.generalData, [field]: value }
+        }));
+    }
   };
+
+  // Función para validar nombres (solo letras y espacios)
+  const validateName = (value) => {
+    return /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value);
+  };
+
+  // Modificar los campos de nombre, apellidos:
+  <TextField
+    label="Nombre"
+    value={historyData.generalData.nombre}
+    onChange={(e) => {
+      if (validateName(e.target.value) || e.target.value === '') {
+        handleGeneralChange('nombre', e.target.value);
+      }
+    }}
+    fullWidth
+    error={historyData.generalData.nombre && !validateName(historyData.generalData.nombre)}
+    helperText={historyData.generalData.nombre && !validateName(historyData.generalData.nombre) ? "Solo se permiten letras" : ""}
+  />
 
   // Maneja el cambio en el radio group Donante
   const handleDonanteChange = (event) => {
@@ -317,53 +434,71 @@ export default function NuevaHistoriaClinica() {
     }));
   };
 
-  // Funciones para agregar nuevas filas (corregidas y optimizadas)
-  const addAppRow = () => {
+
+  const addAntecedentePersonalRow = () => {
     setHistoryData(prev => {
-      const newId = prev.AntecedentesPersonales.length > 0 ? Math.max(...prev.AntecedentesPersonales.map(r => r.id)) + 1 : 1;
+      const personales = Array.isArray(prev.antecedentesPersonales) ? prev.antecedentesPersonales : [];
+      const newId = personales.length > 0
+        ? Math.max(...personales.map(r => Number(r.id) || 0)) + 1
+        : 1;
       return {
         ...prev,
-        AntecedentesPersonales: [...prev.AntecedentesPersonales, { id: newId, antecedente: '', año: '' }]
+        antecedentesPersonales: [...personales, { id: newId, antecedente: '', año: '' }] // Añadido año inicial
       };
     });
   };
 
-  const addApfRow = () => {
+
+  const addAntecedenteFRow = () => {
     setHistoryData(prev => {
-      const newId = prev.apf.length > 0 ? Math.max(...prev.apf.map(r => r.id)) + 1 : 1;
+      const antecedentes = Array.isArray(prev.antecedentesFamiliares) ? prev.antecedentesFamiliares : [];
+      const newId = antecedentes.length > 0
+        ? Math.max(...antecedentes.map(r => Number(r.id) || 0)) + 1
+        : 1;
       return {
         ...prev,
-        apf: [...prev.apf, { id: newId, antecedente: '', parentesco: '' }]
+        antecedentesFamiliares: [...antecedentes, { id: newId, antecedente: '', parentesco: '' }]
       };
     });
   };
+
 
   const addAlergiaRow = () => {
     setHistoryData(prev => {
-      const newId = prev.alergias.length > 0 ? Math.max(...prev.alergias.map(r => r.id)) + 1 : 1;
+      const alergias = Array.isArray(prev.alergias) ? prev.alergias : [];
+      const newId = alergias.length > 0
+        ? Math.max(...alergias.map(r => Number(r.id) || 0)) + 1
+        : 1;
       return {
         ...prev,
-        alergias: [...prev.alergias, { id: newId, alergia: '' }]
+        alergias: [...alergias, { id: newId, alergia: '' }]
       };
     });
   };
 
   const addHabitoRow = () => {
     setHistoryData(prev => {
-      const newId = prev.habitos.length > 0 ? Math.max(...prev.habitos.map(r => r.id)) + 1 : 1;
+      const habitosToxicos = Array.isArray(prev.habitosToxicos) ? prev.habitosToxicos : [];
+      const newId = habitosToxicos.length > 0
+        ? Math.max(...habitosToxicos.map(r => Number(r.id) || 0)) + 1
+        : 1;
       return {
         ...prev,
-        habitos: [...prev.habitos, { id: newId, habito: '', intensidad: 'Leve' }]
+        habitosToxicos: [...habitosToxicos, { id: newId, habito: '', intensidad: '' }]
       };
     });
   };
 
+
   const addEstanciaRow = () => {
     setHistoryData(prev => {
-      const newId = prev.estanciaExtranjero.length > 0 ? Math.max(...prev.estanciaExtranjero.map(r => r.id)) + 1 : 1;
+      const estanciaExtranjero = Array.isArray(prev.estanciaExtranjero) ? prev.estanciaExtranjero : [];
+      const newId = estanciaExtranjero.length > 0
+        ? Math.max(...prev.estanciaExtranjero.map(r => r.id || 0)) + 1
+        : 1;
       return {
         ...prev,
-        estanciaExtranjero: [...prev.estanciaExtranjero, { id: newId, fecha: '', pais: '', estadia: '', motivo: '' }]
+        estanciaExtranjero: [...estanciaExtranjero, { id: newId, fecha: '', pais: '', estadia: '', motivo: '' }]
       };
     });
   };
@@ -514,13 +649,23 @@ export default function NuevaHistoriaClinica() {
                 fullWidth
               />
             </Grid>
+            {/* Select Sexo */}
             <Grid item xs={12} sm={3}>
-              <TextField
-                label="Sexo"
-                value={historyData.generalData.sexo}
-                onChange={(e) => handleGeneralChange('sexo', e.target.value)}
-                fullWidth
-              />
+              <FormControl fullWidth>
+                <FormLabel>Sexo</FormLabel>
+                <Select
+                  name="sexo"
+                  value={historyData.generalData.sexo}
+                  onChange={(e) => handleGeneralChange('sexo', e.target.value)}
+                >
+                  <MenuItem value="">Seleccione</MenuItem>
+                  {sexos.map((item) => (
+                    <MenuItem key={item._id} value={item._id}>
+                      {item.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={3}>
               <TextField
@@ -530,11 +675,31 @@ export default function NuevaHistoriaClinica() {
                 fullWidth
               />
             </Grid>
+
+            {/* Select Color de Piel */}
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth>
+                <FormLabel>Color de Piel</FormLabel>
+                <Select
+                  name="color_piel"
+                  value={historyData.generalData.color_piel}
+                  onChange={(e) => handleGeneralChange('color_piel', e.target.value)}
+                >
+                  <MenuItem value="">Seleccione</MenuItem>
+                  {coloresPiel.map((item) => (
+                    <MenuItem key={item._id} value={item._id}>
+                      {item.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
             <Grid item xs={12} sm={3}>
               <TextField
-                label="Color Piel"
-                value={historyData.generalData.color_piel}
-                onChange={(e) => handleGeneralChange('color_piel', e.target.value)}
+                label="No Historia"
+                value={historyData.generalData.no_hc}
+                onChange={(e) => handleGeneralChange('no_hc', e.target.value)}
                 fullWidth
               />
             </Grid>
@@ -588,6 +753,24 @@ export default function NuevaHistoriaClinica() {
                 fullWidth
               />
             </Grid>
+            {/* Select Provincia */}
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth>
+                <FormLabel>Provincia</FormLabel>
+                <Select
+                  name="provincia"
+                  value={historyData.generalData.provincia}
+                  onChange={(e) => handleGeneralChange('provincia', e.target.value)}
+                >
+                  <MenuItem value="">Seleccione</MenuItem>
+                  {provincias.map((item) => (
+                    <MenuItem key={item._id} value={item._id}>
+                      {item.nombre_provincia}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
 
             <Grid item xs={12} sm={3}>
               <TextField
@@ -619,17 +802,16 @@ export default function NuevaHistoriaClinica() {
               <FormControl fullWidth>
                 <FormLabel>Grupo Sanguíneo</FormLabel>
                 <Select
-                  name="grupo_sanguineo"
-                  value={historyData.generalData.grupo_sanguine
-                    
-                   }
-                  onChange={(e) => handleGeneralChange('grupo_sanguineo', e.target.value)}
+                  name="grupo_sanguine"
+                  value={historyData.generalData.grupo_sanguine}
+                  onChange={(e) => handleGeneralChange('grupo_sanguine', e.target.value)}
                 >
                   <MenuItem value="">Seleccione</MenuItem>
-                  <MenuItem value="A">A</MenuItem>
-                  <MenuItem value="B">B</MenuItem>
-                  <MenuItem value="AB">AB</MenuItem>
-                  <MenuItem value="O">O</MenuItem>
+                  {gruposSanguineos.map((item) => (
+                    <MenuItem key={item._id} value={item._id}>
+                      {item.nombre}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -644,8 +826,11 @@ export default function NuevaHistoriaClinica() {
                   onChange={(e) => handleGeneralChange('factor', e.target.value)}
                 >
                   <MenuItem value="">Seleccione</MenuItem>
-                  <MenuItem value="+">+</MenuItem>
-                  <MenuItem value="-">-</MenuItem>
+                  {factores.map((item) => (
+                    <MenuItem key={item._id} value={item._id}>
+                      {item.signo}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -739,38 +924,56 @@ export default function NuevaHistoriaClinica() {
         </Paper>
 
         {/* Sección APP con botón Agregar */}
-        <SectionHeader title="Antecedentes Patologicos Personales (APP)" />
+        <SectionHeader title="Antecedentes Personales" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          <Button variant="outlined" onClick={addAppRow}>Agregar Antecedente</Button>
+          <Button variant="outlined" onClick={addAntecedentePersonalRow}>Agregar Antecedente</Button>
         </Box>
         <Paper sx={{ height: 250, mb: 4 }}>
           <DataGrid
-            rows={historyData.AntecedentesPersonales}
+            rows={historyData.antecedentesPersonales}
             columns={appColumns}
             pageSize={5}
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                antecedentesPersonales: prev.antecedentesPersonales.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección APF con botón Agregar */}
-        <SectionHeader title="Antecdentes Patologicos Familiares (APF)" />
+        <SectionHeader title="Antecedentes Familiares" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          <Button variant="outlined" onClick={addApfRow}>Agregar Antecedente</Button>
+          <Button variant="outlined" onClick={addAntecedenteFRow}>Agregar Antecedente</Button>
         </Box>
         <Paper sx={{ height: 250, mb: 4 }}>
           <DataGrid
-            rows={historyData.apf}
+            rows={historyData.antecedentesFamiliares}
             columns={apfColumns}
             pageSize={5}
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                antecedentesFamiliares: prev.antecedentesFamiliares.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Alergias con botón Agregar */}
         <SectionHeader title="Alergias" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addAlergiaRow}>Agregar Alergia</Button>
@@ -783,28 +986,44 @@ export default function NuevaHistoriaClinica() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                alergias: prev.alergias.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Hábitos con botón Agregar */}
         <SectionHeader title="Habitos Toxicos" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addHabitoRow}>Agregar Hábito</Button>
         </Box>
         <Paper sx={{ height: 250, mb: 4 }}>
           <DataGrid
-            rows={historyData.habitos}
+            rows={historyData.habitosToxicos}
             columns={habitosColumns}
             pageSize={5}
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
-            editMode="cell"
-            onCellEditCommit={(params) => handleTableEdit('habitos', params)}
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                habitosToxicos: prev.habitosToxicos.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Estancia con botón Agregar */}
         <SectionHeader title="Estancia en el Extranjero" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addEstanciaRow}>Agregar Estancia</Button>
@@ -817,10 +1036,19 @@ export default function NuevaHistoriaClinica() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                estanciaExtranjero: prev.estanciaExtranjero.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Donaciones con botón Agregar */}
         <SectionHeader title="Donaciones Previas" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addDonacionRow}>Agregar Donación</Button>
@@ -833,10 +1061,19 @@ export default function NuevaHistoriaClinica() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                donacionesPrevias: prev.donacionesPrevias.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Transfusiones con botón Agregar */}
         <SectionHeader title="Transfusiones Previas" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addTransfusionRow}>Agregar Transfusión</Button>
@@ -849,6 +1086,16 @@ export default function NuevaHistoriaClinica() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                transfusionesPrevias: prev.transfusionesPrevias.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 

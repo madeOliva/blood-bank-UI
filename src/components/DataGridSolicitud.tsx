@@ -4,6 +4,7 @@ import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Button } from '@mui/material';
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import type { GridColumnVisibilityModel } from '@mui/x-data-grid';
 
 export default function DataGridSol() {
     // Estado para las filas
@@ -18,7 +19,7 @@ export default function DataGridSol() {
             const index = prevRows.findIndex((row) => row.id === rowId);
             if (index === -1) return prevRows;
 
-            // Calcular nuevo id único (puedes mejorar esta lógica según tu caso)
+            // Calcular nuevo id único
             const newId = prevRows.length > 0 ? Math.max(...prevRows.map(r => r.id)) + 1 : 1;
 
             // Nueva fila vacía o con valores por defecto
@@ -42,6 +43,10 @@ export default function DataGridSol() {
     const handleDeleteRow = (rowId: number) => {
         setRows((prevRows) => prevRows.filter((row) => row.id !== rowId));
     };
+
+    const [columnVisibilityModel, setColumnVisibilityModel] = React.useState<GridColumnVisibilityModel>({
+        id: false, // oculta la columna id inicialmente
+    });
 
     const columns: GridColDef[] = [
         { field: 'id', headerName: 'ID', width: 50 },
@@ -95,7 +100,7 @@ export default function DataGridSol() {
                             size="small"
                             endIcon={<AssignmentIcon sx={{ marginLeft: -1 }} />}
                             sx={{ mr: 1 }}
-                            onClick={() => handleAddRowBelow(params.id as number)} // Aquí pasamos el id de la fila actual
+                            onClick={() => handleAddRowBelow(params.id as number)}
                         >
                             Adicionar Solicitud
                         </Button>
@@ -104,7 +109,7 @@ export default function DataGridSol() {
                             size="small"
                             color="error"
                             endIcon={<WaterDropIcon sx={{ ml: -1 }} />}
-                            onClick={() => handleDeleteRow(params.id as number)} // Aquí eliminamos la fila
+                            onClick={() => handleDeleteRow(params.id as number)}
                         >
                             Eliminar
                         </Button>
@@ -129,6 +134,8 @@ export default function DataGridSol() {
                 pageSizeOptions={[5]}
                 disableRowSelectionOnClick
                 editMode="cell"
+                columnVisibilityModel={columnVisibilityModel}
+                onColumnVisibilityModelChange={(newModel) => setColumnVisibilityModel(newModel)}
             />
         </Box>
     );

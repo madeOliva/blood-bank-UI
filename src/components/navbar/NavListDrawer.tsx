@@ -60,15 +60,15 @@ export default function NavListDrawer() {
   };
 
   const handleListaE = () => {
-    navigate("/lista-espera", {replace:true});
+    navigate("/lista-espera", { replace: true });
   };
 
   const handleHojaC = () => {
-    navigate("/hoja-cargo", {replace:true});
+    navigate("/hoja-cargo", { replace: true });
   };
 
   const handleHojaD = () => {
-    navigate("/hoja-cargo-donaciones", {replace:true});
+    navigate("/hoja-cargo-donaciones", { replace: true });
   }
 
   const handlePrechequeo = () => {
@@ -104,7 +104,7 @@ export default function NavListDrawer() {
     navigate("/desechos", { replace: true });
   };
 
-    const handleDesechospro = () => {
+  const handleDesechospro = () => {
     navigate("/desechospro", { replace: true });
   };
 
@@ -161,6 +161,30 @@ export default function NavListDrawer() {
     navigate("/listadop", { replace: true });
   };
 
+  const handleDietas = () => {
+    navigate("/dieta", { replace: true });
+  };
+
+  const handleDonantesC = () => {
+    navigate("/donantesCMF", { replace: true });
+  };
+
+  const handleCitadosD = () => {
+    navigate("/citadosps", { replace: true });
+  };
+
+  const handleT = () => {
+    navigate("/pageone", { replace: true });
+  };
+
+  const handlePacientesT = () => {
+    navigate("/listadoPacientes", { replace: true });
+  };
+
+  const handleOrdenT = () => {
+    navigate("/crearOrden", { replace: true });
+  };
+
   return (
     <Box sx={{ width: 250, bgcolor: "white" }}>
       <nav>
@@ -204,7 +228,7 @@ export default function NavListDrawer() {
             </ListItemButton>
           </ListItem>
 
-          {(userRole === 'medico_consultorio') && (
+          {(userRole === 'Médico del consultorio') && (
             <>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => setOpenHi(!openHi)}
@@ -247,7 +271,7 @@ export default function NavListDrawer() {
                   </ListItem>
 
                   <ListItem disablePadding>
-                    <ListItemButton onClick={() => handleLCC()} sx={{
+                    <ListItemButton onClick={() => handleDietas()} sx={{
                       "&:active .MuiListItemIcon-root": {
                         "& svg": {
                           color: "red !important",
@@ -265,7 +289,7 @@ export default function NavListDrawer() {
                   </ListItem>
 
                   <ListItem disablePadding>
-                    <ListItemButton onClick={() => handleLCC()} sx={{
+                    <ListItemButton onClick={() => handleDonantesC()} sx={{
                       "&:active .MuiListItemIcon-root": {
                         "& svg": {
                           color: "red !important",
@@ -285,7 +309,7 @@ export default function NavListDrawer() {
               </Collapse>
             </>)}
 
-          {(userRole === 'tecnico_inscripcion') && (
+          {(userRole === 'Técnico de inscripción') && (
             <>
 
               <ListItem disablePadding>
@@ -346,7 +370,7 @@ export default function NavListDrawer() {
             </>)}
 
 
-          {(userRole === 'medico' || userRole === 'tecnico_prechequeo') && (
+          {(userRole === 'Médico de selección' || userRole === 'Técnico de prechequeo' || userRole === 'Admin') && (
             <>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => setOpenPre(!openPre)}
@@ -387,47 +411,68 @@ export default function NavListDrawer() {
                       <ListItemText primary="Examenes de Prechequeo" />
                     </ListItemButton>
                   </ListItem>
-                  <ListItem disablePadding>
-                    <ListItemButton onClick={() => handleResultados()} sx={{
-                      "&:active .MuiListItemIcon-root": {
-                        "& svg": {
-                          color: "red !important",
-                        },
-                      },
-                      "&:active .MuiTypography-root": {
-                        color: "red !important",
-                      },
-                    }}>
-                      <ListItemIcon>
-                        <EditDocumentIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
-                      </ListItemIcon>
-                      <ListItemText primary="Resultados de exámenes" />
-                    </ListItemButton>
-                  </ListItem>
+                  {userRole === 'Médico de selección' && (
+                    <>
+                      <ListItem disablePadding>
+                        <ListItemButton onClick={() => handleCitadosD()} sx={{
+                          "&:active .MuiListItemIcon-root": {
+                            "& svg": {
+                              color: "red !important",
+                            },
+                          },
+                          "&:active .MuiTypography-root": {
+                            color: "red !important",
+                          },
+                        }}>
+                          <ListItemIcon>
+                            <Groups2Icon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                          </ListItemIcon>
+                          <ListItemText primary="Citados" />
+                        </ListItemButton>
+                      </ListItem>
+                      <ListItem disablePadding>
+                        <ListItemButton onClick={() => handleResultados()} sx={{
+                          "&:active .MuiListItemIcon-root": {
+                            "& svg": {
+                              color: "red !important",
+                            },
+                          },
+                          "&:active .MuiTypography-root": {
+                            color: "red !important",
+                          },
+                        }}>
+                          <ListItemIcon>
+                            <EditDocumentIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                          </ListItemIcon>
+                          <ListItemText primary="Resultados de exámenes" />
+                        </ListItemButton>
+                      </ListItem>
 
-                  <ListItem disablePadding>
-                    <ListItemButton onClick={() => handleNoAptos()} sx={{
-                      "&:active .MuiListItemIcon-root": {
-                        "& svg": {
-                          color: "red !important",
-                        },
-                      },
-                      "&:active .MuiTypography-root": {
-                        color: "red !important",
-                      },
-                    }}>
-                      <ListItemIcon>
-                        <CancelIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
-                      </ListItemIcon>
-                      <ListItemText primary="Donantes no Aptos" />
-                    </ListItemButton>
-                  </ListItem>
+                      <ListItem disablePadding>
+                        <ListItemButton onClick={() => handleNoAptos()} sx={{
+                          "&:active .MuiListItemIcon-root": {
+                            "& svg": {
+                              color: "red !important",
+                            },
+                          },
+                          "&:active .MuiTypography-root": {
+                            color: "red !important",
+                          },
+                        }}>
+                          <ListItemIcon>
+                            <CancelIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                          </ListItemIcon>
+                          <ListItemText primary="Donantes no Aptos" />
+                        </ListItemButton>
+                      </ListItem>
+                    </>
+                  )}
                 </List>
               </Collapse>
             </>
           )}
 
-          {(userRole === 'tecnico_donacion') && (
+          {(userRole === 'Técnico de donación') && (
             <>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => setOpenD(!openD)}
@@ -490,7 +535,7 @@ export default function NavListDrawer() {
             </>
           )}
 
-          {(userRole === 'tecnico_aseguramiento_calidad') && (
+          {(userRole === 'Técnico de aseguramiento de calidad') && (
             <>
 
               <ListItem disablePadding>
@@ -551,7 +596,7 @@ export default function NavListDrawer() {
                     </ListItemButton>
                   </ListItem>
 
-                  
+
 
                   <ListItem disablePadding>
                     <ListItemButton onClick={() => handleReanalizar()} sx={{
@@ -625,12 +670,12 @@ export default function NavListDrawer() {
                     </ListItemButton>
                   </ListItem>
 
-                  
+
                 </List>
               </Collapse>
             </>)}
 
-          {(userRole === 'tecnico_produccion') && (
+          {(userRole === 'Técnico de producción') && (
             <>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => setOpenP(!openP)}
@@ -668,7 +713,7 @@ export default function NavListDrawer() {
                       <ListItemIcon>
                         <ScienceIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                       </ListItemIcon>
-                      <ListItemText primary="Recepción y Centrifugacion" />
+                      <ListItemText primary="Recepción y Centrifugación" />
                     </ListItemButton>
                   </ListItem>
 
@@ -730,9 +775,9 @@ export default function NavListDrawer() {
             </>)}
 
 
-          {(userRole === 'tecnico_laboratorio_calidad' ||
-            userRole === 'tecnico_laboratorio_inmuno' ||
-            userRole === 'tecnico_laboratorio_suma') && (
+          {(userRole === 'Técnico de laboratorio calidad' ||
+            userRole === 'Técnico de laboratorio inmuno' ||
+            userRole === 'Técnico de laboratorio suma') && (
               <>
                 <ListItem disablePadding>
                   <ListItemButton onClick={() => setOpenL(!openL)}
@@ -757,9 +802,9 @@ export default function NavListDrawer() {
 
                 <Collapse in={openL}>
                   <List disablePadding>
-                    {(userRole === 'tecnico_laboratorio_calidad' ||
-                      userRole === 'tecnico_laboratorio_inmuno' ||
-                      userRole === 'tecnico_laboratorio_suma') && (
+                    {(userRole === 'Técnico de laboratorio calidad' ||
+                      userRole === 'Técnico de laboratorio inmuno' ||
+                      userRole === 'Técnico de laboratorio suma') && (
                         <ListItem disablePadding>
                           <ListItemButton onClick={() => handleRM()} sx={{
                             "&:active .MuiListItemIcon-root": {
@@ -779,7 +824,7 @@ export default function NavListDrawer() {
                         </ListItem>
                       )}
 
-                    {userRole === 'tecnico_laboratorio_suma' && (
+                    {userRole === 'Técnico de laboratorio suma' && (
                       <ListItem disablePadding>
                         <ListItemButton onClick={() => handleLS()} sx={{
                           "&:active .MuiListItemIcon-root": {
@@ -799,7 +844,7 @@ export default function NavListDrawer() {
                       </ListItem>
                     )}
 
-                    {userRole === 'tecnico_laboratorio_inmuno' && (
+                    {userRole === 'Técnico de laboratorio inmuno' && (
                       <ListItem disablePadding>
                         <ListItemButton onClick={() => handleLI()} sx={{
                           "&:active .MuiListItemIcon-root": {
@@ -820,7 +865,7 @@ export default function NavListDrawer() {
                     )}
 
 
-                    {userRole === 'tecnico_laboratorio_calidad' && (
+                    {userRole === 'Técnico de laboratorio calidad' && (
                       <ListItem disablePadding>
                         <ListItemButton onClick={() => handleLCC()} sx={{
                           "&:active .MuiListItemIcon-root": {
@@ -844,8 +889,8 @@ export default function NavListDrawer() {
               </>)}
 
 
-          {(userRole === 'jefe_extraccion_movil' ||
-            userRole === 'tecnico_movil') && (
+          {(userRole === 'Jéfe de extracción móvil' ||
+            userRole === 'Técnico móvil') && (
               <>
                 <ListItem disablePadding>
                   <ListItemButton onClick={() => setOpenCM(!openCM)}
@@ -944,7 +989,7 @@ export default function NavListDrawer() {
                 </Collapse>
               </>)}
 
-          {(userRole === 'medico_hospital') && (
+          {(userRole === 'Médico del hospital') && (
             <>
               <ListItem disablePadding>
                 <ListItemButton onClick={() => setOpenH(!openH)}
@@ -969,8 +1014,8 @@ export default function NavListDrawer() {
               <Collapse in={openH}>
                 <List disablePadding>
                   <ListItem disablePadding>
-                    <ListItemButton sx={{
-                      pl: 9,
+                    <ListItemButton onClick={() => handlePacientesT()} sx={{
+
                       "&:active .MuiListItemIcon-root": {
                         "& svg": {
                           color: "red !important",
@@ -980,13 +1025,16 @@ export default function NavListDrawer() {
                         color: "red !important",
                       },
                     }}>
+                      <ListItemIcon>
+                        <Groups2Icon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                      </ListItemIcon>
                       <ListItemText primary="Pacientes a Transfundir" />
                     </ListItemButton>
                   </ListItem>
 
                   <ListItem disablePadding>
-                    <ListItemButton sx={{
-                      pl: 9,
+                    <ListItemButton onClick={() => handleOrdenT()} sx={{
+
                       "&:active .MuiListItemIcon-root": {
                         "& svg": {
                           color: "red !important",
@@ -996,6 +1044,9 @@ export default function NavListDrawer() {
                         color: "red !important",
                       },
                     }}>
+                      <ListItemIcon>
+                        <AssignmentAddIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                      </ListItemIcon>
                       <ListItemText primary="Orden de Transfusión" />
                     </ListItemButton>
                   </ListItem>
@@ -1003,10 +1054,10 @@ export default function NavListDrawer() {
               </Collapse>
             </>)}
 
-          {(userRole === 'medico_hospital') && (
+          {(userRole === 'Técnico de transfusión') && (
             <>
               <ListItem disablePadding>
-                <ListItemButton
+                <ListItemButton onClick={() => handleT()}
                   sx={{
                     "&:active .MuiListItemIcon-root": {
                       "& svg": {

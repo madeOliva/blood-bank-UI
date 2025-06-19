@@ -3,7 +3,9 @@ import {
   AppBar, Toolbar, Typography, Box, Avatar, Modal, Card, CardContent, Button
 } from "@mui/material";
 import { jwtDecode } from "jwt-decode";
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import BotonPersonalizado from "../../components/Button";
+import Navbar from "../../components/navbar/Navbar";
+import Usuario from "../../pictures/Usuario.jpg";
 
 interface JwtPayload {
   email: string;
@@ -32,11 +34,8 @@ export default function UsuarioActivo() {
   return (
     <>
       {/* Navbar */}
-      <AppBar position="static" sx={{ bgcolor: "white", color: "primary.dark" }}>
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Banco de Sangre Provincial
-          </Typography>
+      <Navbar>
+        { /*<Toolbar>
           <Typography variant="body1" sx={{ mr: 2 }}>
             {user.email} ({user.role})
           </Typography>
@@ -46,20 +45,33 @@ export default function UsuarioActivo() {
           >
             <AccountCircleIcon />
           </Avatar>
-        </Toolbar>
-      </AppBar>
+        </Toolbar>*/}
+      </Navbar>
 
       {/* Mensaje de bienvenida */}
-      <Box sx={{ mt: 6, textAlign: "center" }}>
+      <Box sx={{ mt: 10, textAlign: "center" }}>
         <Typography variant="h4" gutterBottom>
           ¡Bienvenido!
         </Typography>
+
+        <img
+          src={Usuario}
+          alt="Img Usuario"
+          style={{
+            width: "100%",
+            maxWidth: "400px", // Ajusta según necesidad
+            height: "auto",
+            objectFit: "contain",
+            padding: "20px", // Espacio en móviles
+          }} />
+
         <Typography variant="subtitle1">
-          Rol: {user.role}
+          Profesion: {user.role}
         </Typography>
         <Typography variant="subtitle2">
-          Email: {user.email}
+          Correo: {user.email}
         </Typography>
+
       </Box>
 
       {/* Modal con datos del usuario */}
@@ -84,14 +96,14 @@ export default function UsuarioActivo() {
               </Typography>
               <Typography variant="body1"><b>Email:</b> {user.email}</Typography>
               <Typography variant="body1"><b>Rol:</b> {user.role}</Typography>
-              <Button
+              <BotonPersonalizado
                 variant="contained"
                 sx={{ mt: 2 }}
                 fullWidth
                 onClick={() => setOpen(false)}
               >
                 Cerrar
-              </Button>
+              </BotonPersonalizado>
             </CardContent>
           </Card>
         </Box>

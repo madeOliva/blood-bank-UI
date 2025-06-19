@@ -39,7 +39,7 @@ export default function Register() {
   ) => {
     event.preventDefault();
   };
-const handleRegister = async () => {
+  const handleRegister = async () => {
     setError('');
 
     if (!name || !email || !password || !role) {
@@ -63,35 +63,37 @@ const handleRegister = async () => {
       }
 
       // Decodifica el token y guarda el rol
-            const decoded = jwtDecode<JwtPayload>(access_token);
-            localStorage.setItem('token', access_token);
-            localStorage.setItem('userRole', decoded.role);
-            if (decoded.role === 'medico') {
-              navigate('/resultadosprechequeo');
-            } else if (decoded.role === 'tecnico_aseguramiento_calidad') {
-              navigate('/vizualizar');
-            } else if(decoded.role === 'medico_hospital') {
-              navigate('/');
-            }else if(decoded.role === 'medico_consultorio') {
-              navigate('/listadop');
-            }else if(decoded.role === 'tecnico_prechequeo'){
-              navigate('/prechequeo');
-            }else if (decoded.role === 'jefe_extraccion_movil'|| decoded.role === 'tecnico_movil' ){
-              navigate('/planDonaciones')
-            }else if (decoded.role === 'tecnico_inscripcion'){
-              navigate('/citados')
-            }else if (decoded.role === 'tecnico_transfusion'){
-              navigate('/pageone')
-            }else if (decoded.role === 'tecnico_donacion'){
-              navigate('/lista-espera')
-            }else if (decoded.role === 'tecnico_laboratorio_suma' || decoded.role === 'tecnico_laboratorio_inmuno' || decoded.role === 'tecnico_laboratorio_calidad'){
-              navigate('/principal_lab')
-            }else if (decoded.role === 'tecnico_produccion'){
-              navigate('/entrada_produccion')
-            }
-             else {
-              setError('No tienes permiso para acceder a esta sección.');
-            }
+      const decoded = jwtDecode<JwtPayload>(access_token);
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('userRole', decoded.role);
+      if (decoded.role === 'Médico de selección') {
+        navigate('/resultadosprechequeo');
+      } else if (decoded.role === 'Técnico de aseguramiento de calidad') {
+        navigate('/vizualizar');
+      } else if(decoded.role === 'Médico del hospital') {
+        navigate('/listadoPacientes');
+      }else if(decoded.role === 'Médico del consultorio') {
+        navigate('/listadop');
+      }else if(decoded.role === 'Técnico de prechequeo'){
+        navigate('/prechequeo');
+      }else if (decoded.role === 'Jefe de extracción móvil'){
+        navigate('/planDonaciones')
+      }else if (decoded.role === 'Técnico de móvil'){
+        navigate('/planDonaciones')
+      }else if (decoded.role === 'Técnico de inscripción'){
+        navigate('/citados')
+      }else if (decoded.role === 'Técnico de transfusión'){
+        navigate('/pageone')
+      }else if (decoded.role === 'Técnico de donación'){
+        navigate('/lista-espera')
+      }else if (decoded.role === 'Técnico de laboratorio suma' || decoded.role === 'Técnico de laboratorio inmuno' || decoded.role === 'Técnico de laboratorio calidad'){
+        navigate('/principal_lab')
+      }else if (decoded.role === 'Técnico de producción'){
+        navigate('/entrada_produccion')
+      }
+      else {
+        setError('No tienes permiso para acceder a esta sección.');
+      }
     } catch (err) {
       if (isAxiosError(err)) {
         setError(err.response?.data?.message || 'Error al registrarse. Intenta de nuevo.');
@@ -284,12 +286,12 @@ const handleRegister = async () => {
               },
             }}
           />
-          
+
           {error && (
-          <Typography color="error" variant="body2" sx={{ mb: 1 }}>
-            {error}
-          </Typography>
-        )}
+            <Typography color="error" variant="body2" sx={{ mb: 1 }}>
+              {error}
+            </Typography>
+          )}
 
           <Button
             variant="contained"
@@ -301,31 +303,31 @@ const handleRegister = async () => {
           <a href="/">Inicia Sesión</a>
         </Box>
 
-        
 
 
-          < Box
+
+        < Box
           bgcolor={"#00796B"}
-        sx={{
-          display: "flex",
-          alignItems: "center", // Centrado horizontal
-          justifyContent: "center", // Centrado vertical
-          width: "50%",
-        }}
-        >
-        <img
-          src={LogoApp}
-          alt="Logo"
-          style={{
-            width: "100%",
-            maxWidth: "400px", // Ajusta según necesidad
-            height: "auto",
-            objectFit: "contain",
-            padding: "20px", // Espacio en móviles
+          sx={{
+            display: "flex",
+            alignItems: "center", // Centrado horizontal
+            justifyContent: "center", // Centrado vertical
+            width: "50%",
           }}
-        />
+        >
+          <img
+            src={LogoApp}
+            alt="Logo"
+            style={{
+              width: "100%",
+              maxWidth: "400px", // Ajusta según necesidad
+              height: "auto",
+              objectFit: "contain",
+              padding: "20px", // Espacio en móviles
+            }}
+          />
+        </Box>
       </Box>
-    </Box>
     </div >
   );
 }

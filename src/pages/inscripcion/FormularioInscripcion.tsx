@@ -10,15 +10,40 @@ import {
   Checkbox,
   FormControlLabel,
   Grid,
+  DialogTitle,
+  DialogContent,
+  Dialog,
 } from "@mui/material";
 import Navbar from "../../components/navbar/Navbar";
 import BotonPersonalizado from "../../components/Button";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 const FormularioInscripcion: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
+
+  const camposVacios = {
+    no_hc: "",
+    nombre: "",
+    primer_apellido: "",
+    segundo_apellido: "",
+    sexo: "",
+    edad: "",
+    municipio: "",
+    provincia: "",
+    color_piel: "",
+    grupo_sanguine: "",
+    factor: "",
+    consejo_popular: "",
+    no_consultorio: "",
+    ocupacion: "",
+    telefono: "",
+    telefonoLaboral: "",
+    centroLaboral: "",
+    otraLocalizacion: "",
+  };
 
   // Estado para los campos del formulario
   const [form, setForm] = useState({
@@ -77,6 +102,64 @@ const FormularioInscripcion: React.FC = () => {
     consejo_popular: "",
     no_consultorio: "",
   });
+
+  // Estados para el modal de éxito
+  const [openSuccess, setOpenSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Estados para el modal de error
+  const [openError, setOpenError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    // Solo buscar si el CI tiene 11 dígitos
+    if (/^\d{11}$/.test(form.ci)) {
+      axios
+        .get(`http://localhost:3000/historia-clinica/ci/${form.ci}`)
+        .then((res) => {
+          if (res.data) {
+            // Llena los campos del formulario con los datos encontrados
+            setForm((prev) => ({
+              ...prev,
+              no_hc: res.data.no_hc || "",
+              nombre: res.data.nombre || "",
+              primer_apellido: res.data.primer_apellido || "",
+              segundo_apellido: res.data.segundo_apellido || "",
+              sexo: res.data.sexo?._id || res.data.sexo || "",
+              edad: res.data.edad ? String(res.data.edad) : "",
+              municipio: res.data.municipio || "",
+              provincia: res.data.provincia?._id || res.data.provincia || "",
+              color_piel: res.data.color_piel || "",
+              grupo_sanguine:
+                res.data.grupo_sanguine?._id || res.data.grupo_sanguine || "",
+              factor: res.data.factor?._id || res.data.factor || "",
+              consejo_popular: res.data.consejo_popular || "",
+              no_consultorio: res.data.no_consultorio || "",
+              ocupacion: res.data.ocupacion || "",
+              telefono: res.data.telefono || "",
+              telefonoLaboral: res.data.telefonoLaboral || "",
+              centroLaboral: res.data.centro_laboral || "",
+              otraLocalizacion: res.data.otra_localizacion || "",
+            }));
+            setIdHistoriaClinica(res.data._id || "");
+          }
+        })
+        .catch(() => {
+          // Si no existe, limpia los campos (opcional)
+          setForm({ ...form, ...camposVacios });
+          setIdHistoriaClinica("");
+        });
+    }else {
+    // Si el CI no tiene 11 dígitos, limpia los campos dependientes
+    setForm((prev) => ({
+      ...prev,
+      ...camposVacios,
+      ci: prev.ci, // Mantén el valor actual del CI
+    }));
+    setIdHistoriaClinica("");
+  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.ci]);
 
   // Cargar datos del registro si hay id
   useEffect(() => {
@@ -224,6 +307,8 @@ const FormularioInscripcion: React.FC = () => {
       newErrors.edad = "Campo obligatorio";
     } else if (!/^\d+$/.test(form.edad) || Number(form.edad) <= 0) {
       newErrors.edad = "Edad debe ser un número mayor que 0";
+    } else if (Number(form.edad) < 18 || Number(form.edad) > 65) {
+      newErrors.edad = "Edad debe estar entre 18 y 65 años";
     }
     if (!form.municipio.trim()) newErrors.municipio = "Campo obligatorio";
     if (!form.provincia.trim()) newErrors.provincia = "Campo obligatorio";
@@ -322,16 +407,30 @@ const FormularioInscripcion: React.FC = () => {
         );
 
         await axios.put(`http://localhost:3000/registro-donacion/${id}`, data);
-        alert("Registro modificado exitosamente");
-        navigate("/hoja-cargo");
+        //alert("Registro modificado exitosamente");
+        setSuccessMessage("¡Se ha modificado satisfactoriamente!");
+        setOpenSuccess(true);
+        // Navega después de un pequeño delay para que el usuario vea el modal
+        setTimeout(() => {
+          setOpenSuccess(false);
+          navigate("/hoja-cargo");
+        }, 1800);
       } else {
         await axios.post(`http://localhost:3000/registro-donacion/`, data);
-        alert("Registro exitoso");
-        navigate("/citados");
+        //alert("Registro exitoso");
+        setSuccessMessage("¡Se ha registrado correctamente!");
+        setOpenSuccess(true);
+        setTimeout(() => {
+          setOpenSuccess(false);
+          navigate("/citados");
+        }, 1800);
       }
-    } catch (error) {
-      alert("Error al registrar");
-      console.error(error);
+    } catch (error: any) {
+      setErrorMessage(
+        error?.response?.data?.message ||
+          "Ocurrió un error al registrar. Intente nuevamente."
+      );
+      setOpenError(true);
     }
   };
 
@@ -770,7 +869,12 @@ const FormularioInscripcion: React.FC = () => {
                       variant="outlined"
                       name="no_consultorio"
                       value={form.no_consultorio}
-                      onChange={handleChange}
+                      onChange={(e) => {
+                        // Solo permite números
+                        const value = e.target.value.replace(/\D/g, "");
+                        setForm({ ...form, no_consultorio: value });
+                        setErrors({ ...errors, no_consultorio: "" });
+                      }}
                       error={!!errors.no_consultorio}
                       helperText={errors.no_consultorio}
                     />
@@ -788,6 +892,87 @@ const FormularioInscripcion: React.FC = () => {
           </BotonPersonalizado>
         </Grid>
       </Box>
+      {/* Modal Éxito Registro/Modificación */}
+      <Dialog
+        open={openSuccess}
+        aria-labelledby="success-dialog-title"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 3,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{ textAlign: "center", pb: 0 }}
+          id="success-dialog-title"
+        >
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap={1}
+          >
+            <CheckCircleOutlineIcon
+              sx={{ fontSize: 60, color: "success.main" }}
+            />
+            <Typography variant="h5" fontWeight="bold" color="success.main">
+              ¡Éxito!
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="body1"
+            textAlign="center"
+            sx={{ mt: 1, fontSize: "1.1rem" }}
+          >
+            {successMessage}
+          </Typography>
+        </DialogContent>
+      </Dialog>
+      {/* Modal Error Registro/Modificación */}
+      <Dialog
+        open={openError}
+        onClose={() => setOpenError(false)}
+        aria-labelledby="error-dialog-title"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 3,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{ textAlign: "center", pb: 0 }}
+          id="error-dialog-title"
+        >
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap={1}
+          >
+            <span style={{ color: "#d32f2f", fontSize: 60 }}>✖</span>
+            <Typography variant="h5" fontWeight="bold" color="error">
+              Error
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="body1"
+            textAlign="center"
+            sx={{ mt: 1, fontSize: "1.1rem" }}
+          >
+            {errorMessage}
+          </Typography>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
