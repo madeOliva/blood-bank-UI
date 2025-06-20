@@ -230,7 +230,7 @@ export default function PruebasReanalizar() {
           mt: 8,
         }}
       >
-        Pruebas a Reanalizar
+        Muestras a Reanalizar
       </Typography>
       <Container maxWidth={false}>
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>

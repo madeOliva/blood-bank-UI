@@ -600,7 +600,8 @@ const FIELD_MAP_VIVERES: Record<string, string> = {
         cantidad: pedidoMensualQuantities[id],
       }));
 
-    const mensualPayload: any = { planId: currentOrderId };
+    // No incluyas planId aquí
+    const mensualPayload: any = {};
     Object.entries(FIELD_MAP_MENSUAL).forEach(([nombre, field]) => {
       mensualPayload[field] = 0;
     });
@@ -642,7 +643,12 @@ const FIELD_MAP_VIVERES: Record<string, string> = {
 
   // --- INTEGRACIÓN CON BACKEND PARA GUARDAR PEDIDOS ---
 
-
+  React.useEffect(() => {
+    if (exitoModalOpen) {
+      const timer = setTimeout(() => setExitoModalOpen(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [exitoModalOpen]);
 const FIELD_MAP_CENTRAL: Record<string, string> = {
   "Torundas de algodón": "torundas_algodon",
   "Torundas de gaza": "torundas_gaza",
@@ -873,7 +879,7 @@ const confirmDevolucionCantidad = async () => {
       <Container maxWidth={false}>
         <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 4, mb: 2 }}>
           <Button variant="contained" color="success" onClick={handlePedidoMensualClick}>
-            Pedido Mensual
+            Pedidos Mensuales
           </Button>
         </Stack>
 
@@ -972,9 +978,7 @@ const confirmDevolucionCantidad = async () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ justifyContent: "center" }}>
-            <Button onClick={() => setExitoModalOpen(false)} variant="contained" color="success">
-              Cerrar
-            </Button>
+            
           </DialogActions>
         </Dialog>
 
