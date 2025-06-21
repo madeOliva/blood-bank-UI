@@ -1,11 +1,37 @@
 
 import React, { useState, useEffect } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Box, Button, MenuItem, Select, TextField, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Grid, Paper } from '@mui/material';
+import { Box, Button, MenuItem, Select, TextField, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Grid, Paper, Modal } from '@mui/material';
 import Navbar from '../../components/navbar/Navbar';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
+import BotonPersonalizado from '../../components/Button';
+import ErrorIcon from '@mui/icons-material/Error';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+
+// Estilos para modales
+const modalStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+  borderRadius: 2,
+  textAlign: 'center',
+};
+
+const successModalStyle = {
+  ...modalStyle,
+  borderTop: '4px solid #13b09e',
+};
+
+const errorModalStyle = {
+  ...modalStyle,
+  borderTop: '4px solid #b0170c',
+};
 
 const emptyHistoryData = {
   generalData: {
@@ -35,29 +61,52 @@ const emptyHistoryData = {
     genero_vida: '',
     donante: '',
   },
-  antecedentesPersonales: [],
-  antecedentesFamiliares: [],
-  alergias: [],
-  habitos: [],
-  estanciaExtranjero: [],
-  donacionesPrevias: [],
-  transfusionesPrevias: [],
+  antecedentesPersonales: [] as { id: number; antecedente: string; año: string }[],
+  antecedentesFamiliares: [] as { id: number; antecedente: string; parentesco: string }[],
+  alergias: [] as { id: number; alergia: string }[],
+  habitosToxicos: [] as { id: number; habito: string; intensidad: string }[],
+  estanciaExtranjero: [] as { id: number; fecha: string; pais: string; estadia: string; motivo: string }[],
+  donacionesPrevias: [] as { id: number; fecha: string; lugar: string; reaccion: string }[],
+  transfusionesPrevias: [] as { id: number; fecha: string; lugar: string; diagnostico: string; reaccion: string; observaciones: string }[],
 };
+
+// Componente para los encabezados de sección con estilo
+function SectionHeader({ title }) {
+  return (
+    <Box
+      sx={{
+        backgroundColor: '#009688',
+        color: '#fff',
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontSize: 18,
+        py: 1,
+        mb: 1,
+        borderRadius: 1,
+      }}
+    >
+      {title}
+    </Box>
+  );
+}
 
 
 export default function VisualizarHC() {
   // Estado principal que contiene toda la historia clínica
   const [historyData, setHistoryData] = useState(emptyHistoryData);
   const [loading, setLoading] = useState(true);
+  const [donacionesPrevias, setDonacionesPrevias] = useState([]);
+
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
+  const [openErrorModal, setOpenErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const { id } = useParams();
 
   // Cargar datos del backend al montar el componente
   useEffect(() => {
-    // Cambia el ID por el que corresponda o hazlo dinámico
     axios.get(`http://localhost:3000/historia-clinica/datos/${id}`)
       .then(res => {
-        // Normaliza los datos para que tengan la estructura esperada por la vista
         const d = res.data;
         setHistoryData({
           generalData: {
@@ -76,7 +125,7 @@ export default function VisualizarHC() {
             ocupacion: d.ocupacion || '',
             cat_ocupacional: d.cat_ocupacional || '',
             telefono: d.telefono || '',
-            provincia:d.provincia || '',
+            provincia: d.provincia || '',
             centro_laboral: d.centro_laboral || '',
             telefonoLaboral: d.telefonoLaboral || '',
             otra_localizacion: d.otra_localizacion || '',
@@ -93,26 +142,26 @@ export default function VisualizarHC() {
                   ? 'Donante Activo'
                   : '',
           },
-          antecedentesPersonales: (d.antecedentesPersonales || []).map((a, idx) => ({
+          antecedentesPersonales: (d.antecedentesPersonales || []).map((a: any, idx: number) => ({
             id: idx + 1,
             antecedente: a.antecedente || '',
             año: a.año || '',
           })),
-          antecedentesFamiliares: (d.antecedentesFamiliares || []).map((a, idx) => ({
+          antecedentesFamiliares: (d.antecedentesFamiliares || []).map((a: any, idx: number) => ({
             id: idx + 1,
             antecedente: a.antecedente || '',
             parentesco: a.parentesco || '',
           })),
-          alergias: (d.alergias || []).map((a, idx) => ({
+          alergias: (d.alergias || []).map((a: any, idx: number) => ({
             id: idx + 1,
             alergia: a.alergia || a || '',
           })),
-          habitos: (d.habitos || []).map((h, idx) => ({
+          habitosToxicos: (d.habitosToxicos || []).map((h: any, idx: number) => ({
             id: idx + 1,
             habito: h.habito || '',
             intensidad: h.intensidad || 'Leve',
           })),
-          estanciaExtranjero: (d.estanciaExtranjero || []).map((e, idx) => ({
+          estanciaExtranjero: (d.estanciaExtranjero || []).map((e: any, idx: number) => ({
             id: idx + 1,
             fecha: e.fecha || '',
             pais: e.pais || '',
@@ -124,7 +173,7 @@ export default function VisualizarHC() {
             fecha: don.fecha || '',
             lugar: don.lugar || '',
             reaccion: don.reaccion || '',
-            motivo: don.motivo || '',
+            /*motivo: don.motivo || '',*/
           })),
           transfusionesPrevias: (d.transfusionesPrevias || []).map((t, idx) => ({
             id: idx + 1,
@@ -138,80 +187,21 @@ export default function VisualizarHC() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+    axios.get(`http://localhost:3000/registro-donacion/historia-clinica/${id}`)
+      .then(res => {
+        // Mapea los datos para el DataGrid
+        const donaciones = (res.data || []).map((don, idx) => ({
+          id: idx + 1,
+          fecha: don.fechaD ? new Date(don.fechaD).toLocaleDateString() : '',
+          lugar: don.lugar || '',
+          reaccion: don.reaccion || '',
+          /* motivo: don.motivo || '', // si tienes motivo en el backend*/
+        }));
+        setDonacionesPrevias(donaciones);
+      });
+  }, [id]);
 
 
-  // Funciones para agregar nuevas filas (igual que antes, pero chequea que historyData exista)
-  const addAppRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      antecedentesPersonales: [
-        ...(prev.antecedentesPersonales || []),
-        { id: (prev.antecedentesPersonales?.length || 0) + 1, antecedente: '', año: '' }
-      ]
-    }));
-  };
-
-  const addApfRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      antecedentesFamiliares: [
-        ...(prev.antecedentesFamiliares || []),
-        { id: (prev.antecedentesFamiliares?.length || 0) + 1, antecedente: '', parentesco: '' }
-      ]
-    }));
-  };
-
-
-  const addAlergiaRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      alergias: [
-        ...(prev.alergias || []),
-        { id: (prev.alergias?.length || 0) + 1, alergia: '' }
-      ]
-    }));
-  };
-
-  const addHabitoRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      habitos: [
-        ...(prev.habitos || []),
-        { id: (prev.habitos?.length || 0) + 1, habito: '', intensidad: 'Leve' }
-      ]
-    }));
-  };
-
-  const addEstanciaRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      estanciaExtranjero: [
-        ...(prev.estanciaExtranjero || []),
-        { id: (prev.estanciaExtranjero?.length || 0) + 1, fecha: '', pais: '', estadia: '', motivo: '' }
-      ]
-    }));
-  };
-
-  const addDonacionRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      donacionesPrevias: [
-        ...(prev.donacionesPrevias || []),
-        { id: (prev.donacionesPrevias?.length || 0) + 1, fecha: '', lugar: '', reaccion: '', motivo: '' }
-      ]
-    }));
-  }
-
-  const addTransfusionRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      transfusionesPrevias: [
-        ...(prev.transfusionesPrevias || []),
-        { id: (prev.transfusionesPrevias?.length || 0) + 1, fecha: '', lugar: '', diagnostico: '', reaccion: '', observaciones: '' }
-      ]
-    }));
-  };
 
   // Maneja cambios en los campos de texto y select en Datos Generales
   const handleGeneralChange = (field, value) => {
@@ -221,6 +211,241 @@ export default function VisualizarHC() {
     }));
   };
 
+
+
+  // Maneja la edición en la tabla de Hábitos Tóxicos (intensidad editable)
+  const handleHabitoEditCommit = (params) => {
+    setHistoryData((prev) => ({
+      ...prev,
+      habitosToxicos: prev.habitosToxicos.map((row) =>
+        row.id === params.id ? { ...row, [params.field]: params.value } : row
+      ),
+    }));
+  };
+
+  // Función para verificar campos vacíos en datos generales
+  const hasEmptyGeneralFields = () => {
+    const gd = historyData.generalData;
+    return (
+      gd.ci.trim() === '' ||
+      gd.nombre.trim() === '' ||
+      gd.primer_apellido.trim() === '' ||
+      gd.segundo_apellido.trim() === '' ||
+      gd.edad.trim() === '' ||
+      gd.sexo.trim() === '' ||
+      gd.color_piel.trim() === '' ||
+      gd.no_hc.trim() === '' ||
+      gd.estado_civil.trim() === '' ||
+      gd.consejo_popular.trim() === '' ||
+      gd.no_consultorio.trim() === '' ||
+      gd.ocupacion.trim() === '' ||
+      gd.telefono.trim() === '' ||
+      gd.municipio.trim() === '' ||
+      gd.centro_laboral.trim() === '' ||
+      gd.telefonoLaboral.trim() === '' ||
+      gd.grupo_sanguine.trim() === '' ||
+      gd.factor.trim() === '' ||
+      gd.cat_ocupacional.trim() === '' ||
+      gd.estilo_vida.trim() === '' ||
+      gd.alimentacion.trim() === '' ||
+      gd.genero_vida.trim() === '' ||
+      gd.donante.trim() === ''
+    );
+  };
+
+  // Función para validar filas incompletas en tablas
+  const hasEmptyTableRows = () => {
+    const tables = [
+      { rows: historyData.antecedentesPersonales, requiredFields: ['antecedente', 'año'] },
+      { rows: historyData.antecedentesFamiliares, requiredFields: ['antecedente', 'parentesco'] },
+      { rows: historyData.alergias, requiredFields: ['alergia'] },
+      { rows: historyData.habitosToxicos, requiredFields: ['habito', 'intensidad'] },
+      { rows: historyData.estanciaExtranjero, requiredFields: ['fecha', 'pais', 'estadia', 'motivo'] },
+      { rows: historyData.donacionesPrevias, requiredFields: ['fecha', 'lugar', 'reaccion', 'motivo'] },
+      { rows: historyData.transfusionesPrevias, requiredFields: ['fecha', 'lugar', 'diagnostico', 'reaccion', 'observaciones'] },
+    ];
+
+    return tables.some(({ rows, requiredFields }) =>
+      rows.some(row =>
+        requiredFields.some(field => {
+          const value = row[field];
+          if (value === null || value === undefined) return true;
+          if (typeof value === 'string' && value.trim() === '') return true;
+          return false;
+        })
+      )
+    );
+  };
+
+  // Función para validar tablas vacías
+  const hasEmptyTables = () => {
+    const requiredTables = {
+      antecedentesPersonales: "Antecedentes Patológicos Personales (APP)",
+      antecedentesFamiliares: "Antecedentes Patológicos Familiares (APF)",
+      alergias: "Alergias",
+      habitosToxicos: "Hábitos Tóxicos",
+      estanciaExtranjero: "Estancia en el Extranjero",
+      donacionesPrevias: "Donaciones Previas",
+      transfusionesPrevias: "Transfusiones Previas"
+    };
+
+    return Object.entries(requiredTables).filter(([key, name]) => {
+      return !Array.isArray(historyData[key]) || historyData[key].length === 0;
+    }).map(([key, name]) => name);
+  };
+
+  // Función principal de validación
+  const validateForm = () => {
+    const errors = [];
+
+    if (hasEmptyGeneralFields()) {
+      errors.push("Existen campos vacíos en los Datos Generales");
+    }
+
+    const emptyTables = hasEmptyTables();
+    if (emptyTables.length > 0) {
+      errors.push(`Debe agregar al menos un registro en: ${emptyTables.join(', ')}`);
+    }
+
+    return errors;
+  };
+
+
+  const handleGuardar = async () => {
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setErrorMessage(errors.join('\n'));
+      setOpenErrorModal(true);
+      return;
+    }
+
+    try {
+      // Validación adicional para la edad
+      const edad = parseInt(historyData.generalData.edad);
+      if (isNaN(edad)) {
+        throw new Error('La edad debe ser un número válido');
+      }
+
+      const dataToSend = {
+        ci: historyData.generalData.ci,
+        nombre: historyData.generalData.nombre,
+        primer_apellido: historyData.generalData.primer_apellido,
+        segundo_apellido: historyData.generalData.segundo_apellido,
+        sexo: historyData.generalData.sexo,
+        edad: edad,
+        estado_civil: historyData.generalData.estado_civil,
+        municipio: historyData.generalData.municipio,
+        provincia: historyData.generalData.provincia,
+        color_piel: historyData.generalData.color_piel,
+        no_hc: historyData.generalData.no_hc,
+        grupo_sanguine: historyData.generalData.grupo_sanguine,
+        factor: historyData.generalData.factor,
+        consejo_popular: historyData.generalData.consejo_popular,
+        no_consultorio: historyData.generalData.no_consultorio,
+        ocupacion: historyData.generalData.ocupacion,
+        telefono: historyData.generalData.telefono,
+        telefonoLaboral: historyData.generalData.telefonoLaboral,
+        centro_laboral: historyData.generalData.centro_laboral,
+        otra_localizacion: historyData.generalData.otra_localizacion,
+        cat_ocupacional: historyData.generalData.cat_ocupacional,
+        estilo_vida: historyData.generalData.estilo_vida,
+        alimentacion: historyData.generalData.alimentacion,
+        genero_vida: historyData.generalData.genero_vida,
+        es_donanteControlado: historyData.generalData.donante === 'Donante Controlado',
+        es_posibleDonante: historyData.generalData.donante === 'Posible Donante',
+        es_donanteActivo: historyData.generalData.donante === 'Donante Activo',
+        alergias: historyData.alergias
+          .filter(item => item.alergia && item.alergia.trim() !== '')
+          .map(item => item.alergia),
+
+        antecedentesPersonales: historyData.antecedentesPersonales
+          .filter(ap => ap.antecedente && ap.año)
+          .map(ap => ({
+            antecedente: ap.antecedente,
+            año: ap.año
+          })),
+
+        antecedentesFamiliares: historyData.antecedentesFamiliares
+          .filter(af => af.antecedente && af.parentesco)
+          .map(af => ({
+            antecedente: af.antecedente,
+            parentesco: af.parentesco
+          })),
+        habitosToxicos: historyData.habitosToxicos
+          .filter(ht => ht.habito && ht.intensidad)
+          .map(ht => ({
+            habito: ht.habito,
+            intensidad: ht.intensidad
+          })),
+        estanciaExtranjero: historyData.estanciaExtranjero
+          .filter(ee => ee.fecha && ee.pais && ee.estadia && ee.motivo)
+          .map(ee => ({
+            fecha: ee.fecha,
+            pais: ee.pais,
+            estadia: ee.estadia,
+            motivo: ee.motivo
+          }))
+      };
+
+      console.log("Datos a enviar:", JSON.stringify(dataToSend, null, 2));
+
+      const response = await axios.put(`http://localhost:3000/historia-clinica/${id}`, dataToSend);
+      console.log('Respuesta del servidor:', response.data);
+      setOpenSuccessModal(true);
+    } catch (error) {
+      console.error('Error detallado:', error.response?.data || error.message || error);
+      setErrorMessage(error.response?.data?.message || 'Error al guardar la historia clínica');
+      setOpenErrorModal(true);
+    }
+  };
+  useEffect(() => {
+    const fetchTransfusiones = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/transfusiones');
+        setHistoryData(prev => ({
+          ...prev,
+          transfusionesPrevias: response.data.map((item: any, idx: number) => ({
+            id: item.id ?? idx + 1,
+            fecha: item.fecha ?? '',
+            lugar: item.lugar ?? '',
+            diagnostico: item.diagnostico ?? '',
+            reaccion: item.reaccion ?? '',
+            observaciones: item.observaciones ?? ''
+          }))
+        }));
+      } catch (error) {
+        setErrorMessage('Error al cargar las transfusiones previas');
+        setOpenErrorModal(true);
+      }
+    };
+
+    fetchTransfusiones();
+  }, []);
+
+  // Funciones para cerrar modales
+  const handleCloseSuccessModal = () => setOpenSuccessModal(false);
+  const handleCloseErrorModal = () => setOpenErrorModal(false);
+
+
+  // Función para validar nombres (solo letras y espacios)
+  const validateName = (value) => {
+    return /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value);
+  };
+
+  // Modificar los campos de nombre, apellidos:
+  <TextField
+    label="Nombre"
+    value={historyData.generalData.nombre}
+    onChange={(e) => {
+      if (validateName(e.target.value) || e.target.value === '') {
+        handleGeneralChange('nombre', e.target.value);
+      }
+    }}
+    fullWidth
+    error={historyData.generalData.nombre && !validateName(historyData.generalData.nombre)}
+    helperText={historyData.generalData.nombre && !validateName(historyData.generalData.nombre) ? "Solo se permiten letras" : ""}
+  />
+
   // Maneja el cambio en el radio group Donante
   const handleDonanteChange = (event) => {
     setHistoryData((prev) => ({
@@ -229,22 +454,76 @@ export default function VisualizarHC() {
     }));
   };
 
-  // Maneja la edición en la tabla de Hábitos Tóxicos (intensidad editable)
-  const handleHabitoEditCommit = (params) => {
-    setHistoryData((prev) => ({
+  // Generador de IDs únicos
+  const generateUniqueId = () => Date.now() + Math.floor(Math.random() * 10000);
+
+  // Antecedentes personales
+  const addAntecedentePersonalRow = () => {
+    setHistoryData(prev => ({
       ...prev,
-      habitos: prev.habitos.map((row) =>
-        row.id === params.id ? { ...row, [params.field]: params.value } : row
-      ),
+      antecedentesPersonales: [
+        ...(Array.isArray(prev.antecedentesPersonales) ? prev.antecedentesPersonales : []),
+        { id: generateUniqueId(), antecedente: '', año: '' }
+      ]
     }));
   };
 
-  // Función para guardar los datos (puedes adaptar para enviar a backend)
-  const handleGuardar = () => {
-    alert('Historia clínica guardada correctamente');
-    // Aquí puedes agregar lógica para enviar los datos a un servidor
-    // console.log(historyData);
+  // Antecedentes familiares
+  const addAntecedenteFRow = () => {
+    setHistoryData(prev => ({
+      ...prev,
+      antecedentesFamiliares: [
+        ...(Array.isArray(prev.antecedentesFamiliares) ? prev.antecedentesFamiliares : []),
+        { id: generateUniqueId(), antecedente: '', parentesco: '' }
+      ]
+    }));
   };
+
+  // Alergias
+  const addAlergiaRow = () => {
+    setHistoryData(prev => ({
+      ...prev,
+      alergias: [
+        ...(Array.isArray(prev.alergias) ? prev.alergias : []),
+        { id: generateUniqueId(), alergia: '' }
+      ]
+    }));
+  };
+
+  // Hábitos tóxicos (corregido)
+  const addHabitoRow = () => {
+    setHistoryData(prev => ({
+      ...prev,
+      habitosToxicos: [
+        ...(Array.isArray(prev.habitosToxicos) ? prev.habitosToxicos : []),
+        { id: generateUniqueId(), habito: '', intensidad: 'Leve' }
+      ]
+    }));
+  };
+
+  // Estancia en el extranjero
+  const addEstanciaRow = () => {
+    setHistoryData(prev => ({
+      ...prev,
+      estanciaExtranjero: [
+        ...(Array.isArray(prev.estanciaExtranjero) ? prev.estanciaExtranjero : []),
+        { id: generateUniqueId(), fecha: '', pais: '', estadia: '', motivo: '' }
+      ]
+    }));
+  };
+
+
+
+  // Maneja la edición en todas las tablas
+  const handleTableEdit = (section, params) => {
+    setHistoryData(prev => ({
+      ...prev,
+      [section]: prev[section].map(row =>
+        row.id === params.id ? { ...row, [params.field]: params.value } : row
+      )
+    }));
+  };
+
 
   // Columnas para las tablas DataGrid
   const appColumns = [
@@ -291,7 +570,7 @@ export default function VisualizarHC() {
     { field: 'fecha', headerName: 'Fecha', flex: 1, editable: true },
     { field: 'lugar', headerName: 'Lugar', flex: 1, editable: true },
     { field: 'reaccion', headerName: 'Reacción', flex: 1, editable: true },
-    { field: 'motivo', headerName: 'Motivo', flex: 1, editable: true },
+    /*{ field: 'motivo', headerName: 'Motivo', flex: 1, editable: true },*/
   ];
 
   const transfusionesColumns = [
@@ -302,45 +581,7 @@ export default function VisualizarHC() {
     { field: 'observaciones', headerName: 'Observaciones', flex: 1, editable: true },
   ];
 
-  // Componente para los encabezados de sección con estilo
-  const SectionHeader = ({ title }) => (
-    <Box
-      sx={{
-        backgroundColor: '#009688',
-        color: '#fff',
-        textAlign: 'center',
-        fontWeight: 'bold',
-        fontSize: 18,
-        py: 1,
-        mb: 1,
-        borderRadius: 1,
-      }}
-    >
-      {title}
-    </Box>
-  );
 
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <Box sx={{ p: 3, maxWidth: 1100, margin: 'auto', mt: 8 }}>
-          <Typography align="center">Cargando datos...</Typography>
-        </Box>
-      </>
-    );
-  }
-
-  if (!historyData) {
-    return (
-      <>
-        <Navbar />
-        <Box sx={{ p: 3, maxWidth: 1100, margin: 'auto', mt: 8 }}>
-          <Typography align="center" color="error">No se encontraron datos de la historia clínica.</Typography>
-        </Box>
-      </>
-    );
-  }
 
   return (
     <>
@@ -409,14 +650,6 @@ export default function VisualizarHC() {
                 fullWidth
               />
             </Grid>
-            {/*<Grid item xs={12} sm={3}>
-              <TextField
-                label="Color Piel"
-                value={historyData.generalData.color_piel}
-                onChange={(e) => handleGeneralChange('color_piel', e.target.value)}
-                fullWidth
-              />
-            </Grid>*/}
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Estado Civil"
@@ -498,7 +731,7 @@ export default function VisualizarHC() {
               />
             </Grid>
 
-             <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={3}>
               <FormControl fullWidth>
                 <FormLabel>Provincia</FormLabel>
                 <Select
@@ -527,7 +760,7 @@ export default function VisualizarHC() {
                 fullWidth
               />
             </Grid>
-           
+
 
             {/* Select Grupo Sanguíneo */}
             <Grid item xs={12} sm={3}>
@@ -566,11 +799,10 @@ export default function VisualizarHC() {
               <FormControl fullWidth>
                 <FormLabel>Categoría Ocupacional</FormLabel>
                 <Select
-                  name="categoria_ocupacional"
+                  name="cat_ocupacional"
                   value={historyData.generalData.cat_ocupacional}
                   onChange={(e) => handleGeneralChange('cat_ocupacional', e.target.value)}
                 >
-                  {/* Opciones para que completes */}
                   <MenuItem value="Empleador">Empleador</MenuItem>
                   <MenuItem value="Empleado">Empleado</MenuItem>
                   <MenuItem value="Trabajador por cuenta propia">Trabajador por cuenta propia</MenuItem>
@@ -588,7 +820,6 @@ export default function VisualizarHC() {
                   value={historyData.generalData.estilo_vida}
                   onChange={(e) => handleGeneralChange('estilo_vida', e.target.value)}
                 >
-                  {/* Opciones para que completes */}
                   <MenuItem value="Activo">Activo</MenuItem>
                   <MenuItem value="Sedentario">Sedentario</MenuItem>
                   <MenuItem value="Moderado">Moderado</MenuItem>
@@ -651,7 +882,7 @@ export default function VisualizarHC() {
         {/* Sección Antecedentes Patológicos Personales (APP) */}
         <SectionHeader title="Antecedentes Patologicos Personales (APP)" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          <Button variant="outlined" onClick={addAppRow}>Agregar Antecedente</Button>
+          <Button variant="outlined" onClick={addAntecedentePersonalRow}>Agregar Antecedente</Button>
         </Box>
         <Paper sx={{ height: 250, mb: 4 }}>
           <DataGrid
@@ -661,13 +892,15 @@ export default function VisualizarHC() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            editMode="cell"
+            onCellEditCommit={(params) => handleTableEdit('antecedentesPersonales', params)}
           />
         </Paper>
 
         {/* Sección Antecedentes Patológicos Familiares (APF) */}
         <SectionHeader title="Antecdentes Patologicos Familiares (APF)" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          <Button variant="outlined" onClick={addApfRow}>Agregar Antecedente</Button>
+          <Button variant="outlined" onClick={addAntecedenteFRow}>Agregar Antecedente</Button>
         </Box>
         <Paper sx={{ height: 250, mb: 4 }}>
           <DataGrid
@@ -677,6 +910,8 @@ export default function VisualizarHC() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            editMode="cell"
+            onCellEditCommit={(params) => handleTableEdit('antecedentesFamiliares', params)}
           />
         </Paper>
 
@@ -693,6 +928,8 @@ export default function VisualizarHC() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            editMode="cell"
+            onCellEditCommit={(params) => handleTableEdit('alergias', params)}
           />
         </Paper>
 
@@ -703,7 +940,7 @@ export default function VisualizarHC() {
         </Box>
         <Paper sx={{ height: 250, mb: 4 }}>
           <DataGrid
-            rows={historyData.habitos}
+            rows={historyData.habitosToxicos}
             columns={habitosColumns}
             pageSize={5}
             rowsPerPageOptions={[5]}
@@ -732,12 +969,9 @@ export default function VisualizarHC() {
 
         {/*Sección Donaciones Previas*/}
         <SectionHeader title="Donaciones Previas" />
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          <Button variant="outlined" onClick={addDonacionRow}>Agregar Donación</Button>
-        </Box>
         <Paper sx={{ height: 250, mb: 4 }}>
           <DataGrid
-            rows={historyData.donacionesPrevias}
+            rows={donacionesPrevias}
             columns={donacionesColumns}
             pageSize={5}
             rowsPerPageOptions={[5]}
@@ -748,9 +982,6 @@ export default function VisualizarHC() {
 
         {/*Sección Transfusiones Previas*/}
         <SectionHeader title="Transfusiones Previas" />
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          <Button variant="outlined" onClick={addTransfusionRow}>Agregar Transfusión</Button>
-        </Box>
         <Paper sx={{ height: 250, mb: 4 }}>
           <DataGrid
             rows={historyData.transfusionesPrevias}
@@ -763,14 +994,9 @@ export default function VisualizarHC() {
         </Paper>
 
 
-        {/* Botón Aceptar */}
-        <Box sx={{
-          display: 'flex', justifyContent: 'center',
-          mt: 4,
-          bottom: 20,
-          zIndex: 1
-        }}>
-          <Button variant="contained" sx={{
+        {/* Botón Guardar */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, bottom: 20, zIndex: 1 }}>
+          <BotonPersonalizado variant="contained" sx={{
             background: '#009688',
             color: '#fff',
             fontWeight: 600,
@@ -786,8 +1012,74 @@ export default function VisualizarHC() {
             },
           }} onClick={handleGuardar}>
             Aceptar
-          </Button>
+          </BotonPersonalizado>
         </Box>
+
+        {/* Modal Éxito */}
+        <Modal
+          open={openSuccessModal}
+          onClose={handleCloseSuccessModal}
+          aria-labelledby="success-modal-title"
+          aria-describedby="success-modal-description"
+        >
+          <Box sx={successModalStyle}>
+            <CheckCircleIcon sx={{ fontSize: 60, color: '#009688', mb: 2 }} />
+            <Typography id="success-modal-title" variant="h5" component="h2" gutterBottom>
+              ¡Éxito!
+            </Typography>
+            <Typography id="success-modal-description" sx={{ mb: 3 }}>
+              La historia clínica se ha guardado correctamente.
+            </Typography>
+            <BotonPersonalizado variant="contained"
+              onClick={handleCloseSuccessModal}
+              sx={{
+                backgroundColor: '#009688', color: '#fff',
+                fontWeight: 600,
+                fontSize: '1rem',
+                borderRadius: 1,
+                boxShadow: 3,
+                '&:hover': {
+                  backgroundColor: '#00796b',
+                  transform: 'scale(1.05)',
+                  transition: 'transform 0.3s',
+                },
+              }}
+            >
+              Aceptar
+            </BotonPersonalizado>
+          </Box>
+        </Modal>
+
+        {/* Modal Error */}
+        <Modal
+          open={openErrorModal}
+          onClose={handleCloseErrorModal}
+          aria-labelledby="error-modal-title"
+          aria-describedby="error-modal-description"
+        >
+          <Box sx={errorModalStyle}>
+            <ErrorIcon sx={{ fontSize: 60, color: '#f44336', mb: 2 }} />
+            <Typography id="error-modal-title" variant="h5" component="h2" gutterBottom>
+              ¡Error!
+            </Typography>
+            <Typography
+              id="error-modal-description"
+              sx={{
+                mb: 3,
+                whiteSpace: 'pre-line',
+                textAlign: 'left',
+                backgroundColor: '#fff8f8',
+                p: 2,
+                borderRadius: 1,
+              }}
+            >
+              {errorMessage}
+            </Typography>
+            <BotonPersonalizado variant="contained" color="error" onClick={handleCloseErrorModal}>
+              Corregir
+            </BotonPersonalizado>
+          </Box>
+        </Modal>
       </Box>
 
     </>

@@ -89,7 +89,7 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
   const handleSubmit = async () => {
     setError('');
     if (hayCamposVacios()) {
-      setErrorMsg("Por favor complete todos los campos y seleccione Apto o No Apto.");
+      setErrorMsg("Por favor complete todos los campos.");
       setModalType("error");
       setOpenModal(true);
       return;
