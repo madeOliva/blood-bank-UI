@@ -32,26 +32,32 @@ export default function LiberacionComponentes() {
   const [openSuccess, setOpenSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
- useEffect(() => {
-  fetch("http://localhost:3000/componentes-obtenidos/obtenidos")
+useEffect(() => {
+  fetch("http://localhost:3000/componentes-obtenidos/componentes_obtenidos")
     .then(res => res.json())
     .then(data => {
       setRows(
-         Array.isArray(data)
-    ? data.map((item: any, idx: number) => ({
-        id: item._id || idx,
-        no: item.no_consecutivo ?? idx + 1,
-        hc: item.historia_clinica?.no_hc ?? "",
-        sexo: item.historia_clinica?.sexo ?? "",
-        edad: Number(item.historia_clinica?.edad) || 0,
-        volumen: Number(item.componentes?.[0]?.volumen) || 0,
-        grupo: item.historia_clinica?.grupo ?? "",
-        factor: item.historia_clinica?.factor ?? "",
-        fecha_obtencion: item.fecha_obtencion ?? "",
-        componente: item.componentes?.[0]?.tipo ?? "",
-      }))
-    : []
-);
+        Array.isArray(data)
+          ? data
+              .filter((item: any) => item.estado_obtencion === "obtenido")
+              .map((item: any, idx: number) => ({
+                id: item._id || idx,
+                no: item.no_consecutivo ?? idx + 1,
+                hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+                nombre: item.registro_donacion?.historiaClinica?.nombre ?? "",
+                sexo: item.registro_donacion?.historiaClinica?.sexo ?? "",
+                edad: item.registro_donacion?.historiaClinica?.edad ?? "",
+                grupo: item.registro_donacion?.historiaClinica?.grupo ?? item.registro_donacion?.historiaClinica?.grupo_sanguine ?? "",
+                factor: item.registro_donacion?.historiaClinica?.factor ?? "",
+                volumen: item.componentes?.[0]?.volumen ?? "",
+                componente: item.componentes?.[0]?.tipo ?? "",
+                fecha_obtencion: item.fecha_obtencion ?? "",
+                estado_obtencion: item.estado_obtencion ?? "",
+                causa_baja: item.causa_baja ?? "",
+                entidad: item.registro_donacion?.nombre_unidad ?? "",
+              }))
+          : []
+      );
     })
     .catch(() => setRows([]));
 }, []);
@@ -118,7 +124,7 @@ const handleLiberar = async (id: number) => {
   field: "fecha_obtencion",
   headerName: "Fecha Obtención",
   width: 140,
-},,
+},
     { field: "componente", headerName: "Componente", width: 130 },
     {
       field: "accion",

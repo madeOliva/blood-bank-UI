@@ -1,64 +1,73 @@
-
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
 import { Box, Container, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import axios from "axios";
 
-export default function DesechosPro() {
+type RowData = {
+  id: string | number;
+  no: string | number;
+  hc: string;
+  desecho: string;
+  causa_baja: string;
+  componente: string;
+};
 
+export default function DesechosPro() {
   const [rows, setRows] = useState<RowData[]>([]);
   const [openModal, setOpenModal] = useState(false);
+  const [openLiberarModal, setOpenLiberarModal] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState<string | number | null>(null);
 
   // Cargar solo los componentes con estado_obtencion "baja"
   useEffect(() => {
-  axios.get("http://localhost:3000/componentes-obtenidos/bajas")
-    .then(response => {
-       console.log("DATOS RECIBIDOS:", response.data); // <-- AGREGA ESTO
+    const fetchData = async () => {
+      const response = await axios.get("http://localhost:3000/componentes-obtenidos/bajas?estado=baja");
       const bajas = Array.isArray(response.data)
-  ? response.data.map((item: any, idx: number) => ({
-      id: item._id || idx,
-      no: item.no_consecutivo ?? idx + 1,
-      hc: item.historia_clinica?.no_hc ?? "",
-      desecho: "Componente",
-      causa_baja: item.causa_baja ?? "",
-      componente: item.componentes?.[0]?.tipo ?? "",
-    }))
-  : [];
+        ? response.data
+            .filter((item: any) => item.estado_obtencion === "baja")
+            .map((item: any, idx: number) => ({
+              id: item._id || idx,
+              no: item.no_consecutivo ?? idx + 1,
+              hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+              desecho: "Componente",
+              causa_baja: item.causa_baja ?? "",
+              componente: item.componentes?.[0]?.tipo ?? "",
+            }))
+        : [];
       setRows(bajas);
-    })
-    .catch(error => {
-      console.error("Error fetching data:", error);
-    });
-}, []);
+    };
+    fetchData();
+  }, []);
 
   const handleOpenModal = (id: string | number) => {
     setSelectedRowId(id);
     setOpenModal(true);
   };
 
+  const handleOpenLiberarModal = (id: string | number) => {
+    setSelectedRowId(id);
+    setOpenLiberarModal(true);
+  };
+
   // Cambia el estado a "desechada"
   const handleDesechar = async () => {
     if (!selectedRowId) return;
     try {
-      await axios.put(`http://localhost:3000/componentes-obtenidos/${selectedRowId}`, {
-        estado_obtencion: "desechada",
-      });
+      await axios.patch(`http://localhost:3000/componentes-obtenidos/${selectedRowId}/desechar`);
       // Actualiza la tabla después del cambio
-      const response = await axios.get("http://localhost:3000/componentes-obtenidos/bajas");
+      const response = await axios.get("http://localhost:3000/componentes-obtenidos/bajas?estado=baja");
       const bajas = Array.isArray(response.data)
-        ? response.data.map((item: any, idx: number) => ({
-            id: item.id || item._id || idx,
-            no: item.no ?? idx + 1,
-            hc: item.no_hc ?? "",
-            desecho: item.desecho ?? "",
-            motivo: item.causa_baja ?? "",
-            componente:
-              item.nombre_componente
-              ?? (item.componentes && Array.isArray(item.componentes) && item.componentes[0] && item.componentes[0].tipo)
-              ?? "",
-          }))
+        ? response.data
+            .filter((item: any) => item.estado_obtencion === "baja")
+            .map((item: any, idx: number) => ({
+              id: item._id || idx,
+              no: item.no_consecutivo ?? idx + 1,
+              hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+              desecho: "Componente",
+              causa_baja: item.causa_baja ?? "",
+              componente: item.componentes?.[0]?.tipo ?? "",
+            }))
         : [];
       setRows(bajas);
       setOpenModal(false);
@@ -68,27 +77,30 @@ export default function DesechosPro() {
     }
   };
 
-  // Cambia el estado a "reenviada"
-  const handleEnviarIndividual = async (id: string | number) => {
+  // Cambia el estado a "liberado"
+  const handleLiberar = async () => {
+    if (!selectedRowId) return;
     try {
-      await axios.put(`http://localhost:3000/componentes-obtenidos/${id}`, {
-        estado_obtencion: "reenviada",
-      });
+      await axios.patch(`http://localhost:3000/componentes-obtenidos/${selectedRowId}/liberar`);
       // Actualiza la tabla después del cambio
-      const response = await axios.get("http://localhost:3000/componentes-obtenidos/bajas");
-     const bajas = Array.isArray(response.data)
-  ? response.data.map((item: any, idx: number) => ({
-      id: item._id || idx,
-      no: item.no_consecutivo ?? idx + 1,
-      hc: item.historia_clinica?.no_hc ?? "",
-      desecho: "Componente",
-      causa_baja: item.causa_baja ?? "",
-      componente: item.componentes?.[0]?.tipo ?? "",
-    }))
-  : [];
+      const response = await axios.get("http://localhost:3000/componentes-obtenidos/bajas?estado=baja");
+      const bajas = Array.isArray(response.data)
+        ? response.data
+            .filter((item: any) => item.estado_obtencion === "baja")
+            .map((item: any, idx: number) => ({
+              id: item._id || idx,
+              no: item.no_consecutivo ?? idx + 1,
+              hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+              desecho: "Componente",
+              causa_baja: item.causa_baja ?? "",
+              componente: item.componentes?.[0]?.tipo ?? "",
+            }))
+        : [];
       setRows(bajas);
+      setOpenLiberarModal(false);
+      setSelectedRowId(null);
     } catch (error) {
-      alert("Error al actualizar el estado.");
+      alert("Error al liberar el componente.");
     }
   };
 
@@ -97,7 +109,6 @@ export default function DesechosPro() {
     { field: "hc", headerName: "HC-donación", width: 150 },
     { field: "desecho", headerName: "Desecho", width: 150 },
     { field: "causa_baja", headerName: "Causa de baja", width: 180 },
- 
     {
       field: "accion",
       headerName: "",
@@ -114,11 +125,11 @@ export default function DesechosPro() {
             Desechar
           </Button>
           <Button
-            onClick={() => handleEnviarIndividual(params.id)}
+            onClick={() => handleOpenLiberarModal(params.id)}
             color="success"
             variant="contained"
           >
-            Reenviar
+            Liberar
           </Button>
         </>
       ),
@@ -180,6 +191,19 @@ export default function DesechosPro() {
           <Button onClick={() => setOpenModal(false)}>Cancelar</Button>
           <Button onClick={handleDesechar} color="error" variant="contained">
             Desechar
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Modal de confirmación para Liberar */}
+      <Dialog open={openLiberarModal} onClose={() => setOpenLiberarModal(false)}>
+        <DialogTitle>Confirmar acción</DialogTitle>
+        <DialogContent>
+          ¿Estás seguro que deseas liberar este registro?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenLiberarModal(false)}>Cancelar</Button>
+          <Button onClick={handleLiberar} color="success" variant="contained">
+            Liberar
           </Button>
         </DialogActions>
       </Dialog>

@@ -72,6 +72,12 @@ export default function PlanDonaciones() {
   };
 
   useEffect(() => {
+    // Calcular el próximo mes y año
+    const now = dayjs();
+    const nextMonthDate = now.add(1, 'month');
+    const nextMonth = nextMonthDate.month();
+    const nextMonthYear = nextMonthDate.year();
+
     const fetchData = async () => {
       try {
         const res = await axios.get(API_URL);
@@ -85,7 +91,15 @@ export default function PlanDonaciones() {
           compromiso: item.compromiso,
           responsableSalud: item.responsableDeSalud || item.responsableSalud,
           cdr: item.cdr,
-        }));
+        }))
+        .filter((plan: any) => {
+          const fecha = dayjs(plan.fechaHora);
+          return (
+            fecha.isValid() &&
+            fecha.month() === nextMonth &&
+            fecha.year() === nextMonthYear
+          );
+        });
         setRows(data);
       } catch (err) {
         setRows([]);
@@ -246,7 +260,7 @@ export default function PlanDonaciones() {
           mt: 8,
         }}
       >
-        Plan de Donaciones Mensual
+        Plan de Donaciones del Mes
       </Typography>
 
       <Container maxWidth={false}>
