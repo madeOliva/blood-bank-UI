@@ -66,7 +66,7 @@ export default function App() {
           <CitadosPS />
         </ProtectedRoute>} />
 
-      <Route path="/historiadonante/:id" element={
+      <Route path="/historiadonante/:id/:historiaClinicaId" element={
         <ProtectedRoute allowedRoles={["Médico de selección"]}>
           <HistoriaDonante />
         </ProtectedRoute>} />
