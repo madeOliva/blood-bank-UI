@@ -1,118 +1,68 @@
-
-import { DataGrid, GridRowsProp, GridColDef, GridRowParams } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridRowsProp,
+  GridColDef,
+  GridRowParams,
+} from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import BotonPersonalizado from "../../components/Button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import DeleteIcon from "@mui/icons-material/Delete";
 
-const initialRows: GridRowsProp = [
-  {
-    id: 1,
-    ci: "123456789",
-    "nombres y aplelidos": "Juan Pérez",
-    edad: 25,
-    sexo: "Masculino",
-    grupo: "A",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 2,
-    ci: "987654321",
-    "nombres y aplelidos": "María López",
-    edad: 30,
-    sexo: "Femenino",
-    grupo: "B",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-  {
-    id: 3,
-    ci: "456789123",
-    "nombres y aplelidos": "Carlos García",
-    edad: 40,
-    sexo: "Masculino",
-    grupo: "O",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 4,
-    ci: "789123456",
-    "nombres y aplelidos": "Ana Martínez",
-    edad: 35,
-    sexo: "Femenino",
-    grupo: "AB",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-  {
-    id: 5,
-    ci: "321654987",
-    "nombres y aplelidos": "Luis Fernández",
-    edad: 28,
-    sexo: "Masculino",
-    grupo: "A",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 6,
-    ci: "654987321",
-    "nombres y aplelidos": "Sofía Ramírez",
-    edad: 22,
-    sexo: "Femenino",
-    grupo: "B",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-  {
-    id: 7,
-    ci: "147258369",
-    "nombres y aplelidos": "Miguel Torres",
-    edad: 45,
-    sexo: "Masculino",
-    grupo: "O",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 8,
-    ci: "369258147",
-    "nombres y aplelidos": "Laura Gómez",
-    edad: 29,
-    sexo: "Femenino",
-    grupo: "AB",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-  {
-    id: 9,
-    ci: "258369147",
-    "nombres y aplelidos": "Pedro Sánchez",
-    edad: 33,
-    sexo: "Masculino",
-    grupo: "A",
-    rh: "+",
-    "donante de": "Voluntario",
-  },
-  {
-    id: 10,
-    ci: "963852741",
-    "nombres y aplelidos": "Elena Ruiz",
-    edad: 27,
-    sexo: "Femenino",
-    grupo: "B",
-    rh: "-",
-    "donante de": "Reposición",
-  },
-];
 
+
+export default function ListaCitados() {
+  const navigate = useNavigate();
+  const [rows, setRows] = useState<GridRowsProp>([]);
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
+  const [rowToDelete, setRowToDelete] = useState<any>(null);
+
+
+// Eliminar donante (cambiar citado a false y quitar de la tabla)
+  const handleConfirmDelete = async () => {
+    if (!rowToDelete) return;
+    try {
+      await axios.put(`http://localhost:3000/historia-clinica/${rowToDelete.id}`, { citado: false });
+      setRows((prevRows) => prevRows.filter((row) => row.id !== rowToDelete.id));
+      setOpenDeleteConfirm(false);
+      setRowToDelete(null);
+    } catch (error) {
+      setOpenDeleteConfirm(false);
+      setRowToDelete(null);
+      // Puedes mostrar un mensaje de error si lo deseas
+    }
+  };
+
+
+  //Columnas
 const columns: GridColDef[] = [
+  {
+      field: "eliminar",
+      headerName: "",
+      width: 80,
+      sortable: false,
+      filterable: false,
+      align: "center",
+      renderCell: (params) => (
+        <IconButton
+          onClick={(e) => {
+            e.stopPropagation();
+            setRowToDelete(params.row);
+            setOpenDeleteConfirm(true);
+          }}
+          aria-label="eliminar"
+        >
+          <DeleteIcon sx={{ color: "red" }} />
+        </IconButton>
+      ),
+    },
+  
   { field: "ci", headerName: "CI", width: 200 },
   {
-    field: "nombres y aplelidos",
+    field: "nombres_apellidos",
     headerName: "Nombres y Apellidos",
     width: 300,
   },
@@ -120,20 +70,78 @@ const columns: GridColDef[] = [
   { field: "sexo", headerName: "Sexo", width: 100 },
   { field: "grupo", headerName: "Grupo", width: 100 },
   { field: "rh", headerName: "Rh", width: 100 },
-  { field: "donante de", headerName: "Donante de", width: 100 },
+  { field: "donante_de", headerName: "Donante de", width: 120 },
 ];
 
-export default function ListaCitados() {
-  const navigate = useNavigate(); // Hook para navegar entre páginas
-  const [rows, setRows] = useState(initialRows);
 
-  const handleRowClick = (params:GridRowParams) => {
-   // Elimina la fila seleccionada del estado
-    setRows((prevRows) => prevRows.filter((row) => row.id !== params.row.id));
 
-    // Navega a otra página con el ID de la fila seleccionada
-    navigate(`/inscripcion/${params.row.ci}`);
+
+  useEffect(() => {
+    // Llama a la API para obtener las historias clínicas citadas
+    axios
+      .get("http://localhost:3000/historia-clinica/citados")
+      .then((res) => {
+        // Mapea los datos para el DataGrid
+        const mappedRows = res.data.map((item: any, idx: number) => ({
+          id: item._id || idx,
+          ci: item.ci,
+          nombres_apellidos: `${item.nombre} ${item.primer_apellido} ${item.segundo_apellido}`,
+          edad: item.edad,
+          sexo: item.sexo?.nombre || "",
+          grupo: item.grupo_sanguine?.nombre || "",
+          rh: item.factor?.signo || "",
+          donante_de: item.donante_de || "", // Ajusta este campo según tu backend
+        }));
+        setRows(mappedRows);
+      })
+      .catch((err) => {
+        setRows([]);
+      });
+  }, []);
+
+  // Maneja el clic en una fila
+
+  const handleRowClick = async (params: GridRowParams) => {
+    try {
+      // Navega a la inscripción
+      navigate(`/inscripcion/`, { state: { historiaClinica: params.row } });
+
+      // Llama al backend para actualizar el campo citado a false
+      await axios.put(
+        `http://localhost:3000/historia-clinica/${params.row.id}`,
+        { citado: false }
+      );
+      // Elimina la fila de la tabla visualmente
+      setRows((prevRows) => prevRows.filter((row) => row.id !== params.row.id));
+    } catch (error) {
+      // Manejo de error opcional
+      console.error("Error actualizando citado:", error);
+    }
   };
+
+
+  // Modal de confirmación
+  const DeleteConfirmModal = (
+    <Dialog
+      open={openDeleteConfirm}
+      onClose={() => setOpenDeleteConfirm(false)}
+      aria-labelledby="delete-confirm-dialog-title"
+    >
+      <DialogTitle id="delete-confirm-dialog-title">Confirmar eliminación</DialogTitle>
+      <DialogContent>
+        ¿Está seguro que desea eliminar al posible donante{" "}
+        <strong>{rowToDelete?.nombres_apellidos}</strong> de la lista de citados?
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setOpenDeleteConfirm(false)} color="primary">
+          No
+        </Button>
+        <Button onClick={handleConfirmDelete} color="error" autoFocus>
+          Sí
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
 
   return (
     <>
@@ -153,7 +161,6 @@ export default function ListaCitados() {
       >
         Citados del Dia
       </Typography>
-      {/* Contenedor para centrar el DataGrid */}
       <Box
         style={{
           display: "flex",
@@ -166,19 +173,20 @@ export default function ListaCitados() {
         <Box
           style={{
             height: 450,
-            width: "80%" /* Ajusta el ancho según sea necesario */,
+            width: "80%",
           }}
         >
+        {DeleteConfirmModal}
           <DataGrid
             rows={rows}
             columns={columns}
-            onRowClick={handleRowClick} // Maneja el clic en la fila
+            onRowClick={handleRowClick}
             sx={{
               "& .MuiDataGrid-columnHeaders": {
-                position: "sticky", // Hace que los encabezados sean fijos
-                top: 0, // Los fija en la parte superior
-                zIndex: 1, // Asegura que estén por encima de las filas
-                backgroundColor: "#fff", // Fondo blanco para los encabezados
+                position: "sticky",
+                top: 0,
+                zIndex: 1,
+                backgroundColor: "#fff",
               },
               "& .MuiDataGrid-columnHeaderTitle": {
                 fontFamily: '"Open Sans"',
@@ -188,9 +196,6 @@ export default function ListaCitados() {
                 fontFamily: '"Open Sans"',
                 color: "#000",
               },
-
-              // border: 1,
-              // borderRadius: 2,
             }}
             initialState={{
               pagination: {

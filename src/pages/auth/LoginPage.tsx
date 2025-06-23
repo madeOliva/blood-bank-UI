@@ -13,24 +13,22 @@ import { useNavigate } from "react-router-dom";
 import axios, { isAxiosError } from "axios";
 import { jwtDecode } from "jwt-decode";
 
-
-
 interface LoginResponse {
   access_token: string;
 }
 
 interface JwtPayload {
+  name: string;
   email: string;
   password: string;
   role: string;
 }
 
 export default function Login() {
-
   const [showPassword, setShowPassword] = React.useState(false);
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [error, setError] = React.useState('');
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [error, setError] = React.useState("");
 
   const navigate = useNavigate();
 
@@ -49,62 +47,80 @@ export default function Login() {
   };
 
   const handleLogin = async () => {
-    setError('');
+    setError("");
 
     if (!email || !password) {
-      setError('Por favor ingresa email y contraseña');
+      setError("Por favor ingresa email y contraseña");
       return;
     }
 
     try {
-      const response = await axios.post<LoginResponse>('http://localhost:3000/auth/login', {
-        email,
-        password,
-      });
+      const response = await axios.post<LoginResponse>(
+        "http://localhost:3000/auth/login",
+        {
+          email,
+          password,
+        }
+      );
 
       const { access_token } = response.data;
 
       if (!access_token) {
-        setError('No se recibió token de autenticación');
+        setError("No se recibió token de autenticación");
         return;
       }
       // Decodifica el token y guarda el rol
       const decoded = jwtDecode<JwtPayload>(access_token);
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('userRole', decoded.role);
-      if (decoded.role === 'Médico de selección') {
-        navigate('/resultadosprechequeo');
-      } else if (decoded.role === 'Técnico de aseguramiento de calidad') {
-        navigate('/vizualizar');
-      } else if(decoded.role === 'Médico del hospital') {
-        navigate('/listadoPacientes');
-      }else if(decoded.role === 'Médico del consultorio') {
-        navigate('/listadop');
-      }else if(decoded.role === 'Técnico de prechequeo'){
-        navigate('/prechequeo');
-      }else if (decoded.role === 'Jefe de extracción móvil'){
-        navigate('/planDonaciones')
-      }else if (decoded.role === 'Técnico de móvil'){
-        navigate('/planDonaciones')
-      }else if (decoded.role === 'Técnico de inscripción'){
-        navigate('/citados')
-      }else if (decoded.role === 'Técnico de transfusión'){
-        navigate('/pageone')
-      }else if (decoded.role === 'Técnico de donación'){
-        navigate('/lista-espera')
-      }else if (decoded.role === 'Técnico de laboratorio suma' || decoded.role === 'Técnico de laboratorio inmuno' || decoded.role === 'Técnico de laboratorio calidad'){
-        navigate('/principal_lab')
-      }else if (decoded.role === 'Técnico de producción'){
-        navigate('/entrada_produccion')
-      }
-       else {
-        setError('No tienes permiso para acceder a esta sección.');
+      localStorage.setItem("token", access_token);
+      localStorage.setItem("userRole", decoded.role);
+      // Supón que tienes el usuario en la variable 'user' o lo decodificas del token
+      localStorage.setItem(
+        "usuario",
+        JSON.stringify({
+          name: decoded.name,
+          email: decoded.email,
+          role: decoded.role,
+        })
+      );
+      if (decoded.role === "Médico de selección") {
+        navigate("/resultadosprechequeo");
+      } else if (decoded.role === "Técnico de aseguramiento de calidad") {
+        navigate("/vizualizar");
+      } else if (decoded.role === "Médico del hospital") {
+        navigate("/listadoPacientes");
+      } else if (decoded.role === "Médico del consultorio") {
+        navigate("/listadop");
+      } else if (decoded.role === "Técnico de prechequeo") {
+        navigate("/prechequeo");
+      } else if (decoded.role === "Jefe de extracción móvil") {
+        navigate("/planDonaciones");
+      } else if (decoded.role === "Técnico de móvil") {
+        navigate("/planDonaciones");
+      } else if (decoded.role === "Técnico de inscripción") {
+        navigate("/citados");
+      } else if (decoded.role === "Técnico de transfusión") {
+        navigate("/pageone");
+      } else if (decoded.role === "Técnico de donación") {
+        navigate("/lista-espera");
+      } else if (
+        decoded.role === "Técnico de laboratorio suma" ||
+        decoded.role === "Técnico de laboratorio inmuno" ||
+        decoded.role === "Técnico de laboratorio calidad"
+      ) {
+        navigate("/principal_lab");
+      } else if (decoded.role === "Técnico de producción") {
+        navigate("/entrada_produccion");
+      } else {
+        setError("No tienes permiso para acceder a esta sección.");
       }
     } catch (err) {
       if (isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Error al iniciar sesión. Intenta de nuevo.');
+        setError(
+          err.response?.data?.message ||
+            "Error al iniciar sesión. Intenta de nuevo."
+        );
       } else {
-        setError('Error al iniciar sesión. Intenta de nuevo.');
+        setError("Error al iniciar sesión. Intenta de nuevo.");
       }
     }
   };
@@ -132,8 +148,6 @@ export default function Login() {
             backgroundColor: "white",
           }}
         >
-
-
           <Typography
             variant="h3"
             component="h4"
@@ -202,7 +216,7 @@ export default function Login() {
             variant="outlined"
           >
             <InputLabel htmlFor="outlined-adornment-password">
-            Contraseña
+              Contraseña
             </InputLabel>
             <OutlinedInput
               id="outlined-adornment-password"
@@ -256,7 +270,6 @@ export default function Login() {
             width: "50%",
           }}
         >
-
           <img
             src={LogoApp}
             alt="Logo"

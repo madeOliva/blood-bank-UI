@@ -132,10 +132,26 @@ export default function App() {
         }
       />
       <Route
+        path="/donaciones-sangre/:id"
+        element={
+          <ProtectedRoute allowedRoles={["Técnico de donación"]}>
+            <DonacionesSangre />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/donaciones-sangre"
         element={
           <ProtectedRoute allowedRoles={["Técnico de donación"]}>
             <DonacionesSangre />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/donaciones-plasma/:id"
+        element={
+          <ProtectedRoute allowedRoles={["Técnico de donación"]}>
+            <DonacionesPlasma />
           </ProtectedRoute>
         }
       />
