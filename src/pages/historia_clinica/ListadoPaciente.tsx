@@ -6,11 +6,20 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/navbar/Navbar';
+import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
 
 const ListadoPacientes = () => {
   const navigate = useNavigate();
-  const [pacientes, setPacientes] = useState([]);
+  type Paciente = {
+    _id: string;
+    ci: string;
+    nombre: string;
+    primer_apellido: string;
+    segundo_apellido: string;
+  };
+
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
@@ -20,6 +29,8 @@ const ListadoPacientes = () => {
     primer_apellido: '',
     segundo_apellido: '',
   });
+
+  const [busquedaCI, setBusquedaCI] = useState("");
 
   // Cargar pacientes desde el backend
   useEffect(() => {
@@ -34,6 +45,35 @@ const ListadoPacientes = () => {
     };
     fetchPacientes();
   }, []);
+
+  const handleBuscarPorCI = async () => {
+    if (!busquedaCI.trim()) return;
+    // Busca en la lista actual primero
+    const encontrado = pacientes.find(p => p.ci === busquedaCI.trim());
+    if (encontrado) {
+      // Mueve el paciente al principio
+      setPacientes(prev => [encontrado, ...prev.filter(p => p._id !== encontrado._id)]);
+      setSnackbarMessage('Paciente encontrado y movido al inicio');
+      setSnackbarOpen(true);
+    } else {
+      // Si no está, intenta buscar en el backend
+      try {
+        const res = await axios.get(`http://localhost:3000/historia-clinica/ci/${busquedaCI.trim()}`);
+        if (res.data && res.data._id) {
+          setPacientes(prev => [res.data, ...prev]);
+          setSnackbarMessage('Paciente encontrado y agregado a la lista');
+          setSnackbarOpen(true);
+        } else {
+          setSnackbarMessage('No existe un paciente con ese CI');
+          setSnackbarOpen(true);
+        }
+      } catch {
+        setSnackbarMessage('No existe un paciente con ese CI');
+        setSnackbarOpen(true);
+      }
+    }
+    setBusquedaCI("");
+  };
 
   // Navegar a la vista de historia clínica
   const handleVerHistoriaClinica = (idPaciente) => {
@@ -52,9 +92,9 @@ const ListadoPacientes = () => {
 
   // Cerrar diálogo
   const handleCloseDialog = () => {
-  setOpenDialog(false);
-  setNuevoPaciente({ ci: '', nombre: '', primer_apellido: '', segundo_apellido: '' });
-};
+    setOpenDialog(false);
+    setNuevoPaciente({ ci: '', nombre: '', primer_apellido: '', segundo_apellido: '' });
+  };
 
   // Manejar cambios en los inputs
   const handleInputChange = (e) => {
@@ -62,6 +102,18 @@ const ListadoPacientes = () => {
       ...nuevoPaciente,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const soloLetras = (texto: string) => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(texto);
+
+  const validarCI = (ci: string): string => {
+    if (!/^\d{11}$/.test(ci))
+      return "El CI debe tener exactamente 11 dígitos numéricos.";
+    const mes = parseInt(ci.slice(2, 4), 10);
+    const dia = parseInt(ci.slice(4, 6), 10);
+    if (mes < 1 || mes > 12) return "El mes en el CI no es válido.";
+    if (dia < 1 || dia > 31) return "El día en el CI no es válido.";
+    return "";
   };
 
   // Agregar paciente al backend
@@ -77,6 +129,25 @@ const ListadoPacientes = () => {
       return;
     }
 
+    // Validación de CI
+    const ciError = validarCI(nuevoPaciente.ci.trim());
+    if (ciError) {
+      setSnackbarMessage(ciError);
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Validación de solo letras
+    if (
+      !soloLetras(nuevoPaciente.nombre) ||
+      !soloLetras(nuevoPaciente.primer_apellido) ||
+      !soloLetras(nuevoPaciente.segundo_apellido)
+    ) {
+      setSnackbarMessage('Nombre y apellidos solo deben contener letras');
+      setSnackbarOpen(true);
+      return;
+    }
+
     try {
       const res = await axios.post("http://localhost:3000/historia-clinica", {
         nombre: nuevoPaciente.nombre,
@@ -88,11 +159,11 @@ const ListadoPacientes = () => {
       handleCloseDialog();
       handleCrearHistoriaClinica(res.data._id); // Navega usando el id real del backend
     } catch (error) {
-       if (error.response?.status === 409) {
-      setSnackbarMessage('El CI ya existe. No se puede repetir.');
-    } else {
-      setSnackbarMessage('Error al agregar paciente');
-    }
+      if (error.response?.status === 409) {
+        setSnackbarMessage('El CI ya existe. No se puede repetir.');
+      } else {
+        setSnackbarMessage('Error al agregar paciente');
+      }
       setSnackbarOpen(true);
     }
   };
@@ -201,6 +272,30 @@ const ListadoPacientes = () => {
           pt: 4,
         }}
       >
+
+        <Box sx={{ width: '90%', display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <TextField
+            label="Buscar por CI"
+            value={busquedaCI}
+            onChange={e => setBusquedaCI(e.target.value.replace(/\D/g, '').slice(0, 11))}
+            onKeyDown={e => { if (e.key === 'Enter') handleBuscarPorCI(); }}
+            sx={{ width: 250, mr: 2 }}
+            inputProps={{ maxLength: 11 }}
+          />
+          <IconButton
+            onClick={handleBuscarPorCI}
+            sx={{
+              color: '#009688',
+              ml: 1,
+              '&:hover': {
+                backgroundColor: '#e0f2f1',
+              }
+            }}
+          >
+            <SearchIcon />
+          </IconButton>
+        </Box>
+
         {/* Botón de agregar paciente */}
         <Box sx={{
           width: '90%',
@@ -242,6 +337,9 @@ const ListadoPacientes = () => {
             columns={columns}
             getRowId={(row) => row._id}
             hideFooter
+            pageSize={5}                // Muestra 5 filas por página
+            rowsPerPageOptions={[5, 10, 20]} // Opciones de filas por página
+            pagination
             disableColumnMenu
             disableSelectionOnClick
             sx={{
@@ -282,8 +380,15 @@ const ListadoPacientes = () => {
               fullWidth
               variant="outlined"
               value={nuevoPaciente.ci}
-              onChange={handleInputChange}
+              onChange={e => {
+                // Solo permite números y máximo 11 caracteres
+                const value = e.target.value.replace(/\D/g, '').slice(0, 11);
+                setNuevoPaciente({ ...nuevoPaciente, ci: value });
+              }}
               sx={{ mb: 2 }}
+              inputProps={{ maxLength: 11 }}
+              error={!!nuevoPaciente.ci && !!validarCI(nuevoPaciente.ci)}
+              helperText={nuevoPaciente.ci ? validarCI(nuevoPaciente.ci) : ""}
             />
             <TextField
               autoFocus
@@ -296,6 +401,12 @@ const ListadoPacientes = () => {
               value={nuevoPaciente.nombre}
               onChange={handleInputChange}
               sx={{ mb: 2 }}
+              error={!!nuevoPaciente.nombre && !soloLetras(nuevoPaciente.nombre)}
+              helperText={
+                nuevoPaciente.nombre && !soloLetras(nuevoPaciente.nombre)
+                  ? "Solo se permiten letras"
+                  : ""
+              }
             />
             <TextField
               margin="dense"
@@ -307,6 +418,12 @@ const ListadoPacientes = () => {
               value={nuevoPaciente.primer_apellido}
               onChange={handleInputChange}
               sx={{ mb: 2 }}
+              error={!!nuevoPaciente.primer_apellido && !soloLetras(nuevoPaciente.primer_apellido)}
+              helperText={
+                nuevoPaciente.primer_apellido && !soloLetras(nuevoPaciente.primer_apellido)
+                  ? "Solo se permiten letras"
+                  : ""
+              }
             />
             <TextField
               margin="dense"
@@ -318,6 +435,12 @@ const ListadoPacientes = () => {
               value={nuevoPaciente.segundo_apellido}
               onChange={handleInputChange}
               sx={{ mb: 2 }}
+              error={!!nuevoPaciente.segundo_apellido && !soloLetras(nuevoPaciente.segundo_apellido)}
+              helperText={
+                nuevoPaciente.segundo_apellido && !soloLetras(nuevoPaciente.segundo_apellido)
+                  ? "Solo se permiten letras"
+                  : ""
+              }
             />
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>

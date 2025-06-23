@@ -394,6 +394,7 @@ export default function NavListDrawer() {
 
               <Collapse in={openPre}>
                 <List disablePadding>
+                  {userRole === 'Técnico de prechequeo' && (
                   <ListItem disablePadding>
                     <ListItemButton onClick={() => handlePrechequeo()} sx={{
                       "&:active .MuiListItemIcon-root": {
@@ -411,6 +412,7 @@ export default function NavListDrawer() {
                       <ListItemText primary="Examenes de Prechequeo" />
                     </ListItemButton>
                   </ListItem>
+                  )}
                   {userRole === 'Médico de selección' && (
                     <>
                       <ListItem disablePadding>
@@ -889,8 +891,8 @@ export default function NavListDrawer() {
               </>)}
 
 
-          {(userRole === 'Jéfe de extracción móvil' ||
-            userRole === 'Técnico móvil') && (
+          {(userRole === 'Jefe de extracción móvil' ||
+            userRole === 'Técnico de móvil') && (
               <>
                 <ListItem disablePadding>
                   <ListItemButton onClick={() => setOpenCM(!openCM)}

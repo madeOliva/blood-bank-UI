@@ -16,7 +16,7 @@ function Water({ row }: { row: any }) {
   const navigate = useNavigate();
 
   const handleHc = () => {
-    navigate(`/historiadonante/${row._id}`); // Usa el _id real
+    navigate(`/historiadonante/${row._id}/${row.historiaClinicaId}`, { replace: true });
   };
 
   return (<Button
@@ -51,6 +51,7 @@ export default function ResultadosPrechequeo() {
         const mappedRows = res.data.map((reg: any, idx: number) => ({
           id: idx + 1,
           _id: reg._id,
+          historiaClinicaId: reg.historiaClinicaId,
           nombre: reg.nombre,
           primer_apellido: reg.primer_apellido,
           segundo_apellido: reg.segundo_apellido,
@@ -117,11 +118,11 @@ export default function ResultadosPrechequeo() {
     },
 
     {
-  field: "actions",
-  headerName: "",
-  width: 150,
-  renderCell: (params) => <Water row={params.row} />,
-},
+      field: "actions",
+      headerName: "",
+      width: 150,
+      renderCell: (params) => <Water row={params.row} />,
+    },
 
 
   ];

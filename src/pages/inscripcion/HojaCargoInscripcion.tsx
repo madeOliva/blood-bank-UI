@@ -17,66 +17,85 @@ import {
   Button,
 } from "@mui/material";
 
-
 export default function HojaCargo() {
-const navigate = useNavigate();
-const [openModifyConfirm, setOpenModifyConfirm] = React.useState(false);
-const [rowToModify, setRowToModify] = React.useState<any>(null);
+  const navigate = useNavigate();
+  const [openModifyConfirm, setOpenModifyConfirm] = React.useState(false);
+  const [rowToModify, setRowToModify] = React.useState<any>(null);
 
-const handleModifyClick = (row: any) => {
-  setRowToModify(row);
-  setOpenModifyConfirm(true);
-};
+  const handleModifyClick = (row: any) => {
+    setRowToModify(row);
+    setOpenModifyConfirm(true);
+  };
 
-const handleConfirmModify = () => {
-  // Aquí navegas o haces la acción de modificar
-  navigate(`/inscripcion/${rowToModify.id}`);
-  setOpenModifyConfirm(false);
-};
+  const handleConfirmModify = () => {
+    // Aquí navegas o haces la acción de modificar
+    navigate(`/inscripcion/${rowToModify.id}`);
+    setOpenModifyConfirm(false);
+  };
 
-// Definición de las columnas
+  function formatearFecha(fecha: string): string {
+    if (!fecha) return "";
+    const d = new Date(fecha);
+    const dia = String(d.getDate()).padStart(2, "0");
+    const mes = String(d.getMonth() + 1).padStart(2, "0");
+    const anio = d.getFullYear();
+    return `${dia}-${mes}-${anio}`;
+  }
 
-const columns: GridColDef[] = [
-  {
-    field: "modificar",
-    headerName: "",
-    width: 80,
-    sortable: false,
-    filterable: false,
-    align: "center",
-    renderCell: (params) => (
-      <IconButton
-        onClick={(e) => {
-          e.stopPropagation();
-          handleModifyClick(params.row);
-        }}
-        aria-label="modificar"
-      >
-        <Edit sx={{ color: "red" }} />
-      </IconButton>
-    ),
-  },
-  { field: "fechaR", headerName: "Fecha de Registro", width: 200 },
-  { field: "NoRegistro", headerName: "No. Registro", width: 150 },
-  { field: "no_hc", headerName: "No. HC", width: 120 },
-  { field: "ci_donante", headerName: "CI", width: 150 },
-  { field: "nombre", headerName: "Nombres y Apellidos", width: 300 },
-  { field: "edad", headerName: "Edad", width: 100 },
-  { field: "sexo", headerName: "Sexo", width: 100 },
-  { field: "grupo", headerName: "Grupo", width: 100 },
-  { field: "rh", headerName: "RH", width: 100 },
-  { field: "donante", headerName: "Donante de", width: 150 },
-  { field: "municipio", headerName: "Municipio", width: 120 },
-  { field: "provincia", headerName: "Provincia", width: 120 },
-  { field: "consejo_popular", headerName: "Consejo Popular", width: 140 },
-  { field: "no_consultorio", headerName: "No. Consultorio", width: 140 },
-  { field: "ocupacion", headerName: "Ocupación", width: 120 },
-  { field: "telefono", headerName: "Teléfono", width: 120 },
-  { field: "telefonoLaboral", headerName: "Teléfono Laboral", width: 140 },
-  { field: "centro_laboral", headerName: "Centro Laboral", width: 140 },
-  { field: "otra_localizacion", headerName: "Otra Localización", width: 140 },
-];
+  // Definición de las columnas
 
+  const columns: GridColDef[] = [
+    {
+      field: "modificar",
+      headerName: "",
+      width: 80,
+      sortable: false,
+      filterable: false,
+      align: "center",
+      renderCell: (params) => (
+        <IconButton
+          onClick={(e) => {
+            e.stopPropagation();
+            handleModifyClick(params.row);
+          }}
+          aria-label="modificar"
+        >
+          <Edit sx={{ color: "red" }} />
+        </IconButton>
+      ),
+    },
+    { field: "fechaR", headerName: "Fecha de Registro", width: 200 },
+    { field: "NoRegistro", headerName: "No. Registro", width: 200 },
+    { field: "no_hc", headerName: "No. HC", width: 120 },
+    { field: "ci_donante", headerName: "CI", width: 150 },
+    { field: "nombre", headerName: "Nombres y Apellidos", width: 250 },
+    {
+      field: "fecha_nacimiento",
+      headerName: "Fecha de Nacimiento",
+      width: 200,
+    },
+    { field: "edad", headerName: "Edad", width: 100 },
+    { field: "sexo", headerName: "Sexo", width: 50 },
+    { field: "grupo", headerName: "Grupo", width: 100 },
+    { field: "rh", headerName: "RH", width: 100 },
+    { field: "donante", headerName: "Donante de", width: 150 },
+    { field: "municipio", headerName: "Municipio", width: 120 },
+    { field: "provincia", headerName: "Provincia", width: 120 },
+    { field: "direccion", headerName: "Direccion", width: 300 },
+    { field: "consejo_popular", headerName: "Consejo Popular", width: 140 },
+    { field: "no_consultorio", headerName: "No. Consultorio", width: 140 },
+    { field: "ocupacion", headerName: "Ocupación", width: 120 },
+    { field: "telefono", headerName: "Teléfono", width: 120 },
+    { field: "telefonoLaboral", headerName: "Teléfono Laboral", width: 140 },
+    { field: "centro_laboral", headerName: "Centro Laboral", width: 140 },
+    { field: "otra_localizacion", headerName: "Otra Localización", width: 140 },
+    { field: "nombre_unidad", headerName: "Nombre Unidad", width: 140 },
+    {
+      field: "responsableInscripcion",
+      headerName: "Responsable de Inscripción",
+      width: 220,
+    },
+  ];
 
   const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(
     null
@@ -107,8 +126,6 @@ const columns: GridColDef[] = [
               },
             }
           );
-          // Agrega este log para ver la respuesta real del backend
-          console.log("Respuesta backend:", res.data);
 
           // Mapea los datos para el DataGrid
           const mappedRows = res.data.map((reg: any) => ({
@@ -118,6 +135,9 @@ const columns: GridColDef[] = [
             no_hc: reg.no_hc || "",
             ci_donante: reg.ci_donante || "", // <-- así lo devuelve el backend
             nombre: reg.nombre || "",
+            fecha_nacimiento: reg.fecha_nacimiento
+              ? new Date(reg.fecha_nacimiento).toLocaleDateString()
+              : "", // <-- aquí formateas la fecha
             edad: reg.edad || "",
             sexo: reg.sexo || "",
             grupo: reg.grupo || "",
@@ -125,6 +145,7 @@ const columns: GridColDef[] = [
             donante: reg.donante || "",
             municipio: reg.municipio || "",
             provincia: reg.provincia || "",
+            direccion: reg.direccion || "",
             consejo_popular: reg.consejo_popular || "",
             no_consultorio: reg.no_consultorio || "",
             ocupacion: reg.ocupacion || "",
@@ -132,6 +153,8 @@ const columns: GridColDef[] = [
             telefonoLaboral: reg.telefonoLaboral || "",
             centro_laboral: reg.centro_laboral || "",
             otra_localizacion: reg.otra_localizacion || "",
+            responsableInscripcion: reg.responsableInscripcion || "",
+            nombre_unidad: reg.nombre_unidad || "",
           }));
           setRows(mappedRows);
         } catch (error) {
@@ -284,7 +307,7 @@ const columns: GridColDef[] = [
           <DataGrid
             rows={rows}
             columns={columns}
-            onRowClick={handleRowClick}
+            // onRowClick={handleRowClick}
             sx={{
               "& .MuiDataGrid-columnHeaders": {
                 position: "sticky",
