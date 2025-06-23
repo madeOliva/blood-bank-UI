@@ -1,7 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
-import { Box, Container, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import axios from "axios";
 
 type RowData = {
@@ -18,6 +28,10 @@ export default function DesechosPro() {
   const [openModal, setOpenModal] = useState(false);
   const [openLiberarModal, setOpenLiberarModal] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState<string | number | null>(null);
+
+  // Modal de éxito
+  const [openSuccess, setOpenSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Cargar solo los componentes con estado_obtencion "baja"
   useEffect(() => {
@@ -72,6 +86,9 @@ export default function DesechosPro() {
       setRows(bajas);
       setOpenModal(false);
       setSelectedRowId(null);
+      setSuccessMessage("Registro desechado correctamente");
+      setOpenSuccess(true);
+      setTimeout(() => setOpenSuccess(false), 3000);
     } catch (error) {
       alert("Error al actualizar el estado.");
     }
@@ -99,6 +116,9 @@ export default function DesechosPro() {
       setRows(bajas);
       setOpenLiberarModal(false);
       setSelectedRowId(null);
+      setSuccessMessage("Registro liberado correctamente");
+      setOpenSuccess(true);
+      setTimeout(() => setOpenSuccess(false), 3000);
     } catch (error) {
       alert("Error al liberar el componente.");
     }
@@ -207,6 +227,34 @@ export default function DesechosPro() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
-  );
-}
+      {/* Modal de éxito para Desechar y Liberar */}
+      <Dialog
+        open={openSuccess}
+        onClose={() => setOpenSuccess(false)}
+        aria-labelledby="success-dialog-title"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 3,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+      >
+        <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="success-dialog-title">
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
+            <Typography variant="h5" fontWeight="bold" color="success.main">
+              ¡Éxito!
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
+            {successMessage}
+          </Typography>
+        </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
