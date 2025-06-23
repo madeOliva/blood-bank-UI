@@ -387,7 +387,7 @@ export default function NuevaHistoriaClinica() {
         }
         break;
 
-      
+
       case 'no_consultorio':
         // Solo números para estos campos
         if (value === '' || /^\d+$/.test(value)) {
@@ -603,6 +603,16 @@ export default function NuevaHistoriaClinica() {
   ];
 
 
+  const validarCI = (ci: string): string => {
+    if (!/^\d{11}$/.test(ci))
+      return "El CI debe tener exactamente 11 dígitos numéricos.";
+    const mes = parseInt(ci.slice(2, 4), 10);
+    const dia = parseInt(ci.slice(4, 6), 10);
+    if (mes < 1 || mes > 12) return "El mes en el CI no es válido.";
+    if (dia < 1 || dia > 31) return "El día en el CI no es válido.";
+    return "";
+  };
+
   return (
     <>
       <Navbar />
@@ -621,8 +631,15 @@ export default function NuevaHistoriaClinica() {
               <TextField
                 label="No. CI"
                 value={historyData.generalData.ci}
-                onChange={(e) => handleGeneralChange('ci', e.target.value)}
+                onChange={(e) => {
+                  // Solo permite números y máximo 11 caracteres
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  handleGeneralChange('ci', value);
+                }}
                 fullWidth
+                error={!!validarCI(historyData.generalData.ci) && historyData.generalData.ci.length > 0}
+                helperText={historyData.generalData.ci.length > 0 ? validarCI(historyData.generalData.ci) : ""}
+                inputProps={{ maxLength: 11 }}
               />
             </Grid>
             <Grid item xs={12} sm={3}>

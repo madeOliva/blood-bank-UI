@@ -7,7 +7,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import dayjs, { Dayjs } from 'dayjs';
 import Navbar from '../../components/navbar/Navbar';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import BotonPersonalizado from '../../components/Button';
 
 const modalStyle = {
   position: 'absolute',
@@ -54,7 +54,6 @@ export default function DietaPacientes() {
   }, []);
 
   const handleGuardar = async () => {
-    // Envía la actualización para cada paciente
     try {
       await Promise.all(
         rows.map(row =>
@@ -62,6 +61,13 @@ export default function DietaPacientes() {
             fechaDieta: row.fechaActualizar.format('YYYY-MM-DD'),
           })
         )
+      );
+      // Actualiza la columna fechaDieta localmente después de guardar
+      setRows(prevRows =>
+        prevRows.map(row => ({
+          ...row,
+          fechaDieta: row.fechaActualizar.format('YYYY-MM-DD'),
+        }))
       );
       setSnackbarOpen(true);
     } catch (error) {
@@ -140,6 +146,7 @@ export default function DietaPacientes() {
             value={params.row.fechaActualizar}
             onChange={(newDate) => handleDateChange(params.row.id, newDate)}
             format="DD-MM-YYYY"
+            minDate={dayjs()} 
             slots={{
               openPickerIcon: CalendarTodayIcon,
             }}
@@ -160,8 +167,8 @@ export default function DietaPacientes() {
     <>
       <Navbar />
       <Box sx={{
-        width: '95%',  // Cambiado a 95% para más espacio
-        maxWidth: 1400,  // Máximo ancho
+        width: '100%',
+        maxWidth: 1400,
         mx: 'auto',
         mt: 6,
         mb: 4
@@ -194,7 +201,7 @@ export default function DietaPacientes() {
           <DataGrid
             rows={rows}
             columns={columns}
-            autoHeight={false}  // Desactivado para usar altura fija
+            autoHeight={false}
             hideFooter
             disableColumnMenu
             sx={{
@@ -216,10 +223,19 @@ export default function DietaPacientes() {
                 },
               },
               '& .MuiDataGrid-virtualScroller': {
-                overflowX: 'hidden',  // Evita doble scroll
-              }
+                overflowX: 'hidden',
+              },
+              '& .row-expirada': {
+                backgroundColor: 'rgba(255,0,0,0.2) !important', // fondo rojo claro
+              },
             }}
             getRowId={(row) => row.id}
+            getRowClassName={(params) => {
+              if (params.row.fechaDieta && dayjs(params.row.fechaDieta).isBefore(dayjs(), 'day')) {
+                return 'row-expirada';
+              }
+              return '';
+            }}
             initialState={{
               sorting: {
                 sortModel: [{ field: 'nombre', sort: 'asc' }],
@@ -236,27 +252,12 @@ export default function DietaPacientes() {
           bottom: 20,
           zIndex: 1
         }}>
-          <Button
-            variant="contained"
-            sx={{
-              background: '#009688',
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: '1.1rem',
-              px: 6,
-              py: 1.5,
-              borderRadius: 2,
-              boxShadow: 3,
-              '&:hover': {
-                background: '#00796b',
-                transform: 'scale(1.05)',
-                transition: 'transform 0.3s'
-              },
-            }}
+          <BotonPersonalizado
+            sx={{ width: 225 }}
             onClick={handleGuardar}
           >
             Guardar
-          </Button>
+          </BotonPersonalizado>
         </Box>
 
         <Modal

@@ -661,6 +661,17 @@ export default function VisualizarHC() {
     { field: 'observaciones', headerName: 'Observaciones', flex: 1, editable: true },
   ];
 
+  // Validación de CI
+  const validarCI = (ci: string): string => {
+    if (!/^\d{11}$/.test(ci))
+      return "El CI debe tener exactamente 11 dígitos numéricos.";
+    const mes = parseInt(ci.slice(2, 4), 10);
+    const dia = parseInt(ci.slice(4, 6), 10);
+    if (mes < 1 || mes > 12) return "El mes en el CI no es válido.";
+    if (dia < 1 || dia > 31) return "El día en el CI no es válido.";
+    return "";
+  };
+
 
 
   return (
@@ -681,8 +692,15 @@ export default function VisualizarHC() {
               <TextField
                 label="No. CI"
                 value={historyData.generalData.ci}
-                onChange={(e) => handleGeneralChange('ci', e.target.value)}
+                onChange={(e) => {
+                  // Solo permite números y máximo 11 caracteres
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  handleGeneralChange('ci', value);
+                }}
                 fullWidth
+                error={!!validarCI(historyData.generalData.ci) && historyData.generalData.ci.length > 0}
+                helperText={historyData.generalData.ci.length > 0 ? validarCI(historyData.generalData.ci) : ""}
+                inputProps={{ maxLength: 11 }}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
@@ -797,7 +815,7 @@ export default function VisualizarHC() {
                 helperText={historyData.generalData.ocupacion && !onlyLetters(historyData.generalData.ocupacion) ? "Solo se permiten letras" : ""}
               />
             </Grid>
-            
+
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Teléfono"
@@ -860,8 +878,8 @@ export default function VisualizarHC() {
                 fullWidth
               />
             </Grid>
-            
-           
+
+
 
             {/* Select Grupo Sanguíneo */}
             <Grid item xs={12} sm={3}>
@@ -990,8 +1008,8 @@ export default function VisualizarHC() {
               </FormControl>
             </Grid>
 
-             <Grid item xs={12} sm={3}>
-              <FormControl sx={{width:100}}>
+            <Grid item xs={12} sm={3}>
+              <FormControl sx={{ width: 100 }}>
                 <FormLabel>Provincia</FormLabel>
                 <Select
                   name="provincia"
