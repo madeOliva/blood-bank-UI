@@ -19,49 +19,64 @@ import {
   FormControlLabel,
   Radio,
   Slide,
+  IconButton,
+  TextField,
+  Stack,
 } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DoneOutlineIcon from "@mui/icons-material/DoneOutline";
+import SearchIcon from "@mui/icons-material/Search";
 
 export default function LiberacionComponentes() {
   const [rows, setRows] = useState<any[]>([]);
+  const [filteredRows, setFilteredRows] = useState<any[]>([]);
   const [openModal, setOpenModal] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   const [motivoDesecho, setMotivoDesecho] = useState("");
   const [openSuccess, setOpenSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchComponente, setSearchComponente] = useState("");
 
-useEffect(() => {
+ useEffect(() => {
   fetch("http://localhost:3000/componentes-obtenidos/componentes_obtenidos")
     .then(res => res.json())
     .then(data => {
-      setRows(
-        Array.isArray(data)
-          ? data
-              .filter((item: any) => item.estado_obtencion === "obtenido")
-              .map((item: any, idx: number) => ({
-                id: item._id || idx,
-                no: item.no_consecutivo ?? idx + 1,
-                hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
-                nombre: item.registro_donacion?.historiaClinica?.nombre ?? "",
-                sexo: item.registro_donacion?.historiaClinica?.sexo ?? "",
-                edad: item.registro_donacion?.historiaClinica?.edad ?? "",
-                grupo: item.registro_donacion?.historiaClinica?.grupo ?? item.registro_donacion?.historiaClinica?.grupo_sanguine ?? "",
-                factor: item.registro_donacion?.historiaClinica?.factor ?? "",
-                volumen: item.componentes?.[0]?.volumen ?? "",
-                componente: item.componentes?.[0]?.tipo ?? "",
-                fecha_obtencion: item.fecha_obtencion ?? "",
-                estado_obtencion: item.estado_obtencion ?? "",
-                causa_baja: item.causa_baja ?? "",
-                entidad: item.registro_donacion?.nombre_unidad ?? "",
-              }))
-          : []
-      );
+      console.log("DATA DEL BACKEND:", data); // <-- Agrega esto
+    const newRows = Array.isArray(data)
+  ? data
+      .filter((item: any) =>
+        item.estado_obtencion === "obtenido" &&
+        Array.isArray(item.componentes) &&
+        item.componentes.length > 0
+      )
+      .map((item: any, idx: number) => ({
+        id: item._id || idx,
+        no: item.no_consecutivo ?? idx + 1,
+        hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+        nombre: item.registro_donacion?.historiaClinica?.nombre ?? "",
+        sexo: item.registro_donacion?.historiaClinica?.sexo ?? "",
+        edad: item.registro_donacion?.historiaClinica?.edad ?? "",
+        grupo: item.registro_donacion?.historiaClinica?.grupo ?? item.registro_donacion?.historiaClinica?.grupo_sanguine ?? "",
+        factor: item.registro_donacion?.historiaClinica?.factor ?? "",
+        volumen: item.componentes?.[0]?.volumen ?? "",
+        componente: item.componentes?.[0]?.componente ?? "", // <--- AQUÍ
+        fecha_obtencion: item.componentes?.[0]?.fecha_obtencion ?? item.componentes?.[0]?.fechaObtencion ?? "",
+        estado_obtencion: item.estado_obtencion ?? "",
+        causa_baja: item.causa_baja ?? "",
+        entidad: item.registro_donacion?.nombre_unidad ?? "",
+      }))
+  : [];
+      console.log("ROWS PARA LA TABLA:", newRows); // <-- Agrega esto
+      setRows(newRows);
+      setFilteredRows(newRows);
     })
-    .catch(() => setRows([]));
+    .catch(() => {
+      setRows([]);
+      setFilteredRows([]);
+    });
 }, []);
-
   const handleOpenModal = (id: number) => {
     setSelectedRowId(id);
     setOpenModal(true);
@@ -79,38 +94,56 @@ useEffect(() => {
   };
 
   const handleConfirmDesechar = async () => {
-  if (!selectedRowId) return;
-  try {
-    await fetch(`http://localhost:3000/componentes-obtenidos/${selectedRowId}/desechar`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ motivo_desecho: motivoDesecho }),
-    });
-    setRows(rows => rows.filter(row => row.id !== selectedRowId));
-    setOpenModal(false);
-    setSelectedRowId(null);
-    setMotivoDesecho("");
-    setSuccessMessage("Componente desechado exitosamente.");
-    setOpenSuccess(true);
-    setTimeout(() => setOpenSuccess(false), 3000); // Oculta el modal a los 3 segundos
-  } catch (e) {
-    alert("Error al desechar el componente");
-  }
-};
+    if (!selectedRowId) return;
+    try {
+      await fetch(`http://localhost:3000/componentes-obtenidos/${selectedRowId}/desechar`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ motivo_desecho: motivoDesecho }),
+      });
+      setRows(rows => rows.filter(row => row.id !== selectedRowId));
+      setFilteredRows(filteredRows => filteredRows.filter(row => row.id !== selectedRowId));
+      setOpenModal(false);
+      setSelectedRowId(null);
+      setMotivoDesecho("");
+      setSuccessMessage("Componente desechado exitosamente.");
+      setOpenSuccess(true);
+      setTimeout(() => setOpenSuccess(false), 3000);
+    } catch (e) {
+      alert("Error al desechar el componente");
+    }
+  };
 
-const handleLiberar = async (id: number) => {
-  try {
-    await fetch(`http://localhost:3000/componentes-obtenidos/${id}/liberar`, {
-      method: "PATCH",
-    });
-    setRows(rows => rows.filter(row => row.id !== id));
-    setSuccessMessage("Componente liberado exitosamente.");
-    setOpenSuccess(true);
-    setTimeout(() => setOpenSuccess(false), 3000); // Oculta el modal a los 3 segundos
-  } catch (e) {
-    alert("Error al liberar el componente");
-  }
-};
+  const handleLiberar = async (id: number) => {
+    try {
+      await fetch(`http://localhost:3000/componentes-obtenidos/${id}/liberar`, {
+        method: "PATCH",
+      });
+      setRows(rows => rows.filter(row => row.id !== id));
+      setFilteredRows(filteredRows => filteredRows.filter(row => row.id !== id));
+      setSuccessMessage("Componente liberado exitosamente.");
+      setOpenSuccess(true);
+      setTimeout(() => setOpenSuccess(false), 3000);
+    } catch (e) {
+      alert("Error al liberar el componente");
+    }
+  };
+
+  // Buscador por componente
+  const handleSearch = () => {
+    setFilteredRows(
+      rows.filter(row =>
+        row.componente?.toLowerCase().includes(searchComponente.toLowerCase())
+      )
+    );
+    setSearchOpen(false);
+  };
+
+  const handleClearSearch = () => {
+    setFilteredRows(rows);
+    setSearchComponente("");
+    setSearchOpen(false);
+  };
 
   const columns: GridColDef[] = [
     { field: "no", headerName: "NO", width: 90 },
@@ -120,11 +153,7 @@ const handleLiberar = async (id: number) => {
     { field: "volumen", headerName: "Volumen", type: "number", width: 90, editable: false },
     { field: "grupo", headerName: "Grupo", width: 70, editable: false },
     { field: "factor", headerName: "Factor", width: 70, editable: false },
-    {
-  field: "fecha_obtencion",
-  headerName: "Fecha Obtención",
-  width: 140,
-},
+    { field: "fecha_obtencion", headerName: "Fecha Obtención", width: 140 },
     { field: "componente", headerName: "Componente", width: 130 },
     {
       field: "accion",
@@ -156,6 +185,45 @@ const handleLiberar = async (id: number) => {
   return (
     <>
       <Navbar />
+      <Box sx={{ position: "relative", width: "100%" }}>
+        {/* Buscador en la esquina superior derecha */}
+        <IconButton
+          color="primary"
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1,
+            backgroundColor: "white",
+            boxShadow: 2,
+            "&:hover": { backgroundColor: "#f0f0f0" },
+          }}
+          onClick={() => setSearchOpen(true)}
+        >
+          <SearchIcon />
+        </IconButton>
+      </Box>
+
+      <Dialog open={searchOpen} onClose={() => setSearchOpen(false)}>
+        <DialogTitle>Buscar por componente</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Componente"
+              value={searchComponente}
+              onChange={(e) => setSearchComponente(e.target.value)}
+              fullWidth
+            />
+            <Button variant="contained" onClick={handleSearch} disabled={!searchComponente}>
+              Buscar
+            </Button>
+            <Button variant="outlined" onClick={handleClearSearch}>
+              Limpiar búsqueda
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
       <Typography
         variant="h4"
         component="h5"
@@ -183,7 +251,7 @@ const handleLiberar = async (id: number) => {
                 color: "#000",
               },
             }}
-            rows={rows}
+            rows={filteredRows}
             columns={columns}
             initialState={{
               pagination: {
@@ -268,33 +336,33 @@ const handleLiberar = async (id: number) => {
         </DialogActions>
       </Dialog>
 
-     {/* Modal Éxito Envío */}
-<Dialog
-  open={openSuccess}
-  aria-labelledby="success-dialog-title"
-  PaperProps={{
-    sx: {
-      borderRadius: 3,
-      padding: 3,
-      minWidth: 320,
-      boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-    },
-  }}
->
-  <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="success-dialog-title">
-    <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
-      <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
-      <Typography variant="h5" fontWeight="bold" color="success.main">
-        ¡Éxito!
-      </Typography>
-    </Box>
-  </DialogTitle>
-  <DialogContent>
-    <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
-      {successMessage}
-    </Typography>
-  </DialogContent>
-</Dialog>
+      {/* Modal Éxito Envío */}
+      <Dialog
+        open={openSuccess}
+        aria-labelledby="success-dialog-title"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 3,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+      >
+        <DialogTitle sx={{ textAlign: "center", pb: 0 }} id="success-dialog-title">
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 60, color: "success.main" }} />
+            <Typography variant="h5" fontWeight="bold" color="success.main">
+              ¡Éxito!
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" textAlign="center" sx={{ mt: 1, fontSize: "1.1rem" }}>
+            {successMessage}
+          </Typography>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

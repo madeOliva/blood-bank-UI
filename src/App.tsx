@@ -269,7 +269,7 @@ export default function App() {
       <Route
         path="/bajas"
         element={
-          <ProtectedRoute allowedRoles={["Técnico de produccin"]}>
+          <ProtectedRoute allowedRoles={["Técnico de producción"]}>
             <Bajas />
           </ProtectedRoute>
         }

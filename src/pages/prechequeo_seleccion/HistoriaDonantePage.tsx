@@ -385,6 +385,12 @@ export default function HistoriaDonante() {
             setOpenErrorModal(true);
             return;
         }
+        if (hayCamposVacios()) {
+            setErrorMsg("Por favor complete todos los campos.");
+            setModalType("error");
+            setOpenModal(true);
+            return;
+        }
 
         try {
             // Validación adicional para la edad
@@ -454,21 +460,24 @@ export default function HistoriaDonante() {
                         motivo: ee.motivo
                     }))
             };
+            await axios.put(`http://localhost:3000/historia-clinica/${historiaClinicaId}`, dataToSend);
 
-            console.log("Datos a enviar:", JSON.stringify(dataToSend, null, 2));
-
-            const response = await axios.put(`http://localhost:3000/historia-clinica/${historiaClinicaId}`, dataToSend);
-            console.log('Respuesta del servidor:', response.data);
+            // 2. Guardar prechequeo/interrogatorio
+            const payload = {
+                examenF_peso,
+                examenF_pulso,
+                examenF_temSublingual,
+                examenF_temAxilar,
+                examenF_hemoglobina,
+                apto_examenFisico,
+                respuestas_interrogatorio: getRespuestasInterrogatorio(),
+                apto_interrogatorio,
+                observacion_interrogatorio,
+            };
+            await axios.put(`http://localhost:3000/registro-donacion/${id}`, payload);
             setOpenSuccessModal(true);
         } catch (error) {
-            if (typeof error === "object" && error !== null) {
-                const err = error as any;
-                console.error('Error detallado:', err.response?.data || err.message || err);
-                setErrorMessage(err.response?.data?.message || 'Error al guardar la historia clínica');
-            } else {
-                console.error('Error detallado:', error);
-                setErrorMessage('Error al guardar la historia clínica');
-            }
+            setErrorMessage('Error al guardar la historia clínica y el prechequeo');
             setOpenErrorModal(true);
         }
     };
@@ -883,6 +892,17 @@ export default function HistoriaDonante() {
         { respuesta: resp39, respuesta_escrita: "" },
     ];
 
+    // Validación de CI
+    const validarCI = (ci: string): string => {
+        if (!/^\d{11}$/.test(ci))
+            return "El CI debe tener exactamente 11 dígitos numéricos.";
+        const mes = parseInt(ci.slice(2, 4), 10);
+        const dia = parseInt(ci.slice(4, 6), 10);
+        if (mes < 1 || mes > 12) return "El mes en el CI no es válido.";
+        if (dia < 1 || dia > 31) return "El día en el CI no es válido.";
+        return "";
+    };
+
 
     // Validación simple
     const hayCamposVacios = () => {
@@ -945,10 +965,10 @@ export default function HistoriaDonante() {
         <>
             <Navbar />
 
-            <Typography variant="h4" align="center" gutterBottom sx={{ mb: 3, color: 'primary.dark',mt:8 }}>
-                      Historia Clínica
-                    </Typography>
-            <Box sx={{ p: 6, maxWidth: 1900, margin: 'auto'}}>
+            <Typography variant="h4" align="center" gutterBottom sx={{ mb: 3, color: 'primary.dark', mt: 8 }}>
+                Historia Clínica
+            </Typography>
+            <Box sx={{ p: 6, maxWidth: 1900, margin: 'auto' }}>
                 {/* Sección Datos Generales */}
                 <SectionHeader title="Datos Generales" />
                 <Paper sx={{ p: 3, mb: 4 }}>
@@ -958,8 +978,15 @@ export default function HistoriaDonante() {
                             <TextField
                                 label="No. CI"
                                 value={historyData.generalData.ci}
-                                onChange={(e) => handleGeneralChange('ci', e.target.value)}
+                                onChange={(e) => {
+                                    // Solo permite números y máximo 11 caracteres
+                                    const value = e.target.value.replace(/\D/g, '').slice(0, 11);
+                                    handleGeneralChange('ci', value);
+                                }}
                                 fullWidth
+                                error={!!validarCI(historyData.generalData.ci) && historyData.generalData.ci.length > 0}
+                                helperText={historyData.generalData.ci.length > 0 ? validarCI(historyData.generalData.ci) : ""}
+                                inputProps={{ maxLength: 11 }}
                             />
                         </Grid>
                         <Grid item xs={12} sm={3}>
@@ -1514,7 +1541,7 @@ export default function HistoriaDonante() {
 
                 <Accordion  >
                     <AccordionSummary
-                        sx={{ display: "flex", backgroundColor: "primary.dark", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd:1 }}
+                        sx={{ display: "flex", backgroundColor: "primary.dark", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
                         expandIcon={<ExpandMoreIcon />}
                         aria-controls="panel3-content"
                         id="panel3-header"
@@ -2631,24 +2658,6 @@ export default function HistoriaDonante() {
                                 )}
                             </Box>
                         </Box>
-
-
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-
-                            }}
-                        >
-                            <BotonPersonalizado onClick={handleSubmit} sx={{ width: 225 }}>
-                                ACEPTAR
-                            </BotonPersonalizado>
-                        </Box>
-
-
-
-
                     </AccordionDetails>
                 </Accordion>
 
@@ -2807,21 +2816,8 @@ export default function HistoriaDonante() {
 
                 {/* Botón Guardar */}
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, bottom: 20, zIndex: 1 }}>
-                    <BotonPersonalizado variant="contained" sx={{
-                        background: '#009688',
-                        color: '#fff',
-                        fontWeight: 600,
-                        fontSize: '1.1rem',
-                        px: 6,
-                        py: 1.5,
-                        borderRadius: 2,
-                        boxShadow: 3,
-                        '&:hover': {
-                            background: '#00796b',
-                            transform: 'scale(1.05)',
-                            transition: 'transform 0.3s'
-                        },
-                    }} onClick={handleGuardar}>
+                    <BotonPersonalizado sx={{ width: '200px' }}
+                        onClick={handleGuardar}>
                         Aceptar
                     </BotonPersonalizado>
                 </Box>
