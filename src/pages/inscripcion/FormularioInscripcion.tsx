@@ -900,6 +900,7 @@ const FormularioInscripcion: React.FC = () => {
                         value={form.municipio}
                         label="Municipio"
                         onChange={handleChange}
+                        sx={{ minWidth: 210 }}
                       >
                         <MenuItem value="">Seleccione</MenuItem>
                         {municipiosPinarDelRio.map((mun) => (
