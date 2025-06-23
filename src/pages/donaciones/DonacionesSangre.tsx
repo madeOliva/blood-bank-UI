@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Grid,
@@ -13,57 +13,128 @@ import {
   DialogTitle,
   DialogContent,
   Dialog,
+  DialogActions,
+  Button,
+  Collapse,
 } from "@mui/material";
-import Navbar from "../../components/navbar/Navbar"; // Componente Navbar
+import Navbar from "../../components/navbar/Navbar";
 import BotonPersonalizado from "../../components/Button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import axios from "axios";
 
 const DonacionesSangre: React.FC = () => {
-  const navigate = useNavigate(); // Hook para navegar entre páginas
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const location = useLocation();
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+  // Estado para datos personales (para mostrar en la columna izquierda)
+  const [datosDonante, setDatosDonante] = useState<any>(null);
 
   const [form, setForm] = useState({
     no_tubuladura: "",
-    no_fabricacion_bolsa: "",
+    no_lote: "",
     tipo_bolsa: "",
-    volumen: "",
+    volumen: 0,
     reaccion: "",
     otra_reaccion: "",
-    estado: "", // Estado por defecto
-    fechaD: new Date(), // Fecha y hora actual
+    estado: "",
+    fechaD: new Date(),
+    nombre: "",
+    sexo: "",
+    edad: "",
+    grupo: "",
+    rh: "",
+    ci: "",
+    no_hc: "",
+    no_registro: "",
   });
 
-  // Estado de errores por campo
   const [errors, setErrors] = useState({
     no_tubuladura: "",
-    no_fabricacion_bolsa: "",
+    no_lote: "",
     tipo_bolsa: "",
     volumen: "",
     reaccion: "",
     otra_reaccion: "",
   });
 
-  const [showReacciones, setShowReacciones] = useState(false); // Estado para controlar la visibilidad
-  const [showOtraReaccion, setShowOtraReaccion] = useState(false); // Estado para controlar la visibilidad
+  const [showReacciones, setShowReacciones] = useState(false);
+  const [showOtraReaccion, setShowOtraReaccion] = useState(false);
 
-  // Estados para el modal de éxito
   const [openSuccess, setOpenSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  //Validación de campos
+  // Cargar datos al montar (por id de la URL o por location.state)
+  useEffect(() => {
+    // Si vienes de la hoja de cargo y tienes datos en location.state, úsalos
+    const stateDonante = location.state?.datosDonante;
+    const aplanarDatos = (d: any) => {
+      const historia = d.historiaClinica || {};
+      return {
+        ...d,
+        nombre: d.nombre || historia.nombre || "",
+        sexo: d.sexo || historia.sexo?.nombre || historia.sexo || "",
+        edad: d.edad || historia.edad || "",
+        grupo:
+          d.grupo ||
+          historia.grupo_sanguine?.nombre ||
+          historia.grupo_sanguine ||
+          "",
+        rh: d.rh || historia.factor?.signo || historia.factor || "",
+        ci: d.ci || historia.ci || "",
+        no_hc: d.no_hc || historia.no_hc || "",
+        no_registro: d.no_registro || "",
+      };
+    };
+
+    if (stateDonante) {
+      const datos = aplanarDatos(stateDonante);
+      setDatosDonante(datos);
+      setForm((prev) => ({
+        ...prev,
+        ...datos,
+        fechaD: datos.fechaD || "",
+      }));
+    } else if (id) {
+      // Si entras por URL directa, busca los datos en el backend
+      axios
+        .get(`http://localhost:3000/registro-donacion/${id}`)
+        .then((res) => {
+          const datos = aplanarDatos(res.data);
+          setDatosDonante(datos);
+          setForm((prev) => ({
+            ...prev,
+            ...datos,
+            fechaD: datos.fechaD || "",
+          }));
+        })
+        .catch(() => setDatosDonante(null));
+    }
+    // eslint-disable-next-line
+  }, [id, location.state]);
+
   const validateFields = () => {
     const newErrors: typeof errors = { ...errors };
     if (!form.no_tubuladura.trim())
       newErrors.no_tubuladura = "Campo obligatorio";
-    if (!form.no_fabricacion_bolsa.trim())
-      newErrors.no_fabricacion_bolsa = "Campo obligatorio";
+    if (!form.no_lote.trim()) newErrors.no_lote = "Campo obligatorio";
     if (!form.tipo_bolsa.trim()) newErrors.tipo_bolsa = "Campo obligatorio";
-    if (!form.volumen.trim()) {
+     // Volumen como número
+    if (
+      form.volumen === null ||
+      form.volumen === undefined ||
+      form.volumen === 0
+    ) {
       newErrors.volumen = "Campo obligatorio";
-    } else if (!/^\d+$/.test(form.volumen) || Number(form.volumen) <= 0) {
-      newErrors.volumen = "Solo números mayores que 0";
+    } else if (
+      isNaN(form.volumen) ||
+      Number(form.volumen) <= 0 ||
+      !Number.isInteger(Number(form.volumen))
+    ) {
+      newErrors.volumen = "Solo números enteros mayores que 0";
     }
     if (showReacciones && !form.reaccion.trim())
       newErrors.reaccion = "Campo obligatorio";
@@ -74,29 +145,30 @@ const DonacionesSangre: React.FC = () => {
     return Object.values(newErrors).some((err) => err !== "");
   };
 
-  // Manejar cambios en los campos
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any
   ) => {
     const { name, value } = e.target;
     if (name === "volumen") {
-      if (!/^\d*$/.test(value)) return; // Solo números
+      if (!/^\d*$/.test(value)) return;
     }
     setForm({ ...form, [name]: value });
     setErrors({ ...errors, [name]: "" });
   };
 
-  // Registrar (actualizar) donación
   const handleRegistrar = async () => {
     if (validateFields()) return;
     try {
       const datosAEnviar = {
         ...form,
         estado: "procesando",
-        fechaD: new Date(), // <-- Esto guarda la fecha y hora actual
+        fechaD: new Date(),
+        responsableExtraccion: usuario.name, // Nuevo campo para el responsable
       };
+      console.log("ID que se envía:", id);
+      console.log("Enviando PUT a:", `http://localhost:3000/registro-donacion/${id}`, form);
       await axios.put(
-        `http://localhost:3000/registro-donacion/${idRegistroDonacion}`,
+        `http://localhost:3000/registro-donacion/${id}`,
         datosAEnviar
       );
       setSuccessMessage("¡Donacion registrada satisfactoriamente!");
@@ -111,13 +183,8 @@ const DonacionesSangre: React.FC = () => {
     }
   };
 
-  const location = useLocation();
-  const datosDonante = location.state?.datosDonante;
-  const idRegistroDonacion = datosDonante?.id; // <-- este es el id que necesitas
-
   return (
     <>
-      {/* Navbar */}
       <Navbar />
       <Typography
         variant="h4"
@@ -135,7 +202,6 @@ const DonacionesSangre: React.FC = () => {
         Donaciones de Sangre
       </Typography>
 
-      {/* Contenido principal */}
       <Box
         sx={{
           padding: { xs: 2, md: 4 },
@@ -152,20 +218,39 @@ const DonacionesSangre: React.FC = () => {
                 Información Personal
               </Typography>
               <Typography>
-                <b>Nombre:</b> {datosDonante ? datosDonante.nombre : ""}
+                <b>Nombre:</b>{" "}
+                {datosDonante?.nombre ||
+                  datosDonante?.historiaClinica?.nombre ||
+                  ""}
               </Typography>
               <Typography>
-                <b>Sexo:</b> {datosDonante ? datosDonante.sexo : ""}
+                <b>Sexo:</b>{" "}
+                {datosDonante?.sexo ||
+                  datosDonante?.historiaClinica?.sexo?.nombre ||
+                  datosDonante?.historiaClinica?.sexo ||
+                  ""}
               </Typography>
               <Typography>
-                <b>Edad:</b> {datosDonante ? datosDonante.edad : ""}
+                <b>Edad:</b>{" "}
+                {datosDonante?.edad ||
+                  datosDonante?.historiaClinica?.edad ||
+                  ""}
               </Typography>
               <Typography>
-                <b>Grupo:</b> {datosDonante ? datosDonante.grupo : ""}{" "}
-                <b>Rh:</b> {datosDonante ? datosDonante.rh : ""}
+                <b>Grupo:</b>{" "}
+                {datosDonante?.grupo ||
+                  datosDonante?.historiaClinica?.grupo_sanguine?.nombre ||
+                  datosDonante?.historiaClinica?.grupo_sanguine ||
+                  ""}{" "}
+                <b>Rh:</b>{" "}
+                {datosDonante?.rh ||
+                  datosDonante?.historiaClinica?.factor?.signo ||
+                  datosDonante?.historiaClinica?.factor ||
+                  ""}
               </Typography>
               <Typography>
-                <b>CI:</b> {datosDonante ? datosDonante.ci : ""}
+                <b>CI:</b>{" "}
+                {datosDonante?.ci || datosDonante?.historiaClinica?.ci || ""}
               </Typography>
             </Box>
           </Grid>
@@ -178,7 +263,8 @@ const DonacionesSangre: React.FC = () => {
               flexDirection={"column"}
               sx={{ width: { xs: "100%", md: "80%" } }}
             >
-              <Grid item xs={12}>
+              {/* Primera caja: No.Tubuladura y NO.Fabricación de la Bolsa */}
+              <Box sx={{ display: "flex", gap: 2, mb: 2, minWidth: 500 }}>
                 <TextField
                   fullWidth
                   label="No.Tubuladura"
@@ -188,22 +274,23 @@ const DonacionesSangre: React.FC = () => {
                   onChange={handleChange}
                   error={!!errors.no_tubuladura}
                   helperText={errors.no_tubuladura}
+                  sx={{ minWidth: 180 }}
                 />
-              </Grid>
-
-              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="NO.Fabricación de la Bolsa"
                   variant="outlined"
-                  name="no_fabricacion_bolsa"
-                  value={form.no_fabricacion_bolsa}
+                  name="no_lote"
+                  value={form.no_lote}
                   onChange={handleChange}
-                  error={!!errors.no_fabricacion_bolsa}
-                  helperText={errors.no_fabricacion_bolsa}
+                  error={!!errors.no_lote}
+                  helperText={errors.no_lote}
+                  sx={{ flex: 2, minWidth: 240 }}
                 />
-              </Grid>
-              <Grid item xs={12} md={6}>
+              </Box>
+
+              {/* Segunda caja: Tipo de Bolsa y Volumen */}
+              <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
                 <FormControl fullWidth error={!!errors.tipo_bolsa}>
                   <InputLabel>Tipo de Bolsa:</InputLabel>
                   <Select
@@ -223,8 +310,6 @@ const DonacionesSangre: React.FC = () => {
                     </Typography>
                   )}
                 </FormControl>
-              </Grid>
-              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Volumen"
@@ -237,7 +322,8 @@ const DonacionesSangre: React.FC = () => {
                   type="number"
                   inputProps={{ min: 0 }}
                 />
-              </Grid>
+              </Box>
+
               {/* Reacciones */}
               <Grid item xs={12}>
                 <FormControlLabel
@@ -256,15 +342,17 @@ const DonacionesSangre: React.FC = () => {
                   label="Se produjeron reacciones?"
                 />
               </Grid>
-              {showReacciones && (
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth error={!!errors.reaccion}>
+              <Collapse in={showReacciones}>
+                <Grid item xs={12}>
+                  <FormControl error={!!errors.reaccion} sx={{ width: 200 }}>
                     <InputLabel>Reacciones:</InputLabel>
                     <Select
                       name="reaccion"
                       value={form.reaccion}
                       onChange={handleChange}
                       size="medium"
+                      label="Reacciones:"
+                      sx={{ width: 180 }}
                     >
                       <MenuItem value="">Seleccione</MenuItem>
                       <MenuItem value="vomito">Vómito</MenuItem>
@@ -278,7 +366,7 @@ const DonacionesSangre: React.FC = () => {
                       </Typography>
                     )}
                   </FormControl>
-                  <Grid item xs={12}>
+                  <Box sx={{ mt: 2 }}>
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -294,25 +382,23 @@ const DonacionesSangre: React.FC = () => {
                       }
                       label="Otra Reacción"
                     />
-                  </Grid>
-                  {showOtraReaccion && (
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Otra Reacción"
-                        variant="outlined"
-                        multiline
-                        rows={3}
-                        name="otra_reaccion"
-                        value={form.otra_reaccion}
-                        onChange={handleChange}
-                        error={!!errors.otra_reaccion}
-                        helperText={errors.otra_reaccion}
-                      />
-                    </Grid>
-                  )}
+                  </Box>
+                  <Collapse in={showOtraReaccion}>
+                    <TextField
+                      fullWidth
+                      label="Otra Reacción"
+                      variant="outlined"
+                      multiline
+                      name="otra_reaccion"
+                      value={form.otra_reaccion}
+                      onChange={handleChange}
+                      error={!!errors.otra_reaccion}
+                      helperText={errors.otra_reaccion}
+                      sx={{ mt: 2 }}
+                    />
+                  </Collapse>
                 </Grid>
-              )}
+              </Collapse>
             </Grid>
           </Grid>
         </Grid>
