@@ -19,11 +19,14 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import Navbar from "../../components/navbar/Navbar";
 import BotonPersonalizado from "../../components/Button";
 import dayjs, { Dayjs } from "dayjs";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useLocation, useNavigate, Location } from "react-router-dom";
-import axios from "axios"; // <-- Agregado para conexión backend
+import axios from "axios";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
 
 type PlanData = {
   id?: number;
@@ -39,7 +42,6 @@ type PlanData = {
 
 type ModalType = "success" | "error";
 
-// Cambia la URL si tu backend está en otro puerto o ruta
 const API_URL = "http://localhost:3000/plan-trabajo";
 
 export default function Plan() {
@@ -56,18 +58,18 @@ export default function Plan() {
   const [consultoriosAfectados, setConsultoriosAfectados] = React.useState<string>(
     data?.consultoriosAfectados?.toString() || ""
   );
-const [selectedDateTime, setSelectedDateTime] = React.useState<Dayjs | null>(
-  data?.fechaHora ? dayjs(data.fechaHora) : null
-);
-const fechaForzada =
-  selectedDateTime &&
-  selectedDateTime
-    .hour(8)
-    .minute(0)
-    .second(0)
-    .millisecond(0)
-    .toISOString();
-const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDonacion || "");
+  const [selectedDateTime, setSelectedDateTime] = React.useState<Dayjs | null>(
+    data?.fechaHora ? dayjs(data.fechaHora) : null
+  );
+  const fechaForzada =
+    selectedDateTime &&
+    selectedDateTime
+      .hour(8)
+      .minute(0)
+      .second(0)
+      .millisecond(0)
+      .toISOString();
+  const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDonacion || "");
   const [compromiso, setCompromiso] = React.useState<string>(data?.compromiso || "");
   const [responsableSalud, setResponsableSalud] = React.useState<string>(data?.responsableSalud || "");
   const [cdr, setCdr] = React.useState<string>(data?.cdr || "");
@@ -101,6 +103,11 @@ const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDona
     "El Vizcaíno",
   ];
 
+  // Calcula el primer y último día del mes siguiente
+  const today = dayjs();
+  const firstDayNextMonth = today.add(1, "month").startOf("month");
+  const lastDayNextMonth = today.add(1, "month").endOf("month");
+
   const hayCamposVacios = (): boolean => {
     return (
       !areaSalud.trim() ||
@@ -116,9 +123,11 @@ const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDona
 
   const fechaValida = (): boolean => {
     if (!selectedDateTime || !selectedDateTime.isValid()) return false;
-    const today = dayjs().startOf("day");
-    const selectedDay = selectedDateTime.startOf("day");
-    return selectedDay.isAfter(today);
+    // Solo permite fechas dentro del mes siguiente
+    return (
+      selectedDateTime.isSameOrAfter(firstDayNextMonth, "day") &&
+      selectedDateTime.isSameOrBefore(lastDayNextMonth, "day")
+    );
   };
 
   const compromisoValido = (): boolean => {
@@ -129,14 +138,13 @@ const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDona
     setCompromiso(event.target.value);
   };
 
-  // --- Nueva función para enviar datos al backend ---
   const handleAceptar = async () => {
     if (hayCamposVacios()) {
       setErrorMsg("Hay campos vacíos, por favor complete todos los campos.");
       setModalType("error");
       setOpenModal(true);
     } else if (!fechaValida()) {
-      setErrorMsg("La fecha debe ser posterior al día de hoy.");
+      setErrorMsg("Solo puede seleccionar días del mes siguiente.");
       setModalType("error");
       setOpenModal(true);
     } else if (!compromisoValido()) {
@@ -146,19 +154,19 @@ const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDona
     } else {
       setLoading(true);
       try {
-   const payload = {
-  fecha: fechaForzada,
-  responsableDeSalud: responsableSalud,
-  areasalud: areaSalud,
-  consejopopular: consejoPopular,
-  consultoriosafectados: consultoriosAfectados
-    .toString()
-    .split(",")
-    .map((c) => c.trim()),
-  lugarDonacion,
-  compromiso,
-  cdr,
-};
+        const payload = {
+          fecha: fechaForzada,
+          responsableDeSalud: responsableSalud,
+          areasalud: areaSalud,
+          consejopopular: consejoPopular,
+          consultoriosafectados: consultoriosAfectados
+            .toString()
+            .split(",")
+            .map((c) => c.trim()),
+          lugarDonacion,
+          compromiso,
+          cdr,
+        };
 
         if (data && data.id) {
           // Modificar plan existente (PATCH)
@@ -170,6 +178,24 @@ const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDona
 
         setModalType("success");
         setOpenModal(true);
+
+        // Limpiar los campos después de enviar
+        setAreaSalud("");
+        setConsejoPopular("");
+        setConsultoriosAfectados("");
+        setSelectedDateTime(null);
+        setLugarDonacion("");
+        setCompromiso("");
+        setResponsableSalud("");
+        setCdr("");
+
+        // Solo redirige si es edición (GUARDAR CAMBIOS)
+        if (data && data.id) {
+          setTimeout(() => {
+            navigate("/planDonaciones");
+          }, 1000);
+        }
+
       } catch (error: any) {
         setErrorMsg(
           error?.response?.data?.message ||
@@ -187,7 +213,6 @@ const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDona
     if (openModal && modalType === "success") {
       const timer = setTimeout(() => {
         setOpenModal(false);
-      
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -226,13 +251,14 @@ const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDona
           >
             {/* Columna 1: Fecha y hora primero, luego Consejo Popular y Consultorios */}
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <DatePicker
-  label="Fecha"
-  value={selectedDateTime}
-  onChange={(newValue) => setSelectedDateTime(newValue as Dayjs)}
-  format="DD/MM/YYYY"
-    minDate={dayjs().add(1, 'day').startOf('day')}
-/>
+              <DatePicker
+                label="Fecha"
+                value={selectedDateTime}
+                onChange={(newValue) => setSelectedDateTime(newValue as Dayjs)}
+                format="DD/MM/YYYY"
+                minDate={firstDayNextMonth}
+                maxDate={lastDayNextMonth}
+              />
 
               <FormControl sx={inputStyle}>
                 <InputLabel id="consejo-popular-label">Consejo Popular</InputLabel>
@@ -371,6 +397,6 @@ const [lugarDonacion, setLugarDonacion] = React.useState<string>(data?.lugarDona
           </DialogContent>
         </Dialog>
       </>
-    </LocalizationProvider>
-  );
-}
+      </LocalizationProvider>
+    );
+  }

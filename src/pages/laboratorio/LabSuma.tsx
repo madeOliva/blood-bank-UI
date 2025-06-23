@@ -59,7 +59,7 @@ const columns: GridColDef[] = [
     valueOptions: ["Analizadas", "Reanalizadas", "aceptada"], // agrega "aceptada" si quieres verla como opción
   },
   {
-    field: "fecha",
+    field: "fechaLab",
     headerName: "Fecha",
     type: "date",
     width: 120,
@@ -81,15 +81,15 @@ export default function LabSuma() {
         const response = await axios.get(`http://localhost:3000/registro-donacion/consecutivo-historia-aceptada`);
         console.log("Datos recibidos del backend:", response.data); // Verifica los datos aquí
         if (response.data && Array.isArray(response.data)) {
-          const data = response.data.map((item: any, idx: number) => ({
-            id:item.id ,// id único para DataGrid
-            numero_consecutivo: item.numero_consecutivo,
-            no_hc: item.no_hc,
-            estado: item.estado,
+          const data = response.data.map((item: any) => ({
+            id: item._id, // Asegúrate de que el backend devuelve `_id`
+            numero_consecutivo: item.numero_consecutivo || "",
+            no_hc: item.historiaClinica?.no_hc || "",
+            estado: item.estado || "",
             resultado_VIH: item.resultado_VIH ?? "",
             resultado_hepatitisB: item.resultado_hepatitisB ?? "",
             resultado_hepatitisC: item.resultado_hepatitisC ?? "",
-            fecha: item.fecha ?? "",
+            fechaLab: item.fechaLab || "",
           }));
           setRows(data);
         } else {
@@ -154,35 +154,52 @@ export default function LabSuma() {
         row.resultado_VIH === "" ||
         row.resultado_hepatitisB === "" ||
         row.resultado_hepatitisC === "" ||
-        row.fecha === ""
+        row.fechaLab === ""
       );
     });
   };
 
+  
   const handleSave = async () => {
     if (hasEmptyFields()) {
       setOpenEmptyFieldsModal(true);
     } else {
       try {
         for (const row of rows) {
-          await axios.put(`${API_URL}/${row.id}`, {
-            resultado_VIH: row.resultado_VIH,
-            resultado_hepatitisB: row.resultado_hepatitisB,
-            resultado_hepatitisC: row.resultado_hepatitisC,
+          if (!row.id) {
+            console.error("Error: ID del registro está vacío o no es válido:", row);
+            continue; // Salta esta fila si el ID no es válido
+          }
+  
+          const payload = {
+            resultado_VIH: Array.isArray(row.resultado_VIH) ? row.resultado_VIH : [row.resultado_VIH],
+            resultado_hepatitisB: Array.isArray(row.resultado_hepatitisB) ? row.resultado_hepatitisB : [row.resultado_hepatitisB],
+            resultado_hepatitisC: Array.isArray(row.resultado_hepatitisC) ? row.resultado_hepatitisC : [row.resultado_hepatitisC],
             estado: row.estado,
-            fecha: row.fecha,
-          });
+            fechaLab: row.fechaLab,
+          };
+  
+          console.log(`Endpoint llamado: ${API_URL}/update-laboratorio/${row.id}`);
+          console.log("Payload enviado:", payload);
+  
+          try {
+            await axios.patch(`${API_URL}/update-laboratorio/${row.id}`, payload);
+          } catch (error) {
+            console.error(`Error al actualizar la fila con ID ${row.id}:`, error.response?.data || error.message);
+          }
         }
-
-        setOpenModal(true);
-        navigate('/laboratorio/PrincipalLab');
+  
+        setOpenModal(true); // Muestra el modal de éxito
+        navigate('/principal_lab'); // Redirige después de guardar
       } catch (error) {
-        console.error("Error updating data:", error);
+        console.error("Error general al actualizar los datos:", error.response?.data || error.message);
       }
     }
   };
+      
 
-  const handleCloseModal = () => {
+
+    const handleCloseModal = () => {
     setOpenModal(false);
   };
 
@@ -342,3 +359,4 @@ export default function LabSuma() {
     </>
   );
 }
+

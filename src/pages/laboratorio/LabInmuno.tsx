@@ -6,48 +6,52 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Typography ,Stack} from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
+import axios from "axios";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import {Dialog, DialogTitle,DialogContent,DialogContentText} from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
+const API_URL = 'http://localhost:3000/registro-donacion';
 
-
-// Datos de ejemplo
-const initialRows = [
-  {
-    id: 1,
-    numero_consecutivo: "1",
-    hist_clinica: "HC-001",
-    resultado_serologia:"",
-    resultado_tipage: "",
-    resultado_rh: "",
-    resultado_contratipaje: "",
-    resultado_DU: "",
-    fecha: "",
-  },
-  {
-    id: 2,
-    numero_consecutivo: "2",
-    hist_clinica: "HC-002",
-    resultado_serologia:"",
-    resultado_tipage: "",
-    resultado_rh: "",
-    resultado_contratipaje: "",
-    resultado_DU: "",
-    fecha: "",
-  },
-  // Más filas de ejemplo...
-];
 
 export default function LabInmuno() {
-  const [rows, setRows] = useState(initialRows);
+  const [rows, setRows] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [columnVisibilityModel,setColumnVisibilityModel]= useState({});
   const navigate = useNavigate();
   const [openModal,setOpenModal] = useState(false);
   const [openEmptyFieldsModal, setOpenEmptyFieldsModal] = useState(false);
  
+useEffect(() => {
+    const fetchInitialRows = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/registro-donacion/consecutivo-historia-aceptada`);
+        console.log("Datos recibidos del backend:", response.data); // Verifica los datos aquí
+        if (response.data && Array.isArray(response.data)) {
+          const data = response.data.map((item: any) => ({
+            id: item._id, // Asegúrate de que el backend devuelve `_id`
+            numero_consecutivo: item.numero_consecutivo || "",
+            no_hc: item.historiaClinica?.no_hc || "",
+            estado: item.estado || "",
+            resultado_serologia: item.resultado_serologia ?? "",
+            resultado_tipage: item.resultado_tipage ?? "",
+            resultado_rh: item.resultado_rh ?? "",
+            resultado_contratipaje: item.resultado_contratipaje ?? "",
+            resultado_DU: item.resultado_DU ?? "",
+           fechaLab: item.fechaLab || "",
+          }));
+          setRows(data);
+        } else {
+          console.error("Error: Datos inválidos recibidos del servidor.");
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchInitialRows();
+  }, []);
 
  
  const isCellEditable = (params: GridCellParams) =>{
@@ -103,18 +107,18 @@ export default function LabInmuno() {
 
   const handleProcessRowUpdate = (newRow: any, oldRow:any) => {
    let updatedRow = newRow;
-
+   if (!newRow.resultado_serologia || !newRow.resultado_tipage || !newRow.resultado_contratipaje || !newRow.resultado_rh ) {
+    console.error("Error: Campos vacíos en la fila.");
+    return newRow;
+    }
    //Resetear DU si el factor no es negativo
    if(newRow.factor !== "-" && newRow.du !== ""){
     updatedRow = {...newRow,du:""};
    }
 
-   const updatedRows = rows.map(row => 
-    row.id === updatedRow.id ? updatedRow : row
-   );
-
-   setRows(updatedRows);
-   return updatedRow;
+   const updatedRows = rows.map((row) => (row.id === newRow.id ? newRow : row));
+    setRows(updatedRows);
+    return newRow;
   };
 
   //Función para verificar campos vacíos
@@ -126,21 +130,50 @@ export default function LabInmuno() {
         row.resultado_rh === "" ||
         (row.resultado_rh === "-" && row.resultado_DU === "") ||
         row.resultado_contratipaje === "" ||
-        row.fecha === ""
+        row.fechaLab === ""
       );
     });
   };
 
-   const handleSave = () => {
-    if(hasEmptyFields()){
+  const handleSave = async () => {
+    if (hasEmptyFields()) {
       setOpenEmptyFieldsModal(true);
-    }else{
-      console.log("Datos guardados:",rows);
-      setOpenModal(true);
+    } else {
+      try {
+        for (const row of rows) {
+          if (!row.id) {
+            console.error("Error: ID del registro está vacío o no es válido:", row);
+            continue; // Salta esta fila si el ID no es válido
+          }
+  
+          const payload = {
+            resultado_serologia: Array.isArray(row.resultado_serologia) ? row.resultado_serologia : [row.resultado_serologia],
+            resultado_tipage: Array.isArray(row.resultado_tipage) ? row.resultado_tipage : [row.resultado_tipage],
+            resultado_contratipaje: Array.isArray(row.resultado_contratipaje) ? row.resultado_contratipaje : [row.resultado_contratipaje],
+            resultado_rh: Array.isArray(row.resultado_rh) ? row.resultado_rh : [row.resultado_rh],
+            resultado_DU: Array.isArray(row.resultado_DU) ? row.resultado_DU : [row.resultado_DU],
+              
+            estado: row.estado,
+            fechaLab: row.fechaLab,
+          };
+  
+          console.log(`Endpoint llamado: ${API_URL}/update-laboratorio-inmuno/${row.id}`);
+          console.log("Payload enviado:", payload);
+  
+          try {
+            await axios.patch(`${API_URL}/update-laboratorio-inmuno/${row.id}`, payload);
+          } catch (error) {
+            console.error(`Error al actualizar la fila con ID ${row.id}:`, error.response?.data || error.message);
+          }
+        }
+  
+        setOpenModal(true); // Muestra el modal de éxito
+        navigate('/principal_lab'); // Redirige después de guardar
+      } catch (error) {
+        console.error("Error general al actualizar los datos:", error.response?.data || error.message);
+      }
     }
-    
-  };
-
+  };  
   //Función para cerrar los modales
   const handleCloseModal =()=>{
     setOpenModal(false);
@@ -157,7 +190,7 @@ const columns: GridColDef[] = [
     width: 150,
   },
   {
-    field: "hist_clinica",
+    field: "no_hc",
     headerName: "No Historia Clínica",
     width: 150,
     editable: false,
@@ -212,10 +245,10 @@ const columns: GridColDef[] = [
     type: "singleSelect",
     width: 140,
     editable: true,
-    valueOptions: ["Analizadas", "Reanalizadas"],
+    valueOptions: ["Analizadas", "Reanalizadas","Aceptada"],
   },
   {
-    field: "fecha",
+    field: "fechaLab",
     headerName: "Fecha",
     type: "date",
     width: 120,

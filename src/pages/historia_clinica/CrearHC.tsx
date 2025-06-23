@@ -387,7 +387,7 @@ export default function NuevaHistoriaClinica() {
         }
         break;
 
-      case 'no_hc':
+      
       case 'no_consultorio':
         // Solo números para estos campos
         if (value === '' || /^\d+$/.test(value)) {

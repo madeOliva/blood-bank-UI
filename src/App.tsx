@@ -66,7 +66,7 @@ export default function App() {
           <CitadosPS />
         </ProtectedRoute>} />
 
-      <Route path="/historiadonante/:id" element={
+      <Route path="/historiadonante/:id/:historiaClinicaId" element={
         <ProtectedRoute allowedRoles={["Médico de selección"]}>
           <HistoriaDonante />
         </ProtectedRoute>} />
@@ -185,7 +185,7 @@ export default function App() {
       <Route
         path="/formularioplan"
         element={
-          <ProtectedRoute allowedRoles={["Jéfe de extracción móvil", "Técnico de móvil"]}>
+          <ProtectedRoute allowedRoles={["Jefe de extracción móvil", "Técnico de móvil"]}>
             <Plan />
           </ProtectedRoute>
         }
@@ -193,7 +193,7 @@ export default function App() {
       <Route
         path="/planDonaciones"
         element={
-          <ProtectedRoute allowedRoles={["Jéfe de extracción móvil", "Técnico de móvil"]}>
+          <ProtectedRoute allowedRoles={["Jefe de extracción móvil", "Técnico de móvil"]}>
             <PlanDonaciones />
           </ProtectedRoute>
         }
@@ -201,7 +201,7 @@ export default function App() {
       <Route
         path="/resumenDonaciones"
         element={
-          <ProtectedRoute allowedRoles={["Jéfe de extracción móvil", "Técnico de móvil"]}>
+          <ProtectedRoute allowedRoles={["Jefe de extracción móvil", "Técnico de móvil"]}>
             <ResumenPlanDonaciones />
           </ProtectedRoute>
         }
@@ -209,7 +209,7 @@ export default function App() {
       <Route
         path="/pedidos"
         element={
-          <ProtectedRoute allowedRoles={["Jéfe de extracción móvil", "Técnico de móvil"]}>
+          <ProtectedRoute allowedRoles={["Jefe de extracción móvil", "Técnico de móvil"]}>
             <PedidosPage />
           </ProtectedRoute>
         }
