@@ -9,8 +9,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Stack,
+  TextField,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import axios from "axios";
@@ -40,7 +43,7 @@ export default function HojaCargoDonaciones() {
       ),
     },
     { field: "fechaD", headerName: "Fecha Donación", width: 200 },
-    { field: "no_registro", headerName: "No. Registro", width: 120 },
+    { field: "no_registro", headerName: "No. Registro", width: 200 },
     { field: "ci", headerName: "CI", width: 120 },
     { field: "no_hc", headerName: "No. HC", width: 120 },
     { field: "nombre", headerName: "Nombre", width: 250 },
@@ -77,10 +80,16 @@ export default function HojaCargoDonaciones() {
   const [fechaFin, setFechaFin] = React.useState<Dayjs | null>(
     dayjs().endOf("day")
   );
-  const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(null);
+  const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(
+    null
+  );
   const [errorFechaFin, setErrorFechaFin] = React.useState<string | null>(null);
   const [openModifyConfirm, setOpenModifyConfirm] = React.useState(false);
   const [rowToModify, setRowToModify] = React.useState<any>(null);
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [searchNoRegistro, setSearchNoRegistro] = React.useState("");
+  const [filteredRows, setFilteredRows] = React.useState<any[]>([]);
+  const [isSearchActive, setIsSearchActive] = React.useState(false);
 
   // --- Modificar: abre modal de confirmación ---
   const handleModifyClick = (row: any) => {
@@ -115,7 +124,9 @@ export default function HojaCargoDonaciones() {
       return false;
     }
     if (fechaInicio.isAfter(fechaFin)) {
-      setErrorFechaInicio("La fecha de inicio no puede ser posterior a la fecha fin");
+      setErrorFechaInicio(
+        "La fecha de inicio no puede ser posterior a la fecha fin"
+      );
       setErrorFechaFin("La fecha fin no puede ser anterior a la fecha inicio");
       return false;
     }
@@ -132,46 +143,50 @@ export default function HojaCargoDonaciones() {
         "http://localhost:3000/registro-donacion/hoja-cargo-donaciones",
         {
           params: {
-          inicio: fechaInicio ? fechaInicio.format("YYYY-MM-DD") : "",
-          fin: fechaFin ? fechaFin.format("YYYY-MM-DD") : "",
-        },
+            inicio: fechaInicio ? fechaInicio.format("YYYY-MM-DD") : "",
+            fin: fechaFin ? fechaFin.format("YYYY-MM-DD") : "",
+          },
         }
       );
-      setRows(
-        res.data.map((reg: any) => ({
-          id: reg.id || reg._id,
-          fechaD: reg.fechaD,
-          no_registro: reg.no_registro || "",
-          ci: reg.ci || "",
-          no_hc: reg.no_hc || "",
-          nombre: reg.nombre || "",
-          sexo: reg.sexo || "",
-          edad: reg.edad || "",
-          grupo: reg.grupo || "",
-          rh: reg.rh || "",
-          componente: reg.componente?._id || reg.componente || "",
-          componenteNombre:
-            reg.componente?.nombreComponente || reg.componenteNombre || "",
-          componenteObj: reg.componente || null,
-          no_tubuladura: reg.no_tubuladura || "",
-          no_lote: reg.no_lote || "",
-          tipo_bolsa: reg.tipo_bolsa || "",
-          volumen: reg.volumen || "",
-          reaccion: reg.reaccion || "",
-          TCM: reg.TCM || "",
-          TP: reg.TP || "",
-          tiempo: reg.tiempo || "",
-          ciclos: reg.ciclos || "",
-          ACD: reg.ACD || "",
-          no_lote_kitACD: reg.no_lote_kitACD || "",
-          no_lote_kitBach: reg.no_lote_kitBach || "",
-          nombre_tecnico: reg.nombre_tecnico || "",
-          nombre_unidad: reg.nombre_unidad || "",
-          responsableExtraccion: reg.responsableExtraccion || "",
-        }))
-      );
+
+      const mappedRows = res.data.map((reg: any) => ({
+        id: reg.id || reg._id,
+        fechaD: reg.fechaD,
+        no_registro: reg.no_registro || "",
+        ci: reg.ci || "",
+        no_hc: reg.no_hc || "",
+        nombre: reg.nombre || "",
+        sexo: reg.sexo || "",
+        edad: reg.edad || "",
+        grupo: reg.grupo || "",
+        rh: reg.rh || "",
+        componente: reg.componente?._id || reg.componente || "",
+        componenteNombre:
+          reg.componente?.nombreComponente || reg.componenteNombre || "",
+        componenteObj: reg.componente || null,
+        no_tubuladura: reg.no_tubuladura || "",
+        no_lote: reg.no_lote || "",
+        tipo_bolsa: reg.tipo_bolsa || "",
+        volumen: reg.volumen || "",
+        reaccion: reg.reaccion || "",
+        TCM: reg.TCM || "",
+        TP: reg.TP || "",
+        tiempo: reg.tiempo || "",
+        ciclos: reg.ciclos || "",
+        ACD: reg.ACD || "",
+        no_lote_kitACD: reg.no_lote_kitACD || "",
+        no_lote_kitBach: reg.no_lote_kitBach || "",
+        nombre_tecnico: reg.nombre_tecnico || "",
+        nombre_unidad: reg.nombre_unidad || "",
+        responsableExtraccion: reg.responsableExtraccion || "",
+      }));
+      setRows(mappedRows);
+      setFilteredRows(mappedRows);
+      setIsSearchActive(false);
     } catch (error) {
       setRows([]);
+      setFilteredRows([]);
+      setIsSearchActive(false);
     }
   };
 
@@ -187,11 +202,15 @@ export default function HojaCargoDonaciones() {
     if (!newValue) {
       setErrorFechaInicio("La fecha de inicio es obligatoria");
     } else if (fechaFin && newValue.isAfter(fechaFin)) {
-      setErrorFechaInicio("La fecha de inicio no puede ser posterior a la fecha fin");
+      setErrorFechaInicio(
+        "La fecha de inicio no puede ser posterior a la fecha fin"
+      );
     } else {
       setErrorFechaInicio(null);
       if (fechaFin && fechaFin.isBefore(newValue)) {
-        setErrorFechaFin("La fecha fin no puede ser anterior a la fecha inicio");
+        setErrorFechaFin(
+          "La fecha fin no puede ser anterior a la fecha inicio"
+        );
       } else {
         setErrorFechaFin(null);
       }
@@ -207,11 +226,32 @@ export default function HojaCargoDonaciones() {
     } else {
       setErrorFechaFin(null);
       if (fechaInicio && fechaInicio.isAfter(newValue)) {
-        setErrorFechaInicio("La fecha de inicio no puede ser posterior a la fecha fin");
+        setErrorFechaInicio(
+          "La fecha de inicio no puede ser posterior a la fecha fin"
+        );
       } else {
         setErrorFechaInicio(null);
       }
     }
+  };
+
+  // --- Buscador por No. Registro Donación ---
+  const handleSearch = () => {
+    setFilteredRows(
+      rows.filter(
+        (row) =>
+          !searchNoRegistro || row.no_registro?.toString() === searchNoRegistro
+      )
+    );
+    setIsSearchActive(true);
+    setSearchOpen(false);
+  };
+
+  const handleClearSearch = () => {
+    setSearchNoRegistro("");
+    setSearchOpen(false);
+    setIsSearchActive(false);
+    handleBuscar(); // Esto recarga los datos según las fechas actuales
   };
 
   return (
@@ -232,6 +272,60 @@ export default function HojaCargoDonaciones() {
       >
         Hoja de Cargo
       </Typography>
+
+      <Box sx={{ position: "relative", width: "100%" }}>
+        {/* Buscador en la esquina superior derecha */}
+        <IconButton
+          color="primary"
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1,
+            backgroundColor: "white",
+            boxShadow: 2,
+            "&:hover": { backgroundColor: "#f0f0f0" },
+          }}
+          onClick={() => setSearchOpen(true)}
+        >
+          <SearchIcon />
+        </IconButton>
+      </Box>
+
+      {/* Dialogo de búsqueda */}
+      <Dialog open={searchOpen} onClose={() => setSearchOpen(false)}>
+        <DialogTitle>Buscar por No. Registro Donación</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="No. Registro Donación"
+              value={searchNoRegistro}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Solo letras, números, punto y guion, sin espacios
+                if (
+                  /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9.\-]*$/.test(value) ||
+                  value === ""
+                ) {
+                  setSearchNoRegistro(e.target.value);
+                }
+              }}
+              fullWidth
+            />
+            <Button
+              variant="contained"
+              onClick={handleSearch}
+              disabled={!searchNoRegistro}
+            >
+              Buscar
+            </Button>
+            <Button variant="outlined" onClick={handleClearSearch}>
+              Limpiar búsqueda
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
       <Box
         style={{
           display: "flex",
@@ -282,8 +376,27 @@ export default function HojaCargoDonaciones() {
               />
             </Box>
           </LocalizationProvider>
+          {/* Puedes mostrar un mensaje o badge según el estado: */}
+          <Typography
+            align="center"
+            variant="h2"
+            component="h2"
+            mt={8}
+            sx={{
+              fontSize: { xs: "1rem", md: "2rem" },
+              textAlign: "center",
+              backgroundColor: "#00796B",
+              color: "white",
+              mb: 2,
+              fontFamily: '"Open Sans"',
+            }}
+          >
+            {isSearchActive
+              ? "Resultado de búsqueda por No. Registro Donación"
+              : "Donaciones en el rango de fechas seleccionado"}
+          </Typography>
           <DataGrid
-            rows={rows}
+            rows={filteredRows}
             columns={columnas}
             sx={{
               "& .MuiDataGrid-columnHeaders": {
@@ -325,9 +438,7 @@ export default function HojaCargoDonaciones() {
             <strong>{rowToModify?.nombre}</strong>?
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenModifyConfirm(false)}>
-              No
-            </Button>
+            <Button onClick={() => setOpenModifyConfirm(false)}>No</Button>
             <Button onClick={handleConfirmModify} autoFocus>
               Sí
             </Button>
