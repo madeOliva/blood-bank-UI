@@ -19,6 +19,7 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Slide,
 } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -348,44 +349,63 @@ export default function PruebasReanalizar() {
         </Box>
       </Container>
 
-      {/* Modal de confirmación con Accordion para Desechar */}
+      {/* Modal de desecho */}
       <Dialog
         open={openModal}
         onClose={handleCloseModal}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            padding: 2,
+            minWidth: 320,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          },
+        }}
+        TransitionComponent={Slide}
+        transitionDuration={400}
+        keepMounted
       >
-        <DialogTitle>Desechar muestra</DialogTitle>
+        <DialogTitle id="alert-dialog-title" sx={{ textAlign: "center" }}>
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            <CheckCircleOutlineIcon sx={{ fontSize: 50, color: "error.main" }} />
+            <Typography variant="h6" fontWeight="bold" color="error.main">
+              ¿Desea desechar el componente?
+            </Typography>
+          </Box>
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            ¿Estás seguro que deseas desechar esta muestra?
+          <DialogContentText id="alert-dialog-description" sx={{ textAlign: "center" }}>
+            <Accordion sx={{ mt: 2 }}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="panel1a-content"
+                id="panel1a-header"
+              >
+                <Typography>Selecciona el motivo por el cual va a desechar el componente</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    value={motivoDesecho}
+                    onChange={e => setMotivoDesecho(e.target.value)}
+                  >
+                    <FormControlLabel value="Lipemia" control={<Radio />} label="Lipemia" />
+                    <FormControlLabel value="Hemolisis" control={<Radio />} label="Hemolisis" />
+                    <FormControlLabel value="Bajo Volumen" control={<Radio />} label="Bajo Volumen" />
+                    <FormControlLabel value="Sobre Volumen" control={<Radio />} label="Sobre Volumen" />
+                    <FormControlLabel value="Venipunción" control={<Radio />} label="Venipunción" />
+                    <FormControlLabel value="Return" control={<Radio />} label="Return" />
+                    <FormControlLabel value="No tener muestra(los dos tubos del laboratorio)" control={<Radio />} label="No tener muestra(los dos tubos del laboratorio)" />
+                  </RadioGroup>
+                </FormControl>
+              </AccordionDetails>
+            </Accordion>
           </DialogContentText>
-          <Accordion sx={{ mt: 2 }}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls="panel1a-content"
-              id="panel1a-header"
-            >
-              <Typography>Selecciona el motivo de desecho de la muestra</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <FormControl component="fieldset">
-                <RadioGroup
-                  value={motivoDesecho}
-                  onChange={e => setMotivoDesecho(e.target.value)}
-                >
-                  <FormControlLabel value="Lipemia" control={<Radio />} label="Lipemia" />
-                  <FormControlLabel value="Hemolisis" control={<Radio />} label="Hemolisis" />
-                  <FormControlLabel value="Return" control={<Radio />} label="Return" />
-                  <FormControlLabel value="Bajo Volumen" control={<Radio />} label="Bajo Volumen" />
-                  <FormControlLabel value="Sobre Volumen" control={<Radio />} label="Sobre Volumen" />
-                  <FormControlLabel value="Lipotimia" control={<Radio />} label="Lipotimia" />
-                  <FormControlLabel value="Otros" control={<Radio />} label="Otro" />
-                </RadioGroup>
-              </FormControl>
-            </AccordionDetails>
-          </Accordion>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal} color="inherit">
+        <DialogActions sx={{ justifyContent: "center", pb: 2 }}>
+          <Button onClick={handleCloseModal} variant="outlined">
             Cancelar
           </Button>
           <Button
