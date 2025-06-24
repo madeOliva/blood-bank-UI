@@ -20,6 +20,17 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
+// --- Funciones de validación ---
+const soloLetrasEspacios = (texto: string) => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/.test(texto);
+const soloLetrasSinEspacios = (texto: string) => /^[A-Za-zÁÉÍÓÚáéíóúÑñ]*$/.test(texto);
+const soloNumeros = (texto: string) => /^\d*$/.test(texto);
+const letrasNumerosEspacios = (texto: string) =>
+  /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s]*$/.test(texto);
+const letrasNumerosSinEspacios = (texto: string) =>
+  /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ]*$/.test(texto);
+const letrasNumerosPuntoGuionSinEspacios = (texto: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9.\-]*$/.test(texto);
+
 const municipiosPinarDelRio = [
   { codigo: "101", nombre: "Pinar del Río" },
   { codigo: "102", nombre: "Consolación del Sur" },
@@ -31,7 +42,7 @@ const municipiosPinarDelRio = [
   { codigo: "108", nombre: "San Juan y Martínez" },
   { codigo: "109", nombre: "San Luis" },
   { codigo: "110", nombre: "Sandino" },
-  { codigo: "111", nombre: "Viñales" }
+  { codigo: "111", nombre: "Viñales" },
 ];
 
 const FormularioInscripcion: React.FC = () => {
@@ -413,9 +424,30 @@ const FormularioInscripcion: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any
   ) => {
     const { name, value } = e.target;
-    if (name === "telefono" || name === "telefonoLaboral" || name === "edad") {
-      if (!/^\d*$/.test(value)) return;
+
+    //Validaciones por campo
+  
+    if (name=== "ci"|| name === "telefono" || name === "telefonoLaboral" || name === "edad" || name==="no_consultorio") {
+      if (!soloNumeros(value)) return;
     }
+
+    if (name === "nombre" || name === "primer_apellido" || name === "segundo_apellido") {
+      if (!soloLetrasSinEspacios(value)) return;
+    }
+    if ( name === "centroLaboral" || name === "ocupacion" || name === "consejo_popular") {
+      if (!soloLetrasEspacios(value)) return;
+    }
+
+    if(name==="no_hc"){
+      if (!letrasNumerosPuntoGuionSinEspacios(value)) return;
+    }
+
+    if (name === "direccion" || name === "otraLocalizacion") {
+      // Permite letras, números, espacios y algunos signos básicos de dirección
+      if (!/^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s\.,#\-º°]*$/.test(value)) return;
+    }
+
+
     if (name === "fecha_nacimiento") {
       const nuevaEdad = calcularEdad(value);
       setForm({ ...form, [name]: value, edad: nuevaEdad.toString() });
@@ -575,7 +607,7 @@ const FormularioInscripcion: React.FC = () => {
                       onChange={handleChange}
                       error={!!errors.ci}
                       helperText={
-                        errors.ci || "Debe tener 11 dígitos. Ej: 99010112345"
+                        errors.ci || "Debe tener 11 dígitos. Ej: 99010112345" 
                       }
                       inputProps={{
                         inputMode: "numeric",

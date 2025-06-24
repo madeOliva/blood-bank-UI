@@ -4,8 +4,6 @@ import Navbar from "../../components/navbar/Navbar";
 import {
   Box,
   Typography,
-  TextField,
-  Button,
   IconButton,
   Dialog,
   DialogActions,
@@ -14,11 +12,13 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { useNavigate } from "react-router-dom";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import axios from "axios";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import Button from "../../components/Button"; // Usa tu botón personalizado
 
 export default function HojaCargoDonaciones() {
-  // Nombres ajustados según tu backend (registro_donacion.schema.ts)
   const columnas: GridColDef[] = [
     {
       field: "modificar",
@@ -71,12 +71,14 @@ export default function HojaCargoDonaciones() {
 
   const navigate = useNavigate();
   const [rows, setRows] = React.useState<any[]>([]);
-  const [fechaInicio, setFechaInicio] = React.useState<string>(
-    dayjs().format("YYYY-MM-DD")
+  const [fechaInicio, setFechaInicio] = React.useState<Dayjs | null>(
+    dayjs().startOf("day")
   );
-  const [fechaFin, setFechaFin] = React.useState<string>(
-    dayjs().format("YYYY-MM-DD")
+  const [fechaFin, setFechaFin] = React.useState<Dayjs | null>(
+    dayjs().endOf("day")
   );
+  const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(null);
+  const [errorFechaFin, setErrorFechaFin] = React.useState<string | null>(null);
   const [openModifyConfirm, setOpenModifyConfirm] = React.useState(false);
   const [rowToModify, setRowToModify] = React.useState<any>(null);
 
@@ -102,70 +104,43 @@ export default function HojaCargoDonaciones() {
     setOpenModifyConfirm(false);
   };
 
-  // Cargar donaciones del día por defecto (solo estado "procesando")
-  React.useEffect(() => {
-    const fetchDonacionesHoy = async () => {
-      try {
-        const hoy = dayjs().format("YYYY-MM-DD");
-        const res = await axios.get(
-          "http://localhost:3000/registro-donacion/hoja-cargo-donaciones",
-          {
-            params: { inicio: fechaInicio, fin: fechaFin },
-          }
-        );
-        setRows(
-          res.data.map((reg: any) => ({
-            id: reg.id || reg._id,
-            fechaD: reg.fechaD  ,
-            no_registro: reg.no_registro || "",
-            ci: reg.ci || "",
-            no_hc: reg.no_hc || "",
-            nombre: reg.nombre || "",
-            sexo: reg.sexo || "",
-            edad: reg.edad || "",
-            grupo: reg.grupo || "",
-            rh: reg.rh || "",
-            componente: reg.componente?._id || reg.componente || "",
-            componenteNombre:
-              reg.componente?.nombreComponente || reg.componenteNombre || "",
-            componenteObj: reg.componente || null, // <-- Guarda el objeto completo si lo necesitas
-            no_tubuladura: reg.no_tubuladura || "",
-            no_lote: reg.no_lote || "",
-            tipo_bolsa: reg.tipo_bolsa || "",
-            volumen: reg.volumen || "",
-            reaccion: reg.reaccion || "",
-            TCM: reg.TCM || "",
-            TP: reg.TP || "",
-            tiempo: reg.tiempo || "",
-            ciclos: reg.ciclos || "",
-            ACD: reg.ACD || "",
-            no_lote_kitACD: reg.no_lote_kitACD || "",
-            no_lote_kitBach: reg.no_lote_kitBach || "",
-            nombre_tecnico: reg.nombre_tecnico || "",
-            nombre_unidad: reg.nombre_unidad || "",
-            responsableExtraccion: reg.responsableExtraccion || "",
-          }))
-        );
-      } catch (error) {
-        setRows([]);
-      }
-    };
-    fetchDonacionesHoy();
-  }, []);
+  // --- Validación de fechas ---
+  const validarFechas = () => {
+    if (!fechaInicio) {
+      setErrorFechaInicio("La fecha de inicio es obligatoria");
+      return false;
+    }
+    if (!fechaFin) {
+      setErrorFechaFin("La fecha fin es obligatoria");
+      return false;
+    }
+    if (fechaInicio.isAfter(fechaFin)) {
+      setErrorFechaInicio("La fecha de inicio no puede ser posterior a la fecha fin");
+      setErrorFechaFin("La fecha fin no puede ser anterior a la fecha inicio");
+      return false;
+    }
+    setErrorFechaInicio(null);
+    setErrorFechaFin(null);
+    return true;
+  };
 
-  // Buscar por rango de fechas (solo estado "procesando")
+  // --- Buscar por rango de fechas ---
   const handleBuscar = async () => {
+    if (!validarFechas()) return;
     try {
       const res = await axios.get(
         "http://localhost:3000/registro-donacion/hoja-cargo-donaciones",
         {
-          params: { inicio: fechaInicio, fin: fechaFin },
+          params: {
+          inicio: fechaInicio ? fechaInicio.format("YYYY-MM-DD") : "",
+          fin: fechaFin ? fechaFin.format("YYYY-MM-DD") : "",
+        },
         }
       );
       setRows(
         res.data.map((reg: any) => ({
           id: reg.id || reg._id,
-          fechaD: reg.fechaD ,
+          fechaD: reg.fechaD,
           no_registro: reg.no_registro || "",
           ci: reg.ci || "",
           no_hc: reg.no_hc || "",
@@ -177,7 +152,7 @@ export default function HojaCargoDonaciones() {
           componente: reg.componente?._id || reg.componente || "",
           componenteNombre:
             reg.componente?.nombreComponente || reg.componenteNombre || "",
-          componenteObj: reg.componente || null, // <-- Guarda el objeto completo si lo necesitas
+          componenteObj: reg.componente || null,
           no_tubuladura: reg.no_tubuladura || "",
           no_lote: reg.no_lote || "",
           tipo_bolsa: reg.tipo_bolsa || "",
@@ -190,12 +165,52 @@ export default function HojaCargoDonaciones() {
           ACD: reg.ACD || "",
           no_lote_kitACD: reg.no_lote_kitACD || "",
           no_lote_kitBach: reg.no_lote_kitBach || "",
-          responsableExtraccion: reg.responsableExtraccion || "",
+          nombre_tecnico: reg.nombre_tecnico || "",
           nombre_unidad: reg.nombre_unidad || "",
+          responsableExtraccion: reg.responsableExtraccion || "",
         }))
       );
     } catch (error) {
       setRows([]);
+    }
+  };
+
+  // --- Cargar donaciones por defecto cuando cambian las fechas ---
+  React.useEffect(() => {
+    handleBuscar();
+    // eslint-disable-next-line
+  }, [fechaInicio, fechaFin]);
+
+  // --- Handlers para los pickers ---
+  const handleFechaInicioChange = (newValue: Dayjs | null) => {
+    setFechaInicio(newValue);
+    if (!newValue) {
+      setErrorFechaInicio("La fecha de inicio es obligatoria");
+    } else if (fechaFin && newValue.isAfter(fechaFin)) {
+      setErrorFechaInicio("La fecha de inicio no puede ser posterior a la fecha fin");
+    } else {
+      setErrorFechaInicio(null);
+      if (fechaFin && fechaFin.isBefore(newValue)) {
+        setErrorFechaFin("La fecha fin no puede ser anterior a la fecha inicio");
+      } else {
+        setErrorFechaFin(null);
+      }
+    }
+  };
+
+  const handleFechaFinChange = (newValue: Dayjs | null) => {
+    setFechaFin(newValue);
+    if (!newValue) {
+      setErrorFechaFin("La fecha fin es obligatoria");
+    } else if (fechaInicio && newValue.isBefore(fechaInicio)) {
+      setErrorFechaFin("La fecha fin no puede ser anterior a la fecha inicio");
+    } else {
+      setErrorFechaFin(null);
+      if (fechaInicio && fechaInicio.isAfter(newValue)) {
+        setErrorFechaInicio("La fecha de inicio no puede ser posterior a la fecha fin");
+      } else {
+        setErrorFechaInicio(null);
+      }
     }
   };
 
@@ -229,53 +244,47 @@ export default function HojaCargoDonaciones() {
             width: "98%",
           }}
         >
-          {/* Filtros de fecha */}
-          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-            <TextField
-              label="Fecha inicio"
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-            />
-            <TextField
-              label="Fecha fin"
-              type="date"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              size="small"
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleBuscar}
-              sx={{ minWidth: 120 }}
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                mb: 2,
+                mt: 2,
+                justifyContent: "flex-start",
+              }}
             >
-              Buscar
-            </Button>
-          </Box>
+              <DateTimePicker
+                label="Fecha y Hora Inicio"
+                value={fechaInicio}
+                onChange={handleFechaInicioChange}
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    sx: { width: 230 },
+                    error: !!errorFechaInicio,
+                    helperText: errorFechaInicio,
+                  },
+                }}
+              />
+              <DateTimePicker
+                label="Fecha y Hora Fin"
+                value={fechaFin}
+                onChange={handleFechaFinChange}
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    sx: { width: 230 },
+                    error: !!errorFechaFin,
+                    helperText: errorFechaFin,
+                  },
+                }}
+              />
+            </Box>
+          </LocalizationProvider>
           <DataGrid
             rows={rows}
-            columns={columnas.map((col) =>
-              col.field === "modificar"
-                ? {
-                    ...col,
-                    renderCell: (params) => (
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleModifyClick(params.row);
-                        }}
-                        aria-label="modificar"
-                      >
-                        <EditIcon sx={{ color: "red" }} />
-                      </IconButton>
-                    ),
-                  }
-                : col
-            )}
+            columns={columnas}
             sx={{
               "& .MuiDataGrid-columnHeaders": {
                 position: "sticky",
@@ -316,10 +325,10 @@ export default function HojaCargoDonaciones() {
             <strong>{rowToModify?.nombre}</strong>?
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenModifyConfirm(false)} color="primary">
+            <Button onClick={() => setOpenModifyConfirm(false)}>
               No
             </Button>
-            <Button onClick={handleConfirmModify} color="primary" autoFocus>
+            <Button onClick={handleConfirmModify} autoFocus>
               Sí
             </Button>
           </DialogActions>

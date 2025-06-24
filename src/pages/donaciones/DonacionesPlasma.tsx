@@ -20,6 +20,19 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import axios from "axios";
 
+// --- Funciones de validación ---
+const soloLetrasEspacios = (texto: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/.test(texto);
+const soloLetrasSinEspacios = (texto: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ]*$/.test(texto);
+const soloNumeros = (texto: string) => /^\d*$/.test(texto);
+const letrasNumerosEspacios = (texto: string) =>
+  /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s]*$/.test(texto);
+const letrasNumerosSinEspacios = (texto: string) =>
+  /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ]*$/.test(texto);
+const letrasNumerosPuntoGuionSinEspacios = (texto: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9.\-]*$/.test(texto);
+
 const DonacionesPlasma: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -132,17 +145,21 @@ const DonacionesPlasma: React.FC = () => {
   }, [id, location.state]);
 
   // Manejar cambios en los campos
- const handleChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any
-) => {
-  const { name, value } = e.target;
-  if (["TCM", "TP", "tiempo", "ciclos", "ACD"].includes(name)) {
-    setForm({ ...form, [name]: value === "" ? "" : Number(value) });
-  } else {
-    setForm({ ...form, [name]: value });
-  }
-  setErrors({ ...errors, [name]: "" });
-};
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any
+  ) => {
+    const { name, value } = e.target;
+    if (name === "no_lote_kitACD" || name === "no_lote_kitBach") {
+      if (!letrasNumerosPuntoGuionSinEspacios(value)) return;
+    }
+
+    if (["TCM", "TP", "tiempo", "ciclos", "ACD"].includes(name)) {
+      setForm({ ...form, [name]: value === "" ? "" : Number(value) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+    setErrors({ ...errors, [name]: "" });
+  };
 
   // Registrar (actualizar) donación
   const handleRegistrar = async () => {
@@ -154,7 +171,6 @@ const DonacionesPlasma: React.FC = () => {
         estado: "procesando",
         fechaD: new Date(), // <-- Esto guarda la fecha y hora actual
         responsableExtraccion: usuario.name, // <-- Nuevo campo
-
       };
       console.log(id);
       await axios.put(

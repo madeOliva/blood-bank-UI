@@ -230,9 +230,10 @@ export default function HojaCargo() {
         <Box
           sx={{
             display: "flex",
-            gap: 10,
+            gap: 2,
             marginTop: 2,
-            justifyContent: "center",
+            paddingLeft:2,
+            justifyContent: "flex-start",
           }}
         >
           <DateTimePicker
@@ -241,7 +242,8 @@ export default function HojaCargo() {
             onChange={handleFechaInicioChange}
             slotProps={{
               textField: {
-                sx: { width: 400 },
+                size: "small",
+                sx: { width: 230 },
                 error: !!errorFechaInicio,
                 helperText: errorFechaInicio,
               },
@@ -253,7 +255,8 @@ export default function HojaCargo() {
             onChange={handleFechaFinChange}
             slotProps={{
               textField: {
-                sx: { width: 400 },
+                size:"small",
+                sx: { width: 230 },
                 error: !!errorFechaFin,
                 helperText: errorFechaFin,
               },
@@ -272,7 +275,7 @@ export default function HojaCargo() {
         <Box
           style={{
             height: 450,
-            width: "95%",
+            width: "100%",
           }}
         >
           <Dialog
