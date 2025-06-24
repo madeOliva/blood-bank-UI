@@ -4,7 +4,7 @@ import Box from "@mui/material/Box";
 import Navbar from "../../components/navbar/Navbar";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Typography ,Stack} from "@mui/material";
+import { Typography ,Stack, Tooltip} from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import axios from "axios";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -13,6 +13,20 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 const API_URL = 'http://localhost:3000/registro-donacion';
+
+// Función para verificar si un campo específico está fuera de rango
+const isFieldInvalid = (field: string, value: any) => {
+  if (value === undefined || value === '') return false;
+
+  switch (field) {
+    case 'resultado_serologia':
+    case 'resultado_DU':
+    
+      return value === "Positivo"; // Devuelve true solo si el valor es "Positivo"
+    default:
+      return false;
+  }
+};
 
 
 export default function LabInmuno() {
@@ -35,11 +49,16 @@ useEffect(() => {
             no_hc: item.historiaClinica?.no_hc || "",
             estado: item.estado || "",
             resultado_serologia: item.resultado_serologia ?? "",
+            fecha_serologia: item.fecha_serologia || "",
             resultado_tipage: item.resultado_tipage ?? "",
+            fecha_tipage: item.fecha_tipage || "",
             resultado_rh: item.resultado_rh ?? "",
+            fecha_rh: item.fecha_rh || "",
             resultado_contratipaje: item.resultado_contratipaje ?? "",
+            fecha_contratipaje: item.fecha_contratipaje || "",
             resultado_DU: item.resultado_DU ?? "",
-           fechaLab: item.fechaLab || "",
+            fecha_DU: item.fecha_DU || "",
+           
           }));
           setRows(data);
         } else {
@@ -55,16 +74,18 @@ useEffect(() => {
 
  
  const isCellEditable = (params: GridCellParams) =>{
-    if(params.field === 'resultado_DU'){
+    if(params.field === 'resultado_DU' && params.field === 'fecha_DU' ){
       return params.row.resultado_rh === "-";
     }
     return true;
   };
   useEffect(() =>{
     const shouldShowDU = rows.some(row => row.resultado_rh === "-");
+    const shouldShowFechaDU = rows.some(row => row.resultado_rh === "-");
     setColumnVisibilityModel(prev => ({
       ...prev,
-      resultado_DU:shouldShowDU
+      resultado_DU:shouldShowDU,
+      fecha_DU:shouldShowFechaDU
     }));
   },[rows]);
 
@@ -107,10 +128,7 @@ useEffect(() => {
 
   const handleProcessRowUpdate = (newRow: any, oldRow:any) => {
    let updatedRow = newRow;
-   if (!newRow.resultado_serologia || !newRow.resultado_tipage || !newRow.resultado_contratipaje || !newRow.resultado_rh ) {
-    console.error("Error: Campos vacíos en la fila.");
-    return newRow;
-    }
+   
    //Resetear DU si el factor no es negativo
    if(newRow.factor !== "-" && newRow.du !== ""){
     updatedRow = {...newRow,du:""};
@@ -121,24 +139,9 @@ useEffect(() => {
     return newRow;
   };
 
-  //Función para verificar campos vacíos
-  const hasEmptyFields = () =>{
-    return rows.some(row =>{
-      return(
-        row.resultado_serologia === "" ||
-        row.resultado_tipage === "" ||
-        row.resultado_rh === "" ||
-        (row.resultado_rh === "-" && row.resultado_DU === "") ||
-        row.resultado_contratipaje === "" ||
-        row.fechaLab === ""
-      );
-    });
-  };
 
   const handleSave = async () => {
-    if (hasEmptyFields()) {
-      setOpenEmptyFieldsModal(true);
-    } else {
+    
       try {
         for (const row of rows) {
           if (!row.id) {
@@ -148,13 +151,18 @@ useEffect(() => {
   
           const payload = {
             resultado_serologia: Array.isArray(row.resultado_serologia) ? row.resultado_serologia : [row.resultado_serologia],
+            fecha_serologia: Array.isArray(row.fecha_serologia) ? row.fecha_serologia : [row.fecha_serologia],
             resultado_tipage: Array.isArray(row.resultado_tipage) ? row.resultado_tipage : [row.resultado_tipage],
+            fecha_tipage: Array.isArray(row.fecha_tipage) ? row.fecha_tipage : [row.fecha_tipage],
             resultado_contratipaje: Array.isArray(row.resultado_contratipaje) ? row.resultado_contratipaje : [row.resultado_contratipaje],
+            fecha_contratipaje: Array.isArray(row.fecha_contratipaje) ? row.fecha_contratipaje : [row.fecha_contratipaje],
             resultado_rh: Array.isArray(row.resultado_rh) ? row.resultado_rh : [row.resultado_rh],
+            fecha_rh: Array.isArray(row.fecha_rh) ? row.fecha_rh : [row.fecha_rh],
             resultado_DU: Array.isArray(row.resultado_DU) ? row.resultado_DU : [row.resultado_DU],
+            fecha_DU: Array.isArray(row.fecha_DU) ? row.fecha_DU : [row.fecha_DU],
               
             estado: row.estado,
-            fechaLab: row.fechaLab,
+            
           };
   
           console.log(`Endpoint llamado: ${API_URL}/update-laboratorio-inmuno/${row.id}`);
@@ -172,7 +180,7 @@ useEffect(() => {
       } catch (error) {
         console.error("Error general al actualizar los datos:", error.response?.data || error.message);
       }
-    }
+    
   };  
   //Función para cerrar los modales
   const handleCloseModal =()=>{
@@ -200,9 +208,27 @@ const columns: GridColDef[] = [
     headerName: "Serología",
     width: 180,
     editable: true,
-    type: "singleSelect",
+    type: "singleSelect",renderCell: (params) => {
+              const isInvalid = isFieldInvalid(params.field, params.value);
+              return (
+                <Tooltip title={isInvalid ? "Valor fuera de rango - Debe repetirse este examen" : ""}>
+                  <div className={isInvalid ? "celda-invalida" : ""} style={{ width: '100%', height: '100%' }}>
+                    {params.value}
+                  </div>
+                </Tooltip>
+              );
+            },
+
     valueOptions: ["Positivo", "Negativo"],
     
+  },
+  {
+    field: "fecha_serologia",
+    headerName: "Fecha Serologia",
+    type: "date",
+    width: 120,
+    editable: true,
+    valueGetter: (params) => new Date(params),
   },
   {
     field: "resultado_tipage",
@@ -214,12 +240,28 @@ const columns: GridColDef[] = [
     
   },
   {
+    field: "fecha_tipage",
+    headerName: "Fecha Grupo",
+    type: "date",
+    width: 120,
+    editable: true,
+    valueGetter: (params) => new Date(params),
+  },
+  {
     field: "resultado_rh",
     headerName: "Rh",
     type: "singleSelect",
     width: 120,
     editable: true,
     valueOptions: ["+", "-"],
+  },
+  {
+    field: "fecha_rh",
+    headerName: "Fecha RH",
+    type: "date",
+    width: 120,
+    editable: true,
+    valueGetter: (params) => new Date(params),
   },
   {
     field: "resultado_contratipaje",
@@ -230,9 +272,27 @@ const columns: GridColDef[] = [
     valueOptions: ["A", "B","AB","O"],
   },
   {
+    field: "fecha_contratipaje",
+    headerName: "Fecha Contratipaje",
+    type: "date",
+    width: 120,
+    editable: true,
+    valueGetter: (params) => new Date(params),
+  },
+  {
     field: "resultado_DU",
     headerName: "DU",
     type: "singleSelect",
+    renderCell: (params) => {
+              const isInvalid = isFieldInvalid(params.field, params.value);
+              return (
+                <Tooltip title={isInvalid ? "Valor fuera de rango - Debe repetirse este examen" : ""}>
+                  <div className={isInvalid ? "celda-invalida" : ""} style={{ width: '100%', height: '100%' }}>
+                    {params.value}
+                  </div>
+                </Tooltip>
+              );
+            },
     width: 140,
     editable: true,
     valueOptions: ["Positivo", "Negativo"],
@@ -240,21 +300,22 @@ const columns: GridColDef[] = [
     
   },
   {
-    field: "estado",
-    headerName: "Estado",
-    type: "singleSelect",
-    width: 140,
-    editable: true,
-    valueOptions: ["Analizadas", "Reanalizadas","Aceptada"],
-  },
-  {
-    field: "fechaLab",
-    headerName: "Fecha",
+    field: "fecha_DU",
+    headerName: "Fecha DU",
     type: "date",
     width: 120,
     editable: true,
     valueGetter: (params) => new Date(params),
   },
+  {
+    field: "estado",
+    headerName: "Estado",
+    type: "singleSelect",
+    width: 140,
+    editable: true,
+    valueOptions: ["Analizada", "Reanalizada","Aceptada"],
+  },
+  
 ];
 
 
@@ -269,7 +330,13 @@ return (
          Laboratorio Inmunohematología
         </Typography>
         
-        <Box sx={{ height: 400, width: "100%", mb: 2 }}>
+        <Box sx={{ height: 400, width: "100%", mb: 2 ,
+                      '& .celda-invalida': {
+                      backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 0, 0, 0.3)'
+                      }
+                    }}}>
           <DataGrid
           sx={{
             height:400,
