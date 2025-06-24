@@ -233,7 +233,7 @@ export default function PruebasReanalizar() {
           })
           .map((item: any, idx: number) => ({
             id: item.id || item._id || idx,
-            no: item.no ?? idx + 1,
+            no: item.no_consecutivo ?? idx + 1,
             hc: item.hc ?? "",
             grupo: item.grupo ?? "",
             factor: item.factor ?? "",
