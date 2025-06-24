@@ -1,13 +1,13 @@
 import * as React from "react";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import { Edit, Padding } from "@mui/icons-material";
+import { Edit, Padding, Search } from "@mui/icons-material";
 import axios from "axios";
 import {
   Dialog,
@@ -17,66 +17,81 @@ import {
   Button,
 } from "@mui/material";
 
-
 export default function HojaCargo() {
-const navigate = useNavigate();
-const [openModifyConfirm, setOpenModifyConfirm] = React.useState(false);
-const [rowToModify, setRowToModify] = React.useState<any>(null);
+  const navigate = useNavigate();
+  const [openModifyConfirm, setOpenModifyConfirm] = React.useState(false);
+  const [rowToModify, setRowToModify] = React.useState<any>(null);
 
-const handleModifyClick = (row: any) => {
-  setRowToModify(row);
-  setOpenModifyConfirm(true);
-};
+  //Estados para busqueda
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [searchNoRegistro, setSearchNoRegistro] = React.useState("");
+  const [filteredRows, setFilteredRows] = React.useState<any[]>([]);
+  const [isSearchActive, setIsSearchActive] = React.useState(false);
 
-const handleConfirmModify = () => {
-  // Aquí navegas o haces la acción de modificar
-  navigate(`/inscripcion/${rowToModify.id}`);
-  setOpenModifyConfirm(false);
-};
+  const handleModifyClick = (row: any) => {
+    setRowToModify(row);
+    setOpenModifyConfirm(true);
+  };
 
-// Definición de las columnas
+  const handleConfirmModify = () => {
+    // Aquí navegas o haces la acción de modificar
+    navigate(`/inscripcion/${rowToModify.id}`);
+    setOpenModifyConfirm(false);
+  };
 
-const columns: GridColDef[] = [
-  {
-    field: "modificar",
-    headerName: "",
-    width: 80,
-    sortable: false,
-    filterable: false,
-    align: "center",
-    renderCell: (params) => (
-      <IconButton
-        onClick={(e) => {
-          e.stopPropagation();
-          handleModifyClick(params.row);
-        }}
-        aria-label="modificar"
-      >
-        <Edit sx={{ color: "red" }} />
-      </IconButton>
-    ),
-  },
-  { field: "fechaR", headerName: "Fecha de Registro", width: 200 },
-  { field: "NoRegistro", headerName: "No. Registro", width: 150 },
-  { field: "no_hc", headerName: "No. HC", width: 120 },
-  { field: "ci_donante", headerName: "CI", width: 150 },
-  { field: "nombre", headerName: "Nombres y Apellidos", width: 300 },
-  { field: "edad", headerName: "Edad", width: 100 },
-  { field: "sexo", headerName: "Sexo", width: 100 },
-  { field: "grupo", headerName: "Grupo", width: 100 },
-  { field: "rh", headerName: "RH", width: 100 },
-  { field: "donante", headerName: "Donante de", width: 150 },
-  { field: "municipio", headerName: "Municipio", width: 120 },
-  { field: "provincia", headerName: "Provincia", width: 120 },
-  { field: "consejo_popular", headerName: "Consejo Popular", width: 140 },
-  { field: "no_consultorio", headerName: "No. Consultorio", width: 140 },
-  { field: "ocupacion", headerName: "Ocupación", width: 120 },
-  { field: "telefono", headerName: "Teléfono", width: 120 },
-  { field: "telefonoLaboral", headerName: "Teléfono Laboral", width: 140 },
-  { field: "centro_laboral", headerName: "Centro Laboral", width: 140 },
-  { field: "otra_localizacion", headerName: "Otra Localización", width: 140 },
-];
-
+  // Definición de las columnas
+  const columns: GridColDef[] = [
+    {
+      field: "modificar",
+      headerName: "",
+      width: 80,
+      sortable: false,
+      filterable: false,
+      align: "center",
+      renderCell: (params) => (
+        <IconButton
+          onClick={(e) => {
+            e.stopPropagation();
+            handleModifyClick(params.row);
+          }}
+          aria-label="modificar"
+        >
+          <Edit sx={{ color: "red" }} />
+        </IconButton>
+      ),
+    },
+    { field: "fechaR", headerName: "Fecha de Registro", width: 200 },
+    { field: "NoRegistro", headerName: "No. Registro", width: 200 },
+    { field: "no_hc", headerName: "No. HC", width: 120 },
+    { field: "ci_donante", headerName: "CI", width: 150 },
+    { field: "nombre", headerName: "Nombres y Apellidos", width: 250 },
+    {
+      field: "fecha_nacimiento",
+      headerName: "Fecha de Nacimiento",
+      width: 200,
+    },
+    { field: "edad", headerName: "Edad", width: 100 },
+    { field: "sexo", headerName: "Sexo", width: 50 },
+    { field: "grupo", headerName: "Grupo", width: 100 },
+    { field: "rh", headerName: "RH", width: 100 },
+    { field: "donante", headerName: "Donante de", width: 150 },
+    { field: "municipio", headerName: "Municipio", width: 120 },
+    { field: "provincia", headerName: "Provincia", width: 120 },
+    { field: "direccion", headerName: "Direccion", width: 300 },
+    { field: "consejo_popular", headerName: "Consejo Popular", width: 140 },
+    { field: "no_consultorio", headerName: "No. Consultorio", width: 140 },
+    { field: "ocupacion", headerName: "Ocupación", width: 120 },
+    { field: "telefono", headerName: "Teléfono", width: 120 },
+    { field: "telefonoLaboral", headerName: "Teléfono Laboral", width: 140 },
+    { field: "centro_laboral", headerName: "Centro Laboral", width: 140 },
+    { field: "otra_localizacion", headerName: "Otra Localización", width: 140 },
+    { field: "nombre_unidad", headerName: "Nombre Unidad", width: 140 },
+    {
+      field: "responsableInscripcion",
+      headerName: "Responsable de Inscripción",
+      width: 220,
+    },
+  ];
 
   const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(
     null
@@ -85,13 +100,11 @@ const columns: GridColDef[] = [
   const [errorFechaFin, setErrorFechaFin] = React.useState<string | null>(null);
 
   // Inicializa fechas al primer y último día del mes actual
-  const primerDiaMes = dayjs().startOf("month");
-  const ultimoDiaMes = dayjs().endOf("month");
+  const inicioDia = dayjs().startOf("day");
+  const finDia = dayjs().endOf("day");
 
-  const [fechaInicio, setFechaInicio] = React.useState<Dayjs | null>(
-    primerDiaMes
-  );
-  const [fechaFin, setFechaFin] = React.useState<Dayjs | null>(ultimoDiaMes);
+  const [fechaInicio, setFechaInicio] = React.useState<Dayjs | null>(inicioDia);
+  const [fechaFin, setFechaFin] = React.useState<Dayjs | null>(finDia);
   const [rows, setRows] = React.useState<any[]>([]);
 
   React.useEffect(() => {
@@ -102,13 +115,11 @@ const columns: GridColDef[] = [
             "http://localhost:3000/registro-donacion",
             {
               params: {
-                inicio: fechaInicio.format("YYYY-MM-DD"),
-                fin: fechaFin.format("YYYY-MM-DD"),
+                inicio: fechaInicio.format("YYYY-MM-DD HH:mm:ss"),
+                fin: fechaFin.format("YYYY-MM-DD HH:mm:ss"),
               },
             }
           );
-          // Agrega este log para ver la respuesta real del backend
-          console.log("Respuesta backend:", res.data);
 
           // Mapea los datos para el DataGrid
           const mappedRows = res.data.map((reg: any) => ({
@@ -118,6 +129,9 @@ const columns: GridColDef[] = [
             no_hc: reg.no_hc || "",
             ci_donante: reg.ci_donante || "", // <-- así lo devuelve el backend
             nombre: reg.nombre || "",
+            fecha_nacimiento: reg.fecha_nacimiento
+              ? new Date(reg.fecha_nacimiento).toLocaleDateString()
+              : "", // <-- aquí formateas la fecha
             edad: reg.edad || "",
             sexo: reg.sexo || "",
             grupo: reg.grupo || "",
@@ -125,6 +139,7 @@ const columns: GridColDef[] = [
             donante: reg.donante || "",
             municipio: reg.municipio || "",
             provincia: reg.provincia || "",
+            direccion: reg.direccion || "",
             consejo_popular: reg.consejo_popular || "",
             no_consultorio: reg.no_consultorio || "",
             ocupacion: reg.ocupacion || "",
@@ -132,20 +147,41 @@ const columns: GridColDef[] = [
             telefonoLaboral: reg.telefonoLaboral || "",
             centro_laboral: reg.centro_laboral || "",
             otra_localizacion: reg.otra_localizacion || "",
+            responsableInscripcion: reg.responsableInscripcion || "",
+            nombre_unidad: reg.nombre_unidad || "",
           }));
           setRows(mappedRows);
+          setFilteredRows(mappedRows);
+          setIsSearchActive(false);
         } catch (error) {
           setRows([]);
+          setFilteredRows([]);
+          setIsSearchActive(false);
         }
       } else {
         setRows([]);
+        setFilteredRows([]);
+        setIsSearchActive(false);
       }
     };
     fetchRegistros();
   }, [fechaInicio, fechaFin]);
 
-  const handleRowClick = () => {
-    navigate(`/inscripcion/`);
+  // Búsqueda exacta por No. Registro
+  const handleSearch = () => {
+    setFilteredRows(
+      rows.filter((row) => row.NoRegistro?.toString() === searchNoRegistro)
+    );
+    setIsSearchActive(true);
+    setSearchOpen(false);
+  };
+
+  // Limpiar búsqueda y mostrar registros del rango de fechas
+  const handleClearSearch = () => {
+    setSearchNoRegistro("");
+    setSearchOpen(false);
+    setIsSearchActive(false);
+    setFilteredRows(rows);
   };
 
   const handleFechaInicioChange = (newValue: Dayjs | null) => {
@@ -204,14 +240,67 @@ const columns: GridColDef[] = [
       >
         Hoja de Cargo
       </Typography>
+
+      {/* Botón y diálogo de búsqueda */}
+      <Box sx={{ position: "relative", width: "100%" }}>
+        <IconButton
+          color="primary"
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1,
+            backgroundColor: "white",
+            boxShadow: 2,
+            "&:hover": { backgroundColor: "#f0f0f0" },
+          }}
+          onClick={() => setSearchOpen(true)}
+        >
+          <Search />
+        </IconButton>
+      </Box>
+      <Dialog open={searchOpen} onClose={() => setSearchOpen(false)}>
+        <DialogTitle>Buscar por No. Registro</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="No. Registro"
+              value={searchNoRegistro}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Solo letras, números, punto y guion, sin espacios
+                if (
+                  /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9.\-]*$/.test(value) ||
+                  value === ""
+                ) {
+                  setSearchNoRegistro(value);
+                }
+              }}
+              fullWidth
+            />
+            <Button
+              variant="contained"
+              onClick={handleSearch}
+              disabled={!searchNoRegistro}
+            >
+              Buscar
+            </Button>
+            <Button variant="outlined" onClick={handleClearSearch}>
+              Limpiar búsqueda
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
       {/* Contenedor para los campos de fecha */}
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Box
           sx={{
             display: "flex",
-            gap: 10,
+            gap: 2,
             marginTop: 2,
-            justifyContent: "center",
+            paddingLeft: 2,
+            justifyContent: "flex-start",
           }}
         >
           <DateTimePicker
@@ -220,7 +309,8 @@ const columns: GridColDef[] = [
             onChange={handleFechaInicioChange}
             slotProps={{
               textField: {
-                sx: { width: 400 },
+                size: "small",
+                sx: { width: 230 },
                 error: !!errorFechaInicio,
                 helperText: errorFechaInicio,
               },
@@ -232,7 +322,8 @@ const columns: GridColDef[] = [
             onChange={handleFechaFinChange}
             slotProps={{
               textField: {
-                sx: { width: 400 },
+                size: "small",
+                sx: { width: 230 },
                 error: !!errorFechaFin,
                 helperText: errorFechaFin,
               },
@@ -251,7 +342,7 @@ const columns: GridColDef[] = [
         <Box
           style={{
             height: 450,
-            width: "95%",
+            width: "100%",
           }}
         >
           <Dialog
@@ -281,10 +372,29 @@ const columns: GridColDef[] = [
               </Button>
             </DialogActions>
           </Dialog>
+          {/* Mensaje de estado de búsqueda */}
+          <Typography
+            align="center"
+            variant="h2"
+            component="h2"
+            mt={2}
+            sx={{
+              fontSize: { xs: "1rem", md: "2rem" },
+              textAlign: "center",
+              backgroundColor: "#00796B",
+              color: "white",
+              mb: 2,
+              fontFamily: '"Open Sans"',
+            }}
+          >
+            {isSearchActive
+              ? "Resultado de búsqueda por No. Registro Donación"
+              : "Registros en el rango de fechas seleccionado"}
+          </Typography>
           <DataGrid
-            rows={rows}
+            rows={filteredRows}
             columns={columns}
-            onRowClick={handleRowClick}
+            // onRowClick={handleRowClick}
             sx={{
               "& .MuiDataGrid-columnHeaders": {
                 position: "sticky",

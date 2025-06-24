@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Grid,
@@ -16,22 +16,36 @@ import {
 } from "@mui/material";
 import Navbar from "../../components/navbar/Navbar";
 import BotonPersonalizado from "../../components/Button";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import axios from "axios";
 
+// --- Funciones de validación ---
+const soloLetrasEspacios = (texto: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/.test(texto);
+const soloLetrasSinEspacios = (texto: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ]*$/.test(texto);
+const soloNumeros = (texto: string) => /^\d*$/.test(texto);
+const letrasNumerosEspacios = (texto: string) =>
+  /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s]*$/.test(texto);
+const letrasNumerosSinEspacios = (texto: string) =>
+  /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ]*$/.test(texto);
+const letrasNumerosPuntoGuionSinEspacios = (texto: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9.\-]*$/.test(texto);
+
 const DonacionesPlasma: React.FC = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const datosDonante = location.state?.datosDonante;
-  const idRegistroDonacion = datosDonante?.id;
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
+  const [datosDonante, setDatosDonante] = useState<any>(null);
   const [form, setForm] = useState({
-    TCM: "",
-    TP: "",
-    tiempo: "",
-    ciclos: "",
-    ACD: "",
+    TCM: 0,
+    TP: 0,
+    tiempo: 0,
+    ciclos: 0,
+    ACD: 0,
     no_lote_kitACD: "",
     no_lote_kitBach: "",
     reaccion: "",
@@ -62,11 +76,16 @@ const DonacionesPlasma: React.FC = () => {
   // Validación de campos
   const validateFields = () => {
     const newErrors = { ...errors };
-    if (!form.TCM.trim()) newErrors.TCM = "Campo obligatorio";
-    if (!form.TP.trim()) newErrors.TP = "Campo obligatorio";
-    if (!form.tiempo.trim()) newErrors.tiempo = "Campo obligatorio";
-    if (!form.ciclos.trim()) newErrors.ciclos = "Campo obligatorio";
-    if (!form.ACD.trim()) newErrors.ACD = "Campo obligatorio";
+    if (form.TCM === null || isNaN(form.TCM) || Number(form.TCM) <= 0)
+      newErrors.TCM = "Campo obligatorio";
+    if (form.TP === null || isNaN(form.TP) || Number(form.TP) <= 0)
+      newErrors.TP = "Campo obligatorio";
+    if (form.tiempo === null || isNaN(form.tiempo) || Number(form.tiempo) <= 0)
+      newErrors.tiempo = "Campo obligatorio";
+    if (form.ciclos === null || isNaN(form.ciclos) || Number(form.ciclos) <= 0)
+      newErrors.ciclos = "Campo obligatorio";
+    if (form.ACD === null || isNaN(form.ACD) || Number(form.ACD) <= 0)
+      newErrors.ACD = "Campo obligatorio";
     if (!form.no_lote_kitACD.trim())
       newErrors.no_lote_kitACD = "Campo obligatorio";
     if (!form.no_lote_kitBach.trim())
@@ -79,12 +98,66 @@ const DonacionesPlasma: React.FC = () => {
     return Object.values(newErrors).some((err) => err !== "");
   };
 
+  useEffect(() => {
+    const stateDonante = location.state?.datosDonante;
+    const aplanarDatos = (d: any) => {
+      const historia = d.historiaClinica || {};
+      return {
+        ...d,
+        nombre: d.nombre || historia.nombre || "",
+        sexo: d.sexo || historia.sexo?.nombre || historia.sexo || "",
+        edad: d.edad || historia.edad || "",
+        grupo:
+          d.grupo ||
+          historia.grupo_sanguine?.nombre ||
+          historia.grupo_sanguine ||
+          "",
+        rh: d.rh || historia.factor?.signo || historia.factor || "",
+        ci: d.ci || historia.ci || "",
+        no_hc: d.no_hc || historia.no_hc || "",
+        no_registro: d.no_registro || "",
+      };
+    };
+
+    if (stateDonante) {
+      const datos = aplanarDatos(stateDonante);
+      setDatosDonante(datos);
+      setForm((prev) => ({
+        ...prev,
+        ...datos,
+        fechaD: datos.fechaD || "",
+      }));
+    } else if (id) {
+      axios
+        .get(`http://localhost:3000/registro-donacion/${id}`)
+        .then((res) => {
+          const datos = aplanarDatos(res.data);
+          setDatosDonante(datos);
+          setForm((prev) => ({
+            ...prev,
+            ...datos,
+            fechaD: datos.fechaD || "",
+          }));
+        })
+        .catch(() => setDatosDonante(null));
+    }
+    // eslint-disable-next-line
+  }, [id, location.state]);
+
   // Manejar cambios en los campos
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any
   ) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    if (name === "no_lote_kitACD" || name === "no_lote_kitBach") {
+      if (!letrasNumerosPuntoGuionSinEspacios(value)) return;
+    }
+
+    if (["TCM", "TP", "tiempo", "ciclos", "ACD"].includes(name)) {
+      setForm({ ...form, [name]: value === "" ? "" : Number(value) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
     setErrors({ ...errors, [name]: "" });
   };
 
@@ -97,9 +170,11 @@ const DonacionesPlasma: React.FC = () => {
         ...form,
         estado: "procesando",
         fechaD: new Date(), // <-- Esto guarda la fecha y hora actual
+        responsableExtraccion: usuario.name, // <-- Nuevo campo
       };
+      console.log(id);
       await axios.put(
-        `http://localhost:3000/registro-donacion/${idRegistroDonacion}`,
+        `http://localhost:3000/registro-donacion/${id}`,
         datosAEnviar
       );
       setSuccessMessage("¡Donación de plasma registrada satisfactoriamente!");
@@ -179,6 +254,7 @@ const DonacionesPlasma: React.FC = () => {
                     onChange={handleChange}
                     error={!!errors.TCM}
                     helperText={errors.TCM}
+                    type="number"
                   />
                 </Grid>
                 <Grid item xs={6} sm={3}>
@@ -191,6 +267,7 @@ const DonacionesPlasma: React.FC = () => {
                     onChange={handleChange}
                     error={!!errors.TP}
                     helperText={errors.TP}
+                    type="number"
                   />
                 </Grid>
               </Grid>
@@ -206,6 +283,7 @@ const DonacionesPlasma: React.FC = () => {
                     onChange={handleChange}
                     error={!!errors.tiempo}
                     helperText={errors.tiempo}
+                    type="number"
                   />
                 </Grid>
                 <Grid item xs={6} sm={3}>
@@ -218,6 +296,7 @@ const DonacionesPlasma: React.FC = () => {
                     onChange={handleChange}
                     error={!!errors.ciclos}
                     helperText={errors.ciclos}
+                    type="number"
                   />
                 </Grid>
               </Grid>
@@ -233,6 +312,7 @@ const DonacionesPlasma: React.FC = () => {
                     onChange={handleChange}
                     error={!!errors.ACD}
                     helperText={errors.ACD}
+                    type="number"
                   />
                 </Grid>
                 <Grid item xs={6} sm={9}>

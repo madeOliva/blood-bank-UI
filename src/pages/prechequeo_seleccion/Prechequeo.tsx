@@ -27,8 +27,11 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import React from "react";
 import axios from "axios";
+import SearchIcon from "@mui/icons-material/Search";
+import IconButton from "@mui/material/IconButton";
+import Snackbar from "@mui/material/Snackbar";
 
-function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => void }) {
+function ModalWindow({ row, onRemove }: { row: any, onRemove: (ci: string) => void }) {
   const [open, setOpen] = useState(false);
 
   // Para selects
@@ -46,16 +49,6 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
 
   const [error, setError] = React.useState('');
 
-  const handleHemoglobinaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHemoglobina(e.target.value);
-    // Si ya hay un valor, valida en cada cambio
-    if (e.target.value && Number(e.target.value) < 125) {
-      setError('La hemoglobina tiene que ser mayor a 125');
-    } else {
-      setError('');
-    }
-  };
-
   const handleHemoglobinaBlur = () => {
     if (examenP_hemoglobina && Number(examenP_hemoglobina) < 125) {
       setError('La hemoglobina tiene que ser mayor a 125');
@@ -65,7 +58,7 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
   };
 
   const handleOpen = () => {
-    setApto(null); // ambos inactivos al abrir
+    setApto(null);
     setGrupo('');
     setFactor('');
     setHemoglobina('');
@@ -89,7 +82,7 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
   const handleSubmit = async () => {
     setError('');
     if (hayCamposVacios()) {
-      setErrorMsg("Por favor complete todos los campos y seleccione Apto o No Apto.");
+      setErrorMsg("Por favor complete todos los campos.");
       setModalType("error");
       setOpenModal(true);
       return;
@@ -118,8 +111,8 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
       const timer = setTimeout(() => {
         setOpenModal(false);
         if (modalType === "success") {
-          handleReset(); // Ahora sí resetea y cierra el modal principal
-          onRemove(row.id);
+          onRemove(row.ci);
+          handleReset();
         }
       }, timeoutDuration);
       return () => clearTimeout(timer);
@@ -189,9 +182,19 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (id: string) => vo
             label="Hemoglobina"
             variant="outlined"
             value={examenP_hemoglobina}
-            onChange={handleHemoglobinaChange}
+            onChange={e => {
+              // Solo permite números enteros
+              const value = e.target.value.replace(/\D/g, '');
+              setHemoglobina(value);
+              if (value && Number(value) < 125) {
+                setError('La hemoglobina tiene que ser mayor a 125');
+              } else {
+                setError('');
+              }
+            }}
             onBlur={handleHemoglobinaBlur}
             size="small"
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
             sx={{
               width: 200,
               mt: 2,
@@ -306,13 +309,31 @@ const style = {
 };
 
 export default function Prechequeo() {
-  const navigate = useNavigate();
-
   // Estado para los registros
   const [rows, setRows] = useState<any[]>([]);
 
-  const removeRow = (id: string) => {
-    setRows((prev) => prev.filter((row) => row.id !== id));
+  // ...dentro del componente Prechequeo:
+  const [busquedaCI, setBusquedaCI] = useState("");
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+
+  // Función para buscar por CI
+  const handleBuscarPorCI = () => {
+    if (!busquedaCI.trim()) return;
+    const encontrado = rows.find(r => r.ci === busquedaCI.trim());
+    if (encontrado) {
+      setRows(prev => [encontrado, ...prev.filter(r => r.id !== encontrado.id)]);
+      setSnackbarMessage("Persona encontrada y movida al inicio");
+      setSnackbarOpen(true);
+    } else {
+      setSnackbarMessage("No existe una persona con ese CI en prechequeo pendiente");
+      setSnackbarOpen(true);
+    }
+    setBusquedaCI("");
+  };
+
+  const removeRow = (ci: string) => {
+    setRows((prev) => prev.filter((row) => row.ci !== ci));
   };
 
   // Las columnas deben ir fuera del componente para evitar redefinición
@@ -334,36 +355,32 @@ export default function Prechequeo() {
     },
   ];
 
-  const handleResultadosPrechequeo = () => {
-    navigate("/resultadosprechequeo", { replace: true });
-  };
+  useEffect(() => {
+    const fetchRows = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/registro-donacion/find");
+        const mappedRows = res.data
+          .filter((reg: any) => reg.apto_prechequeo === null || reg.apto_prechequeo === undefined)
+          .map((reg: any) => ({
+            id: reg._id,
+            ci: reg.ci || "",
+            nombre: reg.nombre || '',
+            primer_apellido: reg.primer_apellido || '',
+            segundo_apellido: reg.segundo_apellido || '',
+            edad: reg.edad || '',
+            sexo: reg.sexo || '',
+            grupo_sanguine: reg.grupo_sanguine || '',
+            factor: reg.factor || '',
+            "donante de": reg.componente?.nombreComponente || reg.componente?.nombre_componente || "",
+          }));
 
-useEffect(() => {
-  const fetchRows = async () => {
-    try {
-      const res = await axios.get("http://localhost:3000/registro-donacion/find");
-      console.log("Datos recibidos del backend:", res.data); // Para validar estructura
-
-      const mappedRows = res.data.map((reg: any) => ({
-        id: reg._id,
-        ci: reg.ci || "",
-        nombre: reg.nombre || '',
-        primer_apellido: reg.primer_apellido || '',
-        segundo_apellido: reg.segundo_apellido || '',
-        edad: reg.edad || '',
-        sexo: reg.sexo || '',
-        grupo_sanguine: reg.grupo_sanguine || '',
-        factor: reg.factor || '', // Aquí accedes directamente porque backend ya lo devuelve plano
-        "donante de": reg.componente?.nombreComponente || reg.componente?.nombre_componente || "", 
-      }));
-
-      setRows(mappedRows);
-    } catch (error) {
-      console.error("Error al cargar los registros:", error);
-    }
-  };
-  fetchRows();
-}, []);
+        setRows(mappedRows);
+      } catch (error) {
+        console.error("Error al cargar los registros:", error);
+      }
+    };
+    fetchRows();
+  }, []);
 
 
   return (
@@ -380,6 +397,45 @@ useEffect(() => {
       </Typography>
       <Container>
         <Box sx={{ marginTop: "20px", marginBlockEnd: 1, marginLeft: 7 }}>
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <TextField
+              label="Buscar por CI"
+              value={busquedaCI}
+              onChange={e => setBusquedaCI(e.target.value.replace(/\D/g, '').slice(0, 11))}
+              onKeyDown={e => { if (e.key === 'Enter') handleBuscarPorCI(); }}
+              sx={{ width: 250, mr: 2 }}
+              inputProps={{ maxLength: 11 }}
+            />
+            <IconButton
+              onClick={handleBuscarPorCI}
+              sx={{
+                color: '#009688',
+                ml: 1,
+                '&:hover': {
+                  backgroundColor: '#e0f2f1',
+                }
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={2500}
+            onClose={() => setSnackbarOpen(false)}
+            message={snackbarMessage}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            sx={{
+              '& .MuiSnackbarContent-root': {
+                backgroundColor: '#009688',
+                color: 'white',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                borderRadius: 2
+              }
+            }}
+          />
+
           <DataGrid
             sx={{
               height: 400,
@@ -406,17 +462,6 @@ useEffect(() => {
           />
         </Box>
       </Container>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <BotonPersonalizado onClick={handleResultadosPrechequeo} sx={{ width: 225 }}>
-          ACEPTAR
-        </BotonPersonalizado>
-      </Box>
     </>
   );
 }

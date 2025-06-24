@@ -336,7 +336,7 @@ export default function NavListDrawer() {
                 <List disablePadding>
                   <ListItem disablePadding>
                     <ListItemButton onClick={() => navigate('/citados')} sx={{
-                      pl: 9,
+                  
                       "&:active .MuiListItemIcon-root": {
                         "& svg": {
                           color: "red !important",
@@ -346,13 +346,16 @@ export default function NavListDrawer() {
                         color: "red !important",
                       },
                     }}>
+                       <ListItemIcon>
+                        <Groups2Icon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                      </ListItemIcon>
                       <ListItemText primary="Citados" />
                     </ListItemButton>
                   </ListItem>
 
                   <ListItem disablePadding>
                     <ListItemButton onClick={() => handleHojaC()} sx={{
-                      pl: 9,
+                      
                       "&:active .MuiListItemIcon-root": {
                         "& svg": {
                           color: "red !important",
@@ -362,6 +365,9 @@ export default function NavListDrawer() {
                         color: "red !important",
                       },
                     }}>
+                      <ListItemIcon>
+                        <EditDocumentIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                      </ListItemIcon>
                       <ListItemText primary="Hoja de Cargo" />
                     </ListItemButton>
                   </ListItem>
@@ -394,6 +400,7 @@ export default function NavListDrawer() {
 
               <Collapse in={openPre}>
                 <List disablePadding>
+                  {userRole === 'Técnico de prechequeo' && (
                   <ListItem disablePadding>
                     <ListItemButton onClick={() => handlePrechequeo()} sx={{
                       "&:active .MuiListItemIcon-root": {
@@ -411,6 +418,7 @@ export default function NavListDrawer() {
                       <ListItemText primary="Examenes de Prechequeo" />
                     </ListItemButton>
                   </ListItem>
+                  )}
                   {userRole === 'Médico de selección' && (
                     <>
                       <ListItem disablePadding>
@@ -889,8 +897,8 @@ export default function NavListDrawer() {
               </>)}
 
 
-          {(userRole === 'Jéfe de extracción móvil' ||
-            userRole === 'Técnico móvil') && (
+          {(userRole === 'Jefe de extracción móvil' ||
+            userRole === 'Técnico de móvil') && (
               <>
                 <ListItem disablePadding>
                   <ListItemButton onClick={() => setOpenCM(!openCM)}

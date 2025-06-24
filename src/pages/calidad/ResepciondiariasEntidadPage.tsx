@@ -252,7 +252,7 @@ export default function RecepciondiariasEntidad() {
           color: "white"
         }}
       >
-        Recepción de Donaciones por Entidades
+        Recepción de Donaciones 
       </Typography>
       <Container >
         <Box sx={{ marginTop: "20px", width: "90%", marginBlockEnd: 1, marginLeft: 7 }}>
@@ -264,30 +264,7 @@ export default function RecepciondiariasEntidad() {
               justifyContent: "space-between",
             }}
           >
-            <FormControl sx={{ minWidth: 220 }}>
-              <InputLabel id="demo-simple-select-label">Entidad</InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={entidad}
-                label="Entidad"
-                onChange={handleChangeE}
-              >
-                <MenuItem value={10}></MenuItem>
-                <MenuItem value={20}>01-Sandino</MenuItem>
-                <MenuItem value={30}>02-Mantua</MenuItem>
-                <MenuItem value={40}>03-Las Minas</MenuItem>
-                <MenuItem value={50}>04- Vinales</MenuItem>
-                <MenuItem value={60}>05-La Palma</MenuItem>
-                <MenuItem value={70}>09-Los Palacios</MenuItem>
-                <MenuItem value={80}>10-Consolacion</MenuItem>
-                <MenuItem value={90}>11-Movil de Pinar del Rio</MenuItem>
-                <MenuItem value={100}>12-San Luis</MenuItem>
-                <MenuItem value={110}>13-San Juan</MenuItem>
-                <MenuItem value={120}>14-Guane</MenuItem>
-                <MenuItem value={130}>15-Abel Santamaria</MenuItem>
-              </Select>
-            </FormControl>
+        
           </Box>
 
           <DataGrid

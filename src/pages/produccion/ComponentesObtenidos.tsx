@@ -5,30 +5,25 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 
 const columns: GridColDef[] = [
-  { field: "no_consecutivo", headerName: "No", width: 70 },
-  { field: "no_hc", headerName: "No. HC", width: 120 },
-  { field: "sexo", headerName: "Sexo", width: 70 },
-  { field: "edad", headerName: "Edad", width: 70, type: "number" },
-  { field: "grupo", headerName: "Grupo", width: 80 },
-  { field: "factor", headerName: "Factor", width: 90 },
-  {
-    field: "tipo_componente",
-    headerName: "Componente Obtenido",
-    width: 170,
-    type: "singleSelect",
-    valueOptions: ['CEPL','CEAD','CE','CP','SP','SC','PC', 'PFC', 'CRIO'],
-  },
-  {
-    field: "volumen",
-    headerName: "Vol.(ml)",
-    type: "number",
-    width: 100,
-  },
+  { field: "no_consecutivo", headerName: "No", width: 100 },
+
+  { field: "no_hc", headerName: "No. HC", width: 150 },
+  { field: "sexo", headerName: "Sexo", width: 60 },
+  { field: "edad", headerName: "Edad", width: 60 },
 {
-  field: "fecha_obtencion",
-  headerName: "Fecha Obtención",
-  width: 140,
-},,
+  field: "fecha_donacion",
+  headerName: "Fecha Donación",
+  width: 150,
+  renderCell: (params) => {
+    const value = params.value;
+    if (!value || typeof value !== "string") return "";
+    // Forzar formato compatible con Date si es YYYY-MM-DD
+    const date = new Date(value.includes("T") ? value : value.replace(/-/g, "/"));
+    return isNaN(date.getTime()) ? "" : date.toLocaleDateString();
+  }
+},
+  { field: "fecha_obtencion", headerName: "Fecha Obtención", width: 150, renderCell: (params) => params.value ? new Date(params.value).toLocaleDateString() : "" },
+  { field: "volumen", headerName: "Volumen (ml)", width: 120 }
 ];
 
 type ComponenteObtenidoRow = {
@@ -53,18 +48,18 @@ useEffect(() => {
       const data = Array.isArray(res.data)
         ? res.data
             .filter((item: any) => item.estado_obtencion === "liberado")
-            .map((item: any, idx: number) => ({
-              id: item._id || idx + 1,
-              no_consecutivo: Number(item.no_consecutivo) || idx + 1,
-              no_hc: item.historia_clinica?.no_hc || "",
-              sexo: item.historia_clinica?.sexo || "",
-              edad: Number(item.historia_clinica?.edad) || "",
-              grupo: item.historia_clinica?.grupo || "",
-              factor: item.historia_clinica?.factor || "",
-              tipo_componente: item.componentes?.[0]?.tipo || "",
-              volumen: item.componentes?.[0]?.volumen || "",
-              fecha_obtencion: item.fecha_obtencion,
-            }))
+           .flatMap((item: any, idx: number) =>
+  (item.componentes || []).map((comp: any, compIdx: number) => ({
+    id: `${item._id}_${compIdx}`,
+    no_consecutivo: item.no_consecutivo ?? "",
+    no_hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+    sexo: item.registro_donacion?.historiaClinica?.sexo?.nombre ?? "",
+    edad: item.registro_donacion?.historiaClinica?.edad ?? "",
+    fecha_donacion: item.registro_donacion?.fechaD ?? "",
+    fecha_obtencion: comp.fecha_obtencion ?? "",
+    volumen: comp.volumen ?? ""
+  }))
+)
         : [];
       setRows(data);
     })
