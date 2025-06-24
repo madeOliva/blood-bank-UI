@@ -167,9 +167,7 @@ export default function HojaCargo() {
     fetchRegistros();
   }, [fechaInicio, fechaFin]);
 
-  const handleRowClick = () => {
-    navigate(`/inscripcion/`);
-  };
+ 
 
   const handleFechaInicioChange = (newValue: Dayjs | null) => {
     setFechaInicio(newValue);
