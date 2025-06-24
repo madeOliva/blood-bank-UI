@@ -1,5 +1,4 @@
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, IconButton, InputLabel, MenuItem, Modal, Paper, Radio, RadioGroup, Select, Stack, TextField, Typography } from "@mui/material";
-import { Grid } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, FormControl, FormControlLabel, FormGroup, FormLabel, IconButton, InputLabel, MenuItem, Modal, Paper, Radio, RadioGroup, Select, Stack, TextField, Typography, Grid } from "@mui/material";
 import Navbar from "../../components/navbar/Navbar";
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -75,25 +74,6 @@ const emptyHistoryData = {
     transfusionesPrevias: [] as { id: number; fecha: string; lugar: string; diagnostico: string; reaccion: string; observaciones: string }[],
 };
 
-// Componente para los encabezados de sección con estilo
-function SectionHeader({ title }) {
-    return (
-        <Box
-            sx={{
-                backgroundColor: 'primary.dark',
-                color: '#fff',
-                textAlign: 'center',
-                fontWeight: 'bold',
-                fontSize: 18,
-                py: 1,
-                mb: 1,
-                borderRadius: 1,
-            }}
-        >
-            {title}
-        </Box>
-    );
-}
 
 export default function HistoriaDonante() {
 
@@ -237,14 +217,14 @@ export default function HistoriaDonante() {
                         estadia: e.estadia || '',
                         motivo: e.motivo || '',
                     })),
-                    donacionesPrevias: (d.donacionesPrevias || []).map((don, idx) => ({
+                    donacionesPrevias: (d.donacionesPrevias || []).map((don: any, idx: number) => ({
                         id: idx + 1,
                         fecha: don.fecha || '',
                         lugar: don.lugar || '',
                         reaccion: don.reaccion || '',
                         /*motivo: don.motivo || '',*/
                     })),
-                    transfusionesPrevias: (d.transfusionesPrevias || []).map((t, idx) => ({
+                    transfusionesPrevias: (d.transfusionesPrevias || []).map((t: any, idx: number) => ({
                         id: idx + 1,
                         fecha: t.fecha || '',
                         lugar: t.lugar || '',
@@ -321,45 +301,6 @@ export default function HistoriaDonante() {
         );
     };
 
-    // Función para validar filas incompletas en tablas
-    const hasEmptyTableRows = () => {
-        const tables = [
-            { rows: historyData.antecedentesPersonales, requiredFields: ['antecedente', 'año'] },
-            { rows: historyData.antecedentesFamiliares, requiredFields: ['antecedente', 'parentesco'] },
-            { rows: historyData.alergias, requiredFields: ['alergia'] },
-            { rows: historyData.habitosToxicos, requiredFields: ['habito', 'intensidad'] },
-            { rows: historyData.estanciaExtranjero, requiredFields: ['fecha', 'pais', 'estadia', 'motivo'] },
-        ];
-
-        return tables.some(({ rows, requiredFields }) =>
-            rows.some(row =>
-                requiredFields.some(field => {
-                    const value = row[field];
-                    if (value === null || value === undefined) return true;
-                    if (typeof value === 'string' && value.trim() === '') return true;
-                    return false;
-                })
-            )
-        );
-    };
-
-    // Función para validar tablas vacías
-    const hasEmptyTables = () => {
-        const requiredTables = {
-            antecedentesPersonales: "Antecedentes Patológicos Personales (APP)",
-            antecedentesFamiliares: "Antecedentes Patológicos Familiares (APF)",
-            alergias: "Alergias",
-            habitosToxicos: "Hábitos Tóxicos",
-            estanciaExtranjero: "Estancia en el Extranjero",
-        };
-
-        type TableKey = keyof typeof requiredTables;
-
-        return Object.entries(requiredTables).filter(([key, name]) => {
-            const typedKey = key as TableKey;
-            return !Array.isArray(historyData[typedKey]) || historyData[typedKey].length === 0;
-        }).map(([key, name]) => name);
-    };
 
     // Función principal de validación
     const validateForm = () => {
@@ -367,11 +308,6 @@ export default function HistoriaDonante() {
 
         if (hasEmptyGeneralFields()) {
             errors.push("Existen campos vacíos en los Datos Generales");
-        }
-
-        const emptyTables = hasEmptyTables();
-        if (emptyTables.length > 0) {
-            errors.push(`Debe agregar al menos un registro en: ${emptyTables.join(', ')}`);
         }
 
         return errors;
@@ -475,7 +411,11 @@ export default function HistoriaDonante() {
                 observacion_interrogatorio,
             };
             await axios.put(`http://localhost:3000/registro-donacion/${id}`, payload);
-            setOpenSuccessModal(true);
+            setModalType("success");
+            setOpenModal(true);
+            setTimeout(() => {
+                navigate('/resultadosprechequeo');
+            }, 1200);
         } catch (error) {
             setErrorMessage('Error al guardar la historia clínica y el prechequeo');
             setOpenErrorModal(true);
@@ -505,12 +445,8 @@ export default function HistoriaDonante() {
         fetchTransfusiones();
     }, []);
 
-    // Funciones para cerrar modales
-    const handleCloseSuccessModal = () => setOpenSuccessModal(false);
-    const handleCloseErrorModal = () => setOpenErrorModal(false);
 
     const onlyLetters = (value: string) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value);
-
 
     // Maneja el cambio en el radio group Donante
     const handleDonanteChange = (event) => {
@@ -519,8 +455,6 @@ export default function HistoriaDonante() {
             generalData: { ...prev.generalData, donante: event.target.value },
         }));
     };
-
-
 
     // Antecedentes personales
     const addAntecedentePersonalRow = () => {
@@ -564,7 +498,7 @@ export default function HistoriaDonante() {
         });
     };
 
-    // Hábitos tóxicos (corregido)
+    // Hábitos tóxicos 
     const addHabitoRow = () => {
         setHistoryData(prev => {
             const habitosToxicos = Array.isArray(prev.habitosToxicos) ? prev.habitosToxicos : [];
@@ -592,8 +526,6 @@ export default function HistoriaDonante() {
         });
     };
 
-
-
     // Maneja la edición en todas las tablas
     const handleTableEdit = (section, params) => {
         setHistoryData(prev => ({
@@ -603,7 +535,6 @@ export default function HistoriaDonante() {
             )
         }));
     };
-
 
     // Columnas para las tablas DataGrid
     const appColumns = [
@@ -774,8 +705,7 @@ export default function HistoriaDonante() {
             setErrorTempSublingual("");
         }
     };
-
-
+    //Carga los datos de prechequeo de la persona
     useEffect(() => {
         const fetchPrechequeo = async () => {
             if (id) {
@@ -796,9 +726,7 @@ export default function HistoriaDonante() {
         setShowBox(prev => !prev);
     };
 
-
     const navigate = useNavigate();
-
 
     const [resp1, setResp1] = useState<boolean | null>(null);
     const [resp2, setResp2] = useState<boolean | null>(null);
@@ -847,8 +775,6 @@ export default function HistoriaDonante() {
     const [resp37, setResp37] = useState<boolean | null>(null);
     const [resp38, setResp38] = useState<boolean | null>(null);
     const [resp39, setResp39] = useState<boolean | null>(null);
-
-
 
     const getRespuestasInterrogatorio = () => [
         { respuesta: resp1, respuesta_escrita: "" },
@@ -910,35 +836,6 @@ export default function HistoriaDonante() {
     };
 
 
-    const handleSubmit = async () => {
-        if (hayCamposVacios()) {
-            setErrorMsg("Por favor complete todos los campos.");
-            setModalType("error");
-            setOpenModal(true);
-            return;
-        }
-        try {
-            const payload = {
-                examenF_peso,
-                examenF_pulso,
-                examenF_temSublingual,
-                examenF_temAxilar,
-                examenF_hemoglobina,
-                apto_examenFisico,
-                respuestas_interrogatorio: getRespuestasInterrogatorio(),
-                apto_interrogatorio,
-                observacion_interrogatorio,
-            };
-            await axios.put(`http://localhost:3000/registro-donacion/${id}`, payload);
-            // Puedes mostrar un mensaje de éxito aquí si lo deseas
-        } catch (error) {
-            setErrorMsg("Ocurrió un error al enviar los datos.");
-            setModalType("error");
-            setOpenModal(true);
-        }
-    };
-
-
     const textFieldSx = {
         width: "100%",
         "& .MuiOutlinedInput-root": {
@@ -965,14 +862,15 @@ export default function HistoriaDonante() {
         <>
             <Navbar />
 
-            <Typography variant="h4" align="center" gutterBottom sx={{ mb: 3, color: 'primary.dark', mt: 8 }}>
+            <Typography variant="h4" align="center" gutterBottom sx={{ mb: 2, color: 'primary.dark', mt: 8 }}>
                 Historia Clínica
             </Typography>
-            <Box sx={{ p: 6, maxWidth: 1900, margin: 'auto' }}>
-                {/* Sección Datos Generales */}
-                <SectionHeader title="Datos Generales" />
+            <Box sx={{ maxWidth: 1900, margin: 'auto', paddingBlockEnd: 1 }}>
+                <Typography variant="h4" align="center" sx={{ color: 'white', backgroundColor: 'primary.dark' }}>
+                    Datos Generales
+                </Typography>
                 <Paper sx={{ p: 3, mb: 4 }}>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={3}>
                         {/* Campos de texto */}
                         <Grid item xs={12} sm={3}>
                             <TextField
@@ -1390,7 +1288,7 @@ export default function HistoriaDonante() {
                                             onChange={e => setExamenP_hemoglobina(e.target.value)}
                                             disabled
                                             sx={{
-                                                width: 150,
+                                                width: 100,
                                                 // Cambia el color del texto
                                                 "& .MuiOutlinedInput-root": {
                                                     color: "#000",
@@ -1425,7 +1323,7 @@ export default function HistoriaDonante() {
                                             onChange={e => setExamenP_factor(e.target.value)}
                                             disabled
                                             sx={{
-                                                width: 150,
+                                                width: 100,
                                                 // Cambia el color del texto
                                                 "& .MuiOutlinedInput-root": {
                                                     color: "#000",
@@ -1541,12 +1439,12 @@ export default function HistoriaDonante() {
 
                 <Accordion  >
                     <AccordionSummary
-                        sx={{ display: "flex", backgroundColor: "primary.dark", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
+                        sx={{ display: "flex", backgroundColor: "white", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
                         expandIcon={<ExpandMoreIcon />}
                         aria-controls="panel3-content"
                         id="panel3-header"
                     >
-                        <Typography component="span" sx={{ color: "white", alignContent: "center" }}>INTERROGATORIO</Typography>
+                        <Typography component="span" sx={{ color: "primary.dark", alignContent: "center" }}>INTERROGATORIO</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                         <Box display={"flex"} justifyContent={"space-between"} >
@@ -1699,7 +1597,6 @@ export default function HistoriaDonante() {
                                                 size="small"
                                                 value={text4}
                                                 onChange={e => setTexto4(e.target.value)}
-                                                disabled={resp4 !== true}
                                                 sx={{
                                                     width: 300, ml: 2,
                                                     // Cambia el color del texto
@@ -2661,157 +2558,230 @@ export default function HistoriaDonante() {
                     </AccordionDetails>
                 </Accordion>
 
-                {/* Sección APP con botón Agregar */}
-                <SectionHeader title="Antecedentes Personales" />
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                    <Button variant="outlined" onClick={addAntecedentePersonalRow}>Agregar Antecedente</Button>
-                </Box>
-                <Paper sx={{ height: 250, mb: 4 }}>
-                    <DataGrid
-                        rows={historyData.antecedentesPersonales}
-                        columns={appColumns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
-                        disableSelectionOnClick
-                        hideFooterSelectedRowCount
-                        processRowUpdate={(newRow, oldRow) => {
-                            setHistoryData(prev => ({
-                                ...prev,
-                                antecedentesPersonales: prev.antecedentesPersonales.map(row =>
-                                    row.id === newRow.id ? newRow : row
-                                )
-                            }));
-                            return newRow;
-                        }}
-                        experimentalFeatures={{ newEditingApi: true }}
-                    />
-                </Paper>
+                <Accordion  >
+                    <AccordionSummary
+                        sx={{ display: "flex", backgroundColor: "white", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel3-content"
+                        id="panel3-header"
+                    >
+                        <Typography component="span" sx={{ color: "primary.dark", alignContent: "center" }}>ANTECEDENTES PERSONALES</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                            <Button variant="outlined" onClick={addAntecedentePersonalRow}>Agregar Antecedente</Button>
+                        </Box>
+                        <Paper sx={{ height: 250, mb: 4 }}>
+                            <DataGrid
+                                rows={historyData.antecedentesPersonales}
+                                columns={appColumns}
+                                pageSize={5}
+                                rowsPerPageOptions={[5]}
+                                disableSelectionOnClick
+                                hideFooterSelectedRowCount
+                                processRowUpdate={(newRow, oldRow) => {
+                                    setHistoryData(prev => ({
+                                        ...prev,
+                                        antecedentesPersonales: prev.antecedentesPersonales.map(row =>
+                                            row.id === newRow.id ? newRow : row
+                                        )
+                                    }));
+                                    return newRow;
+                                }}
+                                experimentalFeatures={{ newEditingApi: true }}
+                            />
+                        </Paper>
+                    </AccordionDetails>
+                </Accordion>
 
-                <SectionHeader title="Antecedentes Familiares" />
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                    <Button variant="outlined" onClick={addAntecedenteFRow}>Agregar Antecedente</Button>
-                </Box>
-                <Paper sx={{ height: 250, mb: 4 }}>
-                    <DataGrid
-                        rows={historyData.antecedentesFamiliares}
-                        columns={apfColumns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
-                        disableSelectionOnClick
-                        hideFooterSelectedRowCount
-                        processRowUpdate={(newRow, oldRow) => {
-                            setHistoryData(prev => ({
-                                ...prev,
-                                antecedentesFamiliares: prev.antecedentesFamiliares.map(row =>
-                                    row.id === newRow.id ? newRow : row
-                                )
-                            }));
-                            return newRow;
-                        }}
-                        experimentalFeatures={{ newEditingApi: true }}
-                    />
-                </Paper>
+                <Accordion  >
+                    <AccordionSummary
+                        sx={{ display: "flex", backgroundColor: "white", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel3-content"
+                        id="panel3-header"
+                    >
+                        <Typography component="span" sx={{ color: "primary.dark", alignContent: "center" }}>ANTECEDENTES FAMILIARES</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                            <Button variant="outlined" onClick={addAntecedenteFRow}>Agregar Antecedente</Button>
+                        </Box>
+                        <Paper sx={{ height: 250, mb: 4 }}>
+                            <DataGrid
+                                rows={historyData.antecedentesFamiliares}
+                                columns={apfColumns}
+                                pageSize={5}
+                                rowsPerPageOptions={[5]}
+                                disableSelectionOnClick
+                                hideFooterSelectedRowCount
+                                processRowUpdate={(newRow, oldRow) => {
+                                    setHistoryData(prev => ({
+                                        ...prev,
+                                        antecedentesFamiliares: prev.antecedentesFamiliares.map(row =>
+                                            row.id === newRow.id ? newRow : row
+                                        )
+                                    }));
+                                    return newRow;
+                                }}
+                                experimentalFeatures={{ newEditingApi: true }}
+                            />
+                        </Paper>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion  >
+                    <AccordionSummary
+                        sx={{ display: "flex", backgroundColor: "white", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel3-content"
+                        id="panel3-header"
+                    >
+                        <Typography component="span" sx={{ color: "primary.dark", alignContent: "center" }}>ALERGIAS</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                            <Button variant="outlined" onClick={addAlergiaRow}>Agregar Alergia</Button>
+                        </Box>
+                        <Paper sx={{ height: 200, mb: 4 }}>
+                            <DataGrid
+                                rows={historyData.alergias}
+                                columns={alergiasColumns}
+                                pageSize={5}
+                                rowsPerPageOptions={[5]}
+                                disableSelectionOnClick
+                                hideFooterSelectedRowCount
+                                processRowUpdate={(newRow, oldRow) => {
+                                    setHistoryData(prev => ({
+                                        ...prev,
+                                        alergias: prev.alergias.map(row =>
+                                            row.id === newRow.id ? newRow : row
+                                        )
+                                    }));
+                                    return newRow;
+                                }}
+                                experimentalFeatures={{ newEditingApi: true }}
+                            />
+                        </Paper>
+                    </AccordionDetails>
+                </Accordion>
 
-                <SectionHeader title="Alergias" />
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                    <Button variant="outlined" onClick={addAlergiaRow}>Agregar Alergia</Button>
-                </Box>
-                <Paper sx={{ height: 200, mb: 4 }}>
-                    <DataGrid
-                        rows={historyData.alergias}
-                        columns={alergiasColumns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
-                        disableSelectionOnClick
-                        hideFooterSelectedRowCount
-                        processRowUpdate={(newRow, oldRow) => {
-                            setHistoryData(prev => ({
-                                ...prev,
-                                alergias: prev.alergias.map(row =>
-                                    row.id === newRow.id ? newRow : row
-                                )
-                            }));
-                            return newRow;
-                        }}
-                        experimentalFeatures={{ newEditingApi: true }}
-                    />
-                </Paper>
+                <Accordion  >
+                    <AccordionSummary
+                        sx={{ display: "flex", backgroundColor: "white", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel3-content"
+                        id="panel3-header"
+                    >
+                        <Typography component="span" sx={{ color: "primary.dark", alignContent: "center" }}>HÁBITOS TÓXICOS</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                            <Button variant="outlined" onClick={addHabitoRow}>Agregar Hábito</Button>
+                        </Box>
+                        <Paper sx={{ height: 250, mb: 4 }}>
+                            <DataGrid
+                                rows={historyData.habitosToxicos}
+                                columns={habitosColumns}
+                                pageSize={5}
+                                rowsPerPageOptions={[5]}
+                                disableSelectionOnClick
+                                hideFooterSelectedRowCount
+                                processRowUpdate={(newRow, oldRow) => {
+                                    setHistoryData(prev => ({
+                                        ...prev,
+                                        habitosToxicos: prev.habitosToxicos.map(row =>
+                                            row.id === newRow.id ? newRow : row
+                                        )
+                                    }));
+                                    return newRow;
+                                }}
+                                experimentalFeatures={{ newEditingApi: true }}
+                            />
+                        </Paper>
+                    </AccordionDetails>
+                </Accordion>
 
-                <SectionHeader title="Habitos Toxicos" />
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                    <Button variant="outlined" onClick={addHabitoRow}>Agregar Hábito</Button>
-                </Box>
-                <Paper sx={{ height: 250, mb: 4 }}>
-                    <DataGrid
-                        rows={historyData.habitosToxicos}
-                        columns={habitosColumns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
-                        disableSelectionOnClick
-                        hideFooterSelectedRowCount
-                        processRowUpdate={(newRow, oldRow) => {
-                            setHistoryData(prev => ({
-                                ...prev,
-                                habitosToxicos: prev.habitosToxicos.map(row =>
-                                    row.id === newRow.id ? newRow : row
-                                )
-                            }));
-                            return newRow;
-                        }}
-                        experimentalFeatures={{ newEditingApi: true }}
-                    />
-                </Paper>
+                <Accordion  >
+                    <AccordionSummary
+                        sx={{ display: "flex", backgroundColor: "white", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel3-content"
+                        id="panel3-header"
+                    >
+                        <Typography component="span" sx={{ color: "primary.dark", alignContent: "center" }}>ESTANCIAS EN EL EXTRANJERO</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                            <Button variant="outlined" onClick={addEstanciaRow}>Agregar Estancia</Button>
+                        </Box>
+                        <Paper sx={{ height: 250, mb: 4 }}>
+                            <DataGrid
+                                rows={historyData.estanciaExtranjero}
+                                columns={estanciaColumns}
+                                pageSize={5}
+                                rowsPerPageOptions={[5]}
+                                disableSelectionOnClick
+                                hideFooterSelectedRowCount
+                                processRowUpdate={(newRow, oldRow) => {
+                                    setHistoryData(prev => ({
+                                        ...prev,
+                                        estanciaExtranjero: prev.estanciaExtranjero.map(row =>
+                                            row.id === newRow.id ? newRow : row
+                                        )
+                                    }));
+                                    return newRow;
+                                }}
+                                experimentalFeatures={{ newEditingApi: true }}
+                            />
+                        </Paper>
+                    </AccordionDetails>
+                </Accordion>
 
-                <SectionHeader title="Estancia en el Extranjero" />
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                    <Button variant="outlined" onClick={addEstanciaRow}>Agregar Estancia</Button>
-                </Box>
-                <Paper sx={{ height: 250, mb: 4 }}>
-                    <DataGrid
-                        rows={historyData.estanciaExtranjero}
-                        columns={estanciaColumns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
-                        disableSelectionOnClick
-                        hideFooterSelectedRowCount
-                        processRowUpdate={(newRow, oldRow) => {
-                            setHistoryData(prev => ({
-                                ...prev,
-                                estanciaExtranjero: prev.estanciaExtranjero.map(row =>
-                                    row.id === newRow.id ? newRow : row
-                                )
-                            }));
-                            return newRow;
-                        }}
-                        experimentalFeatures={{ newEditingApi: true }}
-                    />
-                </Paper>
+                <Accordion  >
+                    <AccordionSummary
+                        sx={{ display: "flex", backgroundColor: "white", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel3-content"
+                        id="panel3-header"
+                    >
+                        <Typography component="span" sx={{ color: "primary.dark", alignContent: "center" }}>DONACIONES PREVIAS</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Paper sx={{ height: 250, mb: 4 }}>
+                            <DataGrid
+                                rows={donacionesPrevias}
+                                columns={donacionesColumns}
+                                pageSize={5}
+                                rowsPerPageOptions={[5]}
+                                disableSelectionOnClick
+                                hideFooterSelectedRowCount
+                            />
+                        </Paper>
+                    </AccordionDetails>
+                </Accordion>
 
-                {/*Sección Donaciones Previas*/}
-                <SectionHeader title="Donaciones Previas" />
-                <Paper sx={{ height: 250, mb: 4 }}>
-                    <DataGrid
-                        rows={donacionesPrevias}
-                        columns={donacionesColumns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
-                        disableSelectionOnClick
-                        hideFooterSelectedRowCount
-                    />
-                </Paper>
-
-                {/*Sección Transfusiones Previas*/}
-                <SectionHeader title="Transfusiones Previas" />
-                <Paper sx={{ height: 250, mb: 4 }}>
-                    <DataGrid
-                        rows={historyData.transfusionesPrevias}
-                        columns={transfusionesColumns}
-                        pageSize={5}
-                        rowsPerPageOptions={[5]}
-                        disableSelectionOnClick
-                        hideFooterSelectedRowCount
-                    />
-                </Paper>
+                <Accordion  >
+                    <AccordionSummary
+                        sx={{ display: "flex", backgroundColor: "white", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel3-content"
+                        id="panel3-header"
+                    >
+                        <Typography component="span" sx={{ color: "primary.dark", alignContent: "center" }}>TRANSFUSIONES PREVIAS</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Paper sx={{ height: 250, mb: 4 }}>
+                            <DataGrid
+                                rows={historyData.transfusionesPrevias}
+                                columns={transfusionesColumns}
+                                pageSize={5}
+                                rowsPerPageOptions={[5]}
+                                disableSelectionOnClick
+                                hideFooterSelectedRowCount
+                            />
+                        </Paper>
+                    </AccordionDetails>
+                </Accordion>
 
 
                 {/* Botón Guardar */}
@@ -2821,74 +2791,6 @@ export default function HistoriaDonante() {
                         Aceptar
                     </BotonPersonalizado>
                 </Box>
-
-                {/* Modal Éxito */}
-                <Modal
-                    open={openSuccessModal}
-                    onClose={handleCloseSuccessModal}
-                    aria-labelledby="success-modal-title"
-                    aria-describedby="success-modal-description"
-                >
-                    <Box sx={successModalStyle}>
-                        <CheckCircleIcon sx={{ fontSize: 60, color: '#009688', mb: 2 }} />
-                        <Typography id="success-modal-title" variant="h5" component="h2" gutterBottom>
-                            ¡Éxito!
-                        </Typography>
-                        <Typography id="success-modal-description" sx={{ mb: 3 }}>
-                            La historia clínica se ha guardado correctamente.
-                        </Typography>
-                        <BotonPersonalizado variant="contained"
-                            onClick={handleCloseSuccessModal}
-                            sx={{
-                                backgroundColor: '#009688', color: '#fff',
-                                fontWeight: 600,
-                                fontSize: '1rem',
-                                borderRadius: 1,
-                                boxShadow: 3,
-                                '&:hover': {
-                                    backgroundColor: '#00796b',
-                                    transform: 'scale(1.05)',
-                                    transition: 'transform 0.3s',
-                                },
-                            }}
-                        >
-                            Aceptar
-                        </BotonPersonalizado>
-                    </Box>
-                </Modal>
-
-                {/* Modal Error */}
-                <Modal
-                    open={openErrorModal}
-                    onClose={handleCloseErrorModal}
-                    aria-labelledby="error-modal-title"
-                    aria-describedby="error-modal-description"
-                >
-                    <Box sx={errorModalStyle}>
-                        <ErrorIcon sx={{ fontSize: 60, color: '#f44336', mb: 2 }} />
-                        <Typography id="error-modal-title" variant="h5" component="h2" gutterBottom>
-                            ¡Error!
-                        </Typography>
-                        <Typography
-                            id="error-modal-description"
-                            sx={{
-                                mb: 3,
-                                whiteSpace: 'pre-line',
-                                textAlign: 'left',
-                                backgroundColor: '#fff8f8',
-                                p: 2,
-                                borderRadius: 1,
-                            }}
-                        >
-                            {errorMessage}
-                        </Typography>
-                        <BotonPersonalizado variant="contained" color="error" onClick={handleCloseErrorModal}>
-                            Corregir
-                        </BotonPersonalizado>
-                    </Box>
-                </Modal>
-
-
                 {/* Modal de éxito/alerta */}
                 <Dialog
                     open={openModal}

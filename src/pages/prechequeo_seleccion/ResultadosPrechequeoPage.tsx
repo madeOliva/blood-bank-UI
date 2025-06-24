@@ -1,15 +1,11 @@
 import Box from "@mui/material/Box";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import BotonPersonalizado from "../../components/Button";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/navbar/Navbar"
 import { Button, Typography } from "@mui/material";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import { useEffect, useState } from "react";
 import axios from "axios";
-
-
-
 
 function Water({ row }: { row: any }) {
 
@@ -18,7 +14,6 @@ function Water({ row }: { row: any }) {
   const handleHc = () => {
     navigate(`/historiadonante/${row._id}/${row.historiaClinicaId}`, { replace: true });
   };
-
   return (<Button
     variant="outlined"
     size="small"
@@ -28,27 +23,18 @@ function Water({ row }: { row: any }) {
   >
     Historia
   </Button>)
-
 }
 
-
 export default function ResultadosPrechequeo() {
-  const navigate = useNavigate();
 
   const [rows, setRows] = useState<any[]>([]);
-
-  // Función para eliminar la fila
-  const removeRow = (id: number) => {
-    setRows((prev) => prev.filter((row) => row.id !== id));
-  };
-
-
   useEffect(() => {
-    const fetchRows = async () => {
-      try {
-        const res = await axios.get("http://localhost:3000/registro-donacion/datos");
-        // Mapea los datos para la tabla
-        const mappedRows = res.data.map((reg: any, idx: number) => ({
+  const fetchRows = async () => {
+    try {
+      const res = await axios.get("http://localhost:3000/registro-donacion/datos");
+      const mappedRows = res.data
+        .filter((reg: any) => reg.apto_interrogatorio === null || reg.apto_interrogatorio === undefined)
+        .map((reg: any, idx: number) => ({
           id: idx + 1,
           _id: reg._id,
           historiaClinicaId: reg.historiaClinicaId,
@@ -60,13 +46,13 @@ export default function ResultadosPrechequeo() {
           examenP_hemoglobina: reg.examenP_hemoglobina,
           apto_prechequeo: reg.apto_prechequeo || "",
         }));
-        setRows(mappedRows);
-      } catch (error) {
-        console.error("Error al cargar los registros:", error);
-      }
-    };
-    fetchRows();
-  }, []);
+      setRows(mappedRows);
+    } catch (error) {
+      console.error("Error al cargar los registros:", error);
+    }
+  };
+  fetchRows();
+}, []);
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "No", width: 90 },
@@ -123,20 +109,11 @@ export default function ResultadosPrechequeo() {
       width: 150,
       renderCell: (params) => <Water row={params.row} />,
     },
-
-
   ];
 
-  const handleHc = () => {
-    // Aquí puedes poner lógica de autenticación si lo deseas
-    navigate("/historiadonante", { replace: true }); // Redirige a la vista de Prechequeo
-  };
-
   return (
-
     <>
       <Navbar />
-
       <Typography
         variant="h4"
         component="h5"
@@ -147,8 +124,6 @@ export default function ResultadosPrechequeo() {
       </Typography>
 
       <Box sx={{ marginTop: "20px", width: "100%", marginBlockEnd: 1, marginLeft: 1, marginRight: 1 }}>
-
-
         <DataGrid
           sx={{
             display: "flex",
@@ -161,8 +136,6 @@ export default function ResultadosPrechequeo() {
               fontFamily: '"Open Sans"',
               color: "#000"
             },
-
-
           }}
           rows={rows}
           columns={columns}
@@ -176,24 +149,7 @@ export default function ResultadosPrechequeo() {
           pageSizeOptions={[5]}
 
         />
-
-
-      </Box>
-
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-
-        }}
-      >
-        <BotonPersonalizado onClick={handleHc} sx={{ width: 225 }}>
-          ACEPTAR
-        </BotonPersonalizado>
       </Box>
     </>
-
-
   );
 }
