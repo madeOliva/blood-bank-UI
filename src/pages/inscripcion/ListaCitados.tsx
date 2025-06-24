@@ -5,14 +5,21 @@ import {
   GridRowParams,
 } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Typography,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import BotonPersonalizado from "../../components/Button";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import DeleteIcon from "@mui/icons-material/Delete";
-
-
 
 export default function ListaCitados() {
   const navigate = useNavigate();
@@ -20,13 +27,17 @@ export default function ListaCitados() {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const [rowToDelete, setRowToDelete] = useState<any>(null);
 
-
-// Eliminar donante (cambiar citado a false y quitar de la tabla)
+  // Eliminar donante (cambiar citado a false y quitar de la tabla)
   const handleConfirmDelete = async () => {
     if (!rowToDelete) return;
     try {
-      await axios.put(`http://localhost:3000/historia-clinica/${rowToDelete.id}`, { citado: false });
-      setRows((prevRows) => prevRows.filter((row) => row.id !== rowToDelete.id));
+      await axios.put(
+        `http://localhost:3000/historia-clinica/${rowToDelete.id}`,
+        { citado: false }
+      );
+      setRows((prevRows) =>
+        prevRows.filter((row) => row.id !== rowToDelete.id)
+      );
       setOpenDeleteConfirm(false);
       setRowToDelete(null);
     } catch (error) {
@@ -36,10 +47,9 @@ export default function ListaCitados() {
     }
   };
 
-
   //Columnas
-const columns: GridColDef[] = [
-  {
+  const columns: GridColDef[] = [
+    {
       field: "eliminar",
       headerName: "",
       width: 80,
@@ -59,22 +69,18 @@ const columns: GridColDef[] = [
         </IconButton>
       ),
     },
-  
-  { field: "ci", headerName: "CI", width: 200 },
-  {
-    field: "nombres_apellidos",
-    headerName: "Nombres y Apellidos",
-    width: 300,
-  },
-  { field: "edad", headerName: "Edad", width: 100 },
-  { field: "sexo", headerName: "Sexo", width: 100 },
-  { field: "grupo", headerName: "Grupo", width: 100 },
-  { field: "rh", headerName: "Rh", width: 100 },
-  { field: "donante_de", headerName: "Donante de", width: 120 },
-];
 
-
-
+    { field: "ci", headerName: "CI", width: 200 },
+    {
+      field: "nombres_apellidos",
+      headerName: "Nombres y Apellidos",
+      width: 300,
+    },
+    { field: "edad", headerName: "Edad", width: 100 },
+    { field: "sexo", headerName: "Sexo", width: 100 },
+    { field: "grupo", headerName: "Grupo", width: 100 },
+    { field: "rh", headerName: "Rh", width: 100 },
+  ];
 
   useEffect(() => {
     // Llama a la API para obtener las historias clínicas citadas
@@ -90,7 +96,6 @@ const columns: GridColDef[] = [
           sexo: item.sexo?.nombre || "",
           grupo: item.grupo_sanguine?.nombre || "",
           rh: item.factor?.signo || "",
-          donante_de: item.donante_de || "", // Ajusta este campo según tu backend
         }));
         setRows(mappedRows);
       })
@@ -119,7 +124,6 @@ const columns: GridColDef[] = [
     }
   };
 
-
   // Modal de confirmación
   const DeleteConfirmModal = (
     <Dialog
@@ -127,10 +131,13 @@ const columns: GridColDef[] = [
       onClose={() => setOpenDeleteConfirm(false)}
       aria-labelledby="delete-confirm-dialog-title"
     >
-      <DialogTitle id="delete-confirm-dialog-title">Confirmar eliminación</DialogTitle>
+      <DialogTitle id="delete-confirm-dialog-title">
+        Confirmar eliminación
+      </DialogTitle>
       <DialogContent>
         ¿Está seguro que desea eliminar al posible donante{" "}
-        <strong>{rowToDelete?.nombres_apellidos}</strong> de la lista de citados?
+        <strong>{rowToDelete?.nombres_apellidos}</strong> de la lista de
+        citados?
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setOpenDeleteConfirm(false)} color="primary">
@@ -173,10 +180,10 @@ const columns: GridColDef[] = [
         <Box
           style={{
             height: 450,
-            width: "80%",
+            width: "65%",
           }}
         >
-        {DeleteConfirmModal}
+          {DeleteConfirmModal}
           <DataGrid
             rows={rows}
             columns={columns}

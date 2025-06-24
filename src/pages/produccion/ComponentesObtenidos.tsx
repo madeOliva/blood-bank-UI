@@ -48,18 +48,18 @@ useEffect(() => {
       const data = Array.isArray(res.data)
         ? res.data
             .filter((item: any) => item.estado_obtencion === "liberado")
-            .flatMap((item: any, idx: number) =>
-              (item.componentes || []).map((comp: any, compIdx: number) => ({
-                id: `${item._id}_${compIdx}`,
-                no_consecutivo: item.no_consecutivo ?? "",
-                no_hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
-                sexo: item.registro_donacion?.historiaClinica?.sexo ?? "",
-                edad: item.registro_donacion?.historiaClinica?.edad ?? "",
-                fecha_donacion: item.registro_donacion?.fechaD ?? "",
-                fecha_obtencion: comp.fecha_obtencion ?? "",
-                volumen: comp.volumen ?? ""
-              }))
-            )
+           .flatMap((item: any, idx: number) =>
+  (item.componentes || []).map((comp: any, compIdx: number) => ({
+    id: `${item._id}_${compIdx}`,
+    no_consecutivo: item.no_consecutivo ?? "",
+    no_hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+    sexo: item.registro_donacion?.historiaClinica?.sexo?.nombre ?? "",
+    edad: item.registro_donacion?.historiaClinica?.edad ?? "",
+    fecha_donacion: item.registro_donacion?.fechaD ?? "",
+    fecha_obtencion: comp.fecha_obtencion ?? "",
+    volumen: comp.volumen ?? ""
+  }))
+)
         : [];
       setRows(data);
     })
