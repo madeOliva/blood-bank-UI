@@ -50,35 +50,35 @@ export default function EntradaProduccion() {
   useEffect(() => {
     axios.get("http://localhost:3000/componentes-obtenidos/ids")
       .then(resIds => {
-        const usados = resIds.data;
+        const usados = resIds.data.map((u: any) => String(u));
         axios.get("http://localhost:3000/registro-donacion/donaciones-diarias")
           .then(response => {
-            setRows(
-              Array.isArray(response.data)
-                ? response.data
+            const aceptadas = Array.isArray(response.data)
+              ? response.data
                   .filter((item: any) =>
                     item.estado?.toLowerCase() === "aceptada" &&
-                    !usados.includes(item.id)
+                    !usados.includes(String(item.id ?? item._id ?? ""))
                   )
-                  .map((item: any, idx: number) => ({
-                    id: item.id || idx,
-                    no_consecutivo: item.no ?? "",
-                    no_hc: item.historiaClinica?.no_hc ?? item.hc ?? "",
-                    grupo_acta: item.grupo ?? "",
-                    factor_acta: item.factor ?? "",
-                    sexo: item.sexo ?? "",
-                    edad: item.edad ?? "",
-                    volumen_acta: item.volumen ?? "",
-                    componente_a_obtener: "",
-                    no_centrifuga: null,
-                    temperatura: null,
-                    velocidad: null,
-                    estado_obtencion: item.estado_obtencion ?? "",
-                    causa_baja: "",
-                    componentes: [],
-                    registro_donacion: item.id,
-                  }))
-                : []
+              : [];
+            setRows(
+              aceptadas.map((item: any, idx: number) => ({
+                id: item.id || item._id || idx,
+                no_consecutivo: item.no_consecutivo ?? idx + 1,
+                no_hc: item.historiaClinica?.no_hc ?? item.hc ?? "",
+                grupo_acta: item.grupo ?? "",
+                factor_acta: item.factor ?? "",
+                sexo: item.sexo ?? "",
+                edad: item.edad ?? "",
+                volumen_acta: item.volumen ?? "",
+                componente_a_obtener: "",
+                no_centrifuga: null,
+                temperatura: null,
+                velocidad: null,
+                estado_obtencion: item.estado_obtencion ?? "",
+                causa_baja: "",
+                componentes: [],
+                registro_donacion: item.id || item._id,
+              }))
             );
           })
           .catch(() => setRows([]));
@@ -92,25 +92,27 @@ export default function EntradaProduccion() {
     }
   }, [openEmptyFieldsModal]);
 
-useEffect(() => {
-  if (openNoElementsModal) {
-    const timer = setTimeout(() => setOpenNoElementsModal(false), 10000); // 5 segundos
-    return () => clearTimeout(timer);
-  }
-}, [openNoElementsModal]);
+  useEffect(() => {
+    if (openNoElementsModal) {
+      const timer = setTimeout(() => setOpenNoElementsModal(false), 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [openNoElementsModal]);
 
   // Validaciones
   const isValidDate = (dateString: string): boolean => {
     return !isNaN(Date.parse(dateString));
   };
 
+  // Permite seleccionar el día de hoy y fechas futuras
   const isTodayOrFutureDate = (dateString: string): boolean => {
     if (!isValidDate(dateString)) return false;
-    const inputDate = new Date(dateString);
+    // Forzar a solo fecha (YYYY-MM-DD)
+    const [year, month, day] = dateString.split("T")[0].split("-");
+    const inputDate = new Date(Number(year), Number(month) - 1, Number(day));
     const today = new Date();
-    const normalizedInput = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
     const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return normalizedInput.getTime() >= normalizedToday.getTime();
+    return inputDate.getTime() >= normalizedToday.getTime();
   };
 
   const isEmpty = (value: any) =>
@@ -124,6 +126,13 @@ useEffect(() => {
     if (isEmpty(row.no_centrifuga)) {
       errors.push("Número de centrífuga es requerido");
     }
+    // Solo permite valores entre 1 y 10, ambos inclusive
+    if (
+      row.no_centrifuga !== null &&
+      (Number(row.no_centrifuga) < 1 || Number(row.no_centrifuga) > 10)
+    ) {
+      errors.push("Número de centrífuga debe estar entre 1 y 10");
+    }
     if (isEmpty(row.temperatura)) {
       errors.push("Temperatura es requerida");
     }
@@ -132,9 +141,6 @@ useEffect(() => {
     }
     if (isEmpty(row.estado_obtencion)) {
       errors.push("Estado del componente es requerido");
-    }
-    if (row.no_centrifuga !== null && (Number(row.no_centrifuga) < 1 || Number(row.no_centrifuga) > 10)) {
-      errors.push("Número de centrífuga debe estar entre 1 y 10");
     }
     if (row.temperatura !== null && !(Number(row.temperatura) === 4 || Number(row.temperatura) === 22)) {
       errors.push("Temperatura debe ser 4°C o 22°C");
@@ -158,7 +164,7 @@ useEffect(() => {
           if (isEmpty(comp.fecha_obtencion)) {
             errors.push(`Componente obtenido ${index + 1}: Fecha es requerida`);
           } else if (!isTodayOrFutureDate(comp.fecha_obtencion)) {
-            errors.push(`Componente obtenido ${index + 1}: La fecha no puede ser anterior al día actual`);
+            errors.push(`Componente obtenido ${index + 1}: La fecha no puede ser anterior al día de hoy`);
           }
         });
       }
@@ -180,57 +186,38 @@ useEffect(() => {
 
   // Guardar datos en backend
   const handleSave = async () => {
-  if (rows.length === 0) {
-    setOpenNoElementsModal(true);
-    return;
-  }
-  try {
-    let updatedRows = [...rows];
-    let errors: Record<number, string[]> = {};
-    let hasErrors = false;
-    for (const row of rows) {
-      const rowErrors = validateRow(row);
-      if (rowErrors.length > 0) {
-        errors[row.id] = rowErrors;
-        hasErrors = true;
-        continue;
-      }
-      // Agrega este log:
-      console.log("Enviando a backend:", {
-        id: row.id,
-        no_consecutivo: row.no_consecutivo,
-        no_hc: row.no_hc,
-        grupo_acta: row.grupo_acta,
-        factor_acta: row.factor_acta,
-        sexo: row.sexo,
-        edad: row.edad,
-        volumen_acta: row.volumen_acta,
-        componente_a_obtener: row.componente_a_obtener,
-        no_centrifuga: row.no_centrifuga,
-        temperatura: row.temperatura,
-        velocidad: row.velocidad,
-        estado_obtencion: row.estado_obtencion.toLowerCase(),
-        causa_baja: row.causa_baja,
-        registro_donacion: row.registro_donacion,
-      });
-   await axios.put("http://localhost:3000/centrifugacion", {
-  _id: row.id, // Usa _id si tu backend espera ese nombre
-  no_consecutivo: row.no_consecutivo,
-  no_hc: row.no_hc,
-  grupo_acta: row.grupo_acta,
-  factor_acta: row.factor_acta,
-  sexo: row.sexo,
-  edad: row.edad,
-  volumen_acta: row.volumen_acta,
-  componente_a_obtener: row.componente_a_obtener,
-  no_centrifuga: row.no_centrifuga,
-  temperatura: row.temperatura,
-  velocidad: row.velocidad,
-  estado_obtencion: row.estado_obtencion.toLowerCase(),
-  ...(row.causa_baja ? { causa_baja: row.causa_baja } : {}),
-  registro_donacion: row.registro_donacion,
-});
-      // ...
+    if (rows.length === 0) {
+      setOpenNoElementsModal(true);
+      return;
+    }
+    try {
+      let updatedRows = [...rows];
+      let errors: Record<number, string[]> = {};
+      let hasErrors = false;
+      for (const row of rows) {
+        const rowErrors = validateRow(row);
+        if (rowErrors.length > 0) {
+          errors[row.id] = rowErrors;
+          hasErrors = true;
+          continue;
+        }
+        await axios.put("http://localhost:3000/centrifugacion", {
+          _id: row.id,
+          no_consecutivo: row.no_consecutivo,
+          no_hc: row.no_hc,
+          grupo_acta: row.grupo_acta,
+          factor_acta: row.factor_acta,
+          sexo: row.sexo,
+          edad: row.edad,
+          volumen_acta: row.volumen_acta,
+          componente_a_obtener: row.componente_a_obtener,
+          no_centrifuga: row.no_centrifuga,
+          temperatura: row.temperatura,
+          velocidad: row.velocidad,
+          estado_obtencion: row.estado_obtencion.toLowerCase(),
+          ...(row.causa_baja ? { causa_baja: row.causa_baja } : {}),
+          registro_donacion: row.registro_donacion,
+        });
         if (
           row.estado_obtencion &&
           row.estado_obtencion.toLowerCase() === "obtenido" &&
@@ -407,6 +394,7 @@ useEffect(() => {
             helperText={isError ? "Requerido" : ""}
             size="small"
             sx={{ width: 100 }}
+            inputProps={{ min: 1, max: 10 }}
           />
         );
       },
@@ -765,7 +753,7 @@ useEffect(() => {
                 helperText={
                   !comp.fecha_obtencion ? "Requerido" :
                     !isTodayOrFutureDate(comp.fecha_obtencion) ?
-                      "La fecha no puede ser anterior al día actual" : ""
+                      "La fecha no puede ser anterior al día de hoy" : ""
                 }
               />
               <IconButton color="error" onClick={() => handleRemoveComponente(idx)}>

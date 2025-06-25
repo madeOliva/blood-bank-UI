@@ -125,7 +125,7 @@ export default function RecepciondiariasEntidad() {
                         : typeof row._id === "string" ? row._id
                         : (row._id && typeof row._id === "object" && row._id.$oid) ? row._id.$oid
                         : String(idx),
-                      no: row.no ?? idx + 1,
+                      no: row.no_consecutivo ?? idx + 1,
                       hc: row.hc ?? "",
                       sexo: row.sexo ?? "",
                       edad: row.edad ?? "",
@@ -137,11 +137,14 @@ export default function RecepciondiariasEntidad() {
                 : []
             );
           });
-        setOpenDeleteSuccess(true);
-        setTimeout(() => setOpenDeleteSuccess(false), 1500);
-      } else {
-        alert("Error al desechar la donación.");
-      }
+       setOpenDeleteSuccess(true);
+  setTimeout(() => {
+    setOpenDeleteSuccess(false);
+    window.location.reload(); // Recarga la página después del éxito
+  }, 1500);
+} else {
+  alert("Error al desechar la donación.");
+}
     } catch (error) {
       alert("Error de conexión con el backend.");
       console.error(error);
@@ -192,15 +195,18 @@ export default function RecepciondiariasEntidad() {
           );
         });
 
-      setSuccessMessage("¡Donación enviada correctamente!");
-      setOpenSuccess(true);
-      setTimeout(() => setOpenSuccess(false), 2000);
-    } catch (error) {
-      setSuccessMessage("Error al enviar donación.");
-      setOpenWarning(true);
-      setTimeout(() => setOpenWarning(false), 2000);
-    }
-  };
+   setSuccessMessage("¡Donación enviada correctamente!");
+   setOpenSuccess(true);
+   setTimeout(() => {
+     setOpenSuccess(false);
+     window.location.reload(); // Recarga la página después del éxito
+   }, 2000);
+ } catch (error) {
+   setSuccessMessage("Error al enviar donación.");
+   setOpenWarning(true);
+   setTimeout(() => setOpenWarning(false), 2000);
+ }
+};
 
   const columns: GridColDef<any>[] = [
     { field: "no", headerName: "NO", width: 90 },
