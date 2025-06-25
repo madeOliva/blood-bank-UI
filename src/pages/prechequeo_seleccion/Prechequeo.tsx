@@ -317,16 +317,34 @@ export default function Prechequeo() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
+  // Validación de CI
+  const validarCI = (ci: string): string => {
+    if (!/^\d{11}$/.test(ci))
+      return "El CI debe tener exactamente 11 dígitos numéricos.";
+    const mes = parseInt(ci.slice(2, 4), 10);
+    const dia = parseInt(ci.slice(4, 6), 10);
+    if (mes < 1 || mes > 12) return "El mes en el CI no es válido.";
+    if (dia < 1 || dia > 31) return "El día en el CI no es válido.";
+    return "";
+  };
+
   // Función para buscar por CI
   const handleBuscarPorCI = () => {
+    const errorMsg = validarCI(busquedaCI);
+    if (errorMsg) {
+      setSnackbarMessage(errorMsg);
+      setSnackbarOpen(true);
+      return;
+    }
+
     if (!busquedaCI.trim()) return;
     const encontrado = rows.find(r => r.ci === busquedaCI.trim());
     if (encontrado) {
       setRows(prev => [encontrado, ...prev.filter(r => r.id !== encontrado.id)]);
-      setSnackbarMessage("Persona encontrada y movida al inicio");
+      setSnackbarMessage("Donante encontrado y movido al inicio");
       setSnackbarOpen(true);
     } else {
-      setSnackbarMessage("No existe una persona con ese CI en prechequeo pendiente");
+      setSnackbarMessage("No existe un donante con ese CI en prechequeo pendiente");
       setSnackbarOpen(true);
     }
     setBusquedaCI("");
@@ -402,9 +420,21 @@ export default function Prechequeo() {
               label="Buscar por CI"
               value={busquedaCI}
               onChange={e => setBusquedaCI(e.target.value.replace(/\D/g, '').slice(0, 11))}
-              onKeyDown={e => { if (e.key === 'Enter') handleBuscarPorCI(); }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const errorMsg = validarCI(busquedaCI);
+                  if (errorMsg) {
+                    setSnackbarMessage(errorMsg);
+                    setSnackbarOpen(true);
+                  } else {
+                    handleBuscarPorCI();
+                  }
+                }
+              }}
               sx={{ width: 250, mr: 2 }}
               inputProps={{ maxLength: 11 }}
+              error={!!validarCI(busquedaCI) && busquedaCI.length > 0}
+              helperText={busquedaCI.length > 0 ? validarCI(busquedaCI) : ''}
             />
             <IconButton
               onClick={handleBuscarPorCI}
