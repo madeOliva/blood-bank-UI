@@ -2,8 +2,9 @@ import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
-import { Box, Container, Typography } from "@mui/material";
+import { Box, IconButton, Dialog, DialogTitle, DialogContent, TextField, Button, Stack, Typography } from "@mui/material";
 import axios from "axios";
+import SearchIcon from "@mui/icons-material/Search";
 
 const columns: GridColDef[] = [
   { field: "no", headerName: "NO", width: 90 },
@@ -14,31 +15,98 @@ const columns: GridColDef[] = [
 
 export default function Desechos() {
   const navigate = useNavigate();
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState<any[]>([]);
+  const [filteredRows, setFilteredRows] = useState<any[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchHC, setSearchHC] = useState("");
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
   useEffect(() => {
     axios.get("http://localhost:3000/registro-donacion/donaciones-diarias")
       .then(response => {
-        // Filtra solo los registros con estado "desechada"
-     const desechadas = response.data
-  .filter((item: any) => item.estado === "desechada")
-  .map((item: any, idx: number) => ({
-    id: item.id || idx,
-    no: item.no,
-    hc: item.hc,
-    desecho: item.desecho, // <-- solo usa el valor que viene del backend
-    motivo: item.motivo_desecho || "Sin motivo"
-  }));
+        const desechadas = response.data
+          .filter((item: any) => item.estado === "desechada")
+          .map((item: any, idx: number) => ({
+            id: item.id || item._id || item.no_consecutivo || idx,
+            no: item.no_consecutivo ?? idx + 1,
+            hc: item.hc,
+            desecho: item.desecho,
+            motivo: item.motivo_desecho || "Sin motivo"
+          }));
         setRows(desechadas);
+        setFilteredRows(desechadas);
       })
       .catch(error => {
-        console.error("Error fetching data:", error);
+        setRows([]);
+        setFilteredRows([]);
       });
   }, []);
+
+  // Buscador por historia clínica
+  const handleSearch = () => {
+    if (!searchHC) {
+      setFilteredRows(rows);
+      setIsSearchActive(false);
+      setSearchOpen(false);
+      return;
+    }
+    const data = rows.filter((row) =>
+      row.hc?.toString().toLowerCase().includes(searchHC.trim().toLowerCase())
+    );
+    setFilteredRows(data);
+    setIsSearchActive(true);
+    setSearchOpen(false);
+  };
+
+  // Restablecer filtro
+  const handleClearSearch = () => {
+    setSearchHC("");
+    setFilteredRows(rows);
+    setIsSearchActive(false);
+    setSearchOpen(false);
+  };
 
   return (
     <>
       <Navbar />
+      
+      <Box sx={{ position: "relative", width: "100%" }}>
+        <IconButton
+          color="primary"
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1,
+            backgroundColor: "white",
+            boxShadow: 2,
+            "&:hover": { backgroundColor: "#f0f0f0" },
+          }}
+          onClick={() => setSearchOpen(true)}
+        >
+          <SearchIcon />
+        </IconButton>
+      </Box>
+      <Dialog open={searchOpen} onClose={() => setSearchOpen(false)}>
+        <DialogTitle>Buscar por Historia Clínica</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Historia Clínica"
+              value={searchHC}
+              onChange={(e) => setSearchHC(e.target.value)}
+              fullWidth
+            />
+            <Button variant="contained" onClick={handleSearch} disabled={!searchHC}>
+              Buscar
+            </Button>
+            <Button variant="outlined" onClick={handleClearSearch}>
+              Limpiar búsqueda
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+      
       <Typography
         variant="h4"
         component="h5"
@@ -47,40 +115,26 @@ export default function Desechos() {
           fontSize: { xs: "2rem", md: "3rem" },
           backgroundColor: "primary.dark",
           textAlign: "center",
-          fontFamily: "sans-serif",
-          color: "white"
+          color: "white",
         }}
       >
         Desechos
       </Typography>
-      <Container>
-        <Box sx={{ marginTop: "20px", width: "90%", marginBlockEnd: 1, marginLeft: 7 }}>
-          <DataGrid
-            sx={{
-              height: 400,
-              "& .MuiDataGrid-columnHeaderTitle": {
-                fontFamily: '"Open Sans"',
-                fontWeight: 600,
+      <Box sx={{ width: "95%", margin: "40px auto 0 auto", height: 500 }}>
+        <DataGrid
+          rows={filteredRows}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: {
+                pageSize: 10,
               },
-              "& .MuiDataGrid-cellContent": {
-                fontFamily: '"Open Sans"',
-                color: "#000"
-              },
-            }}
-            rows={rows}
-            columns={columns}
-            initialState={{
-              pagination: {
-                paginationModel: {
-                  pageSize: 10,
-                },
-              },
-            }}
-            pageSizeOptions={[10]}
-            disableRowSelectionOnClick
-          />
-        </Box>
-      </Container>
+            },
+          }}
+          pageSizeOptions={[10]}
+          disableRowSelectionOnClick
+        />
+      </Box>
     </>
   );
 }

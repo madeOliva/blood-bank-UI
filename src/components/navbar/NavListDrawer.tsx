@@ -336,7 +336,7 @@ export default function NavListDrawer() {
                 <List disablePadding>
                   <ListItem disablePadding>
                     <ListItemButton onClick={() => navigate('/citados')} sx={{
-                      pl: 9,
+                  
                       "&:active .MuiListItemIcon-root": {
                         "& svg": {
                           color: "red !important",
@@ -346,13 +346,16 @@ export default function NavListDrawer() {
                         color: "red !important",
                       },
                     }}>
+                       <ListItemIcon>
+                        <Groups2Icon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                      </ListItemIcon>
                       <ListItemText primary="Citados" />
                     </ListItemButton>
                   </ListItem>
 
                   <ListItem disablePadding>
                     <ListItemButton onClick={() => handleHojaC()} sx={{
-                      pl: 9,
+                      
                       "&:active .MuiListItemIcon-root": {
                         "& svg": {
                           color: "red !important",
@@ -362,6 +365,9 @@ export default function NavListDrawer() {
                         color: "red !important",
                       },
                     }}>
+                      <ListItemIcon>
+                        <EditDocumentIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
+                      </ListItemIcon>
                       <ListItemText primary="Hoja de Cargo" />
                     </ListItemButton>
                   </ListItem>

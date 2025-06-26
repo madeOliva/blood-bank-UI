@@ -1,45 +1,22 @@
- import React, { useState } from "react";
+ import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { Box, MenuItem, Select, SelectChangeEvent, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
 import Navbar from '../../components/navbar/Navbar';
+import axios from "axios";
 
 // Interface para los donantes
 interface Donante {
   id: number;
-  estado: string;
   nombre: string;
-  hc: string;
+  no_hc: string;
   telefono: string;
   direccion: string;
   grupo: string;
   ultimaDonacion: string;
 }
 
-// Datos de ejemplo
-const initialDonantes: Donante[] = [
-  {
-    id: 1,
-    estado: "Activo",
-    nombre: "Yudith Carbó",
-    hc: "HC-230",
-    telefono: "48765521",
-    direccion: "Calle 3era Reparto 26 julio Edif 26 Apartamento 4",
-    grupo: "A+",
-    ultimaDonacion: "2025-01-14",
-  },
-  {
-    id: 2,
-    estado: "Baja Temp",
-    nombre: "Eddie Diaz",
-    hc: "HC-320",
-    telefono: "48789010",
-    direccion: "Calle 5ta Reparto 26 julio Bloque 5 bajos",
-    grupo: "O+",
-    ultimaDonacion: "2025-02-06",
-  },
-];
 
 // Estilo para el listón
 const Ribbon = styled(Box)({
@@ -53,12 +30,6 @@ const Ribbon = styled(Box)({
   fontWeight: 500,
 });
 
-// Opciones de estado
-const estadoOptions = [
-  { value: "Activo", label: "Activo" },
-  { value: "Baja Temp", label: "Baja Temp" },
-];
-
 // Función para verificar si el último chequeo fue hace más de 3 meses
 const isChequeoVencido = (fecha: string) => {
   const hoy = dayjs();
@@ -67,7 +38,25 @@ const isChequeoVencido = (fecha: string) => {
 };
 
 const DonantesCMF: React.FC = () => {
-  const [donantes, setDonantes] = useState<Donante[]>(initialDonantes);
+  const [donantes, setDonantes] = useState<Donante[]>([]);
+
+   useEffect(() => {
+    // Llama al backend que ya devuelve solo los activos
+    axios.get('http://localhost:3000/historia-clinica/donantes-activos')
+      .then(res => {
+        const activos = res.data.map((d: any, idx: number) => ({
+          id: d._id || idx + 1,
+          nombre: `${d.nombre} ${d.primer_apellido} ${d.segundo_apellido}`,
+          no_hc: d.no_hc,
+          no_consultorio: d.no_consultorio,
+          telefono: d.telefono,
+          direccion:`${d.municipio || ""}, ${d.provincia || ""}, ${d.consejo_popular || ""}, ${d.otra_localizacion || ""}`,
+          grupo: `${d.grupo_sanguine || ""}${d.factor || ""}`,
+          ultimaDonacion: d.fechaUltimaDonacion || "",
+        }));
+        setDonantes(activos);
+      });
+  }, []);
 
   // Manejar cambio de estado
   const handleEstadoChange = (id: number, nuevoEstado: string) => {
@@ -80,30 +69,9 @@ const DonantesCMF: React.FC = () => {
 
   // Definición de columnas
   const columns: GridColDef[] = [
-    {
-      field: "estado",
-      headerName: "Estado",
-      width: 140,
-      renderCell: (params: GridRenderCellParams) => (
-        <Select
-          value={params.row.estado}
-          size="small"
-          variant="outlined"
-          sx={{ width: "100%" }}
-          onChange={(e: SelectChangeEvent) => 
-            handleEstadoChange(params.row.id, e.target.value)
-          }
-        >
-          {estadoOptions.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </Select>
-      ),
-    },
-    { field: "nombre", headerName: "Nombre y Apellidos", width: 180 },
-    { field: "hc", headerName: "No. HC", width: 100 },
+    { field: "nombre", headerName: "Nombre y Apellidos", width: 200 },
+    { field: "no_hc", headerName: "No. HC", width: 100 },
+    { field: "no_consultorio", headerName: "No Consultorio", width: 200 },
     { field: "telefono", headerName: "Teléfono", width: 120 },
     { field: "direccion", headerName: "Dirección", width: 320 },
     { field: "grupo", headerName: "Grupo/Factor", width: 120 },
@@ -111,14 +79,14 @@ const DonantesCMF: React.FC = () => {
       field: "ultimaDonacion",
       headerName: "Última Donación",
       width: 140,
-      valueFormatter: (params) => dayjs(params.value).format("DD-MM-YYYY"),
+      valueFormatter: (params: any) => dayjs(params.value).format("DD-MM-YYYY"),
     },
   ];
 
   return (
     <>
       <Navbar/>
-      <Box sx={{ width: "85%", margin: "auto", mt: 8 }}>
+      <Box sx={{ margin: "auto", mt: 8 }}>
       <Typography
         variant="h4"
         component="h5"

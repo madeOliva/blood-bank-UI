@@ -19,14 +19,9 @@ const columns: GridColDef[] = [
 
 function isToday(fecha: string | Date) {
   if (!fecha) return false;
-  const today = new Date();
-  const dateObj = new Date(fecha);
-
-  return (
-    dateObj.getFullYear() === today.getFullYear() &&
-    dateObj.getMonth() === today.getMonth() &&
-    dateObj.getDate() === today.getDate()
-  );
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const dateStr = new Date(fecha).toISOString().slice(0, 10);
+  return todayStr === dateStr;
 }
 export default function VizualizarDonaciones() {
   const navigate = useNavigate();
@@ -35,22 +30,30 @@ export default function VizualizarDonaciones() {
 useEffect(() => {
   axios.get('http://localhost:3000/registro-donacion/donaciones-diarias')
     .then(response => {
+      console.log("DATA RECIBIDA:", response.data);
       setRows(
         response.data
-          .filter((item: any) => isToday(item.fechaD))
-          .map((item: any) => ({
-            id: item.id,
-            no: item.no,
-            hc: item.hc,
-            sexo: item.sexo,
-            edad: item.edad,
-            grupo: item.grupo,
-            factor: item.factor,
-            volumen: item.volumen,
-            estado: item.estado,
-            entidad: item.entidad,
-            fechaD: item.fechaD // Opcional: para depuración
-          }))
+          .filter((item: any) => {
+            const fecha = item.fechaD?.$date ?? item.fechaD;
+            if (!fecha) {
+              console.log("Sin fechaD:", item);
+              return false;
+            }
+            return isToday(fecha);
+          })
+         .map((item: any, idx: number) => ({
+  id: item.id || item._id || item.no_consecutivo || idx,
+  no: item.no_consecutivo ?? idx + 1,
+  hc: item.hc,
+  sexo: item.sexo,
+  edad: item.edad,
+  grupo: item.grupo,
+  factor: item.factor,
+  volumen: item.volumen,
+  estado: item.estado,
+  entidad: item.entidad,
+  fechaD: item.fechaD?.$date ?? item.fechaD ?? "",
+}))
       );
     })
     .catch(error => {

@@ -4,15 +4,31 @@ import Box from "@mui/material/Box";
 import Navbar from "../../components/navbar/Navbar";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Typography, Stack } from "@mui/material";
+import { Typography, Stack, Tooltip } from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import axios from "axios";
 import { Dialog, DialogTitle, DialogContent, DialogContentText } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import { green } from "@mui/material/colors";
+
 
 const API_URL = 'http://localhost:3000/registro-donacion';
+
+// Función para verificar si un campo específico está fuera de rango
+const isFieldInvalid = (field: string, value: any) => {
+  if (value === undefined || value === '') return false;
+
+  switch (field) {
+    case 'resultado_VIH':
+    case 'resultado_hepatitisB':
+    case 'resultado_hepatitisC':
+      return value === "Positivo"; // Devuelve true solo si el valor es "Positivo"
+    default:
+      return false;
+  }
+};
 
 const columns: GridColDef[] = [
   {
@@ -32,23 +48,77 @@ const columns: GridColDef[] = [
     width: 180,
     editable: true,
     type: "singleSelect",
+    renderCell: (params) => {
+          const isInvalid = isFieldInvalid(params.field, params.value);
+          return (
+            <Tooltip title={isInvalid ? "Valor fuera de rango - Debe repetirse este examen" : ""}>
+              <div className={isInvalid ? "celda-invalida" : ""} style={{ width: '100%', height: '100%' }}>
+                {params.value}
+              </div>
+            </Tooltip>
+          );
+        },
     valueOptions: ["Positivo", "Negativo"],
+  },
+  {
+    field: "fecha_VIH",
+    headerName: "Fecha HIV",
+    type: "date",
+    width: 120,
+    editable: true,
+    valueGetter: (params) => new Date(params)
   },
   {
     field: "resultado_hepatitisB",
     headerName: "HBsAg",
     type: "singleSelect",
+    renderCell: (params) => {
+      const isInvalid = isFieldInvalid(params.field, params.value);
+      return (
+        <Tooltip title={isInvalid ? "Valor fuera de rango - Debe repetirse este examen" : ""}>
+          <div className={isInvalid ? "celda-invalida" : ""} style={{ width: '100%', height: '100%' }}>
+            {params.value}
+          </div>
+        </Tooltip>
+      );
+    },
     width: 120,
     editable: true,
     valueOptions: ["Positivo", "Negativo"],
   },
   {
+    field: "fecha_hepatitisB",
+    headerName: "Fecha HBsAg",
+    type: "date",
+    width: 120,
+    editable: true,
+    valueGetter: (params) => new Date(params)
+  },
+  {
     field: "resultado_hepatitisC",
     headerName: "HCV",
     type: "singleSelect",
+    renderCell: (params) => {
+      const isInvalid = isFieldInvalid(params.field, params.value);
+      return (
+        <Tooltip title={isInvalid ? "Valor fuera de rango - Debe repetirse este examen" : ""}>
+          <div className={isInvalid ? "celda-invalida" : ""} style={{ width: '100%', height: '100%' }}>
+            {params.value}
+          </div>
+        </Tooltip>
+      );
+    },
     width: 140,
     editable: true,
     valueOptions: ["Positivo", "Negativo"],
+  },
+  {
+    field: "fecha_hepatitisC",
+    headerName: "Fecha HCV",
+    type: "date",
+    width: 120,
+    editable: true,
+    valueGetter: (params) => new Date(params)
   },
   {
     field: "estado",
@@ -56,15 +126,29 @@ const columns: GridColDef[] = [
     type: "singleSelect",
     width: 140,
     editable: true,
-    valueOptions: ["Analizadas", "Reanalizadas", "aceptada"], // agrega "aceptada" si quieres verla como opción
+    valueOptions: ["Analizada", "Reanalizada", "Aceptada"], // agrega "aceptada" si quieres verla como opción
   },
   {
-    field: "fechaLab",
-    headerName: "Fecha",
-    type: "date",
+    field: "analizada",
+    headerName: "Analizada",
     width: 120,
-    editable: true,
-    valueGetter: (params) => params.value ? new Date(params.value).toLocaleDateString() : "",
+    renderCell: (params) => {
+      // Verificación más robusta que considera múltiples escenarios
+      const isAnalyzed = 
+        (params.row.resultado_VIH && params.row.resultado_VIH !== "") ||
+        (params.row.resultado_hepatitisB && params.row.resultado_hepatitisB !== "") ||
+        (params.row.resultado_hepatitisC && params.row.resultado_hepatitisC !== "");
+      
+      return isAnalyzed ? (
+        <Tooltip title="Muestra analizada">
+          <CheckCircleOutlineIcon sx={{ color: green[500], fontSize: 28 }} />
+        </Tooltip>
+      ) : (
+        <Tooltip title="Muestra no analizada">
+          <ErrorOutlineIcon sx={{ color: "error.main", fontSize: 28 }} />
+        </Tooltip>
+      );
+    },
   },
 ];
 
@@ -74,23 +158,36 @@ export default function LabSuma() {
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [openEmptyFieldsModal, setOpenEmptyFieldsModal] = useState(false);
-
+  
   useEffect(() => {
     const fetchInitialRows = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/registro-donacion/consecutivo-historia-aceptada`);
-        console.log("Datos recibidos del backend:", response.data); // Verifica los datos aquí
+        const response = await axios.get(`${API_URL}/consecutivo-historia-aceptada`);
+        console.log("Datos recibidos del backend:", response.data);
+  
         if (response.data && Array.isArray(response.data)) {
-          const data = response.data.map((item: any) => ({
-            id: item._id, // Asegúrate de que el backend devuelve `_id`
-            numero_consecutivo: item.numero_consecutivo || "",
-            no_hc: item.historiaClinica?.no_hc || "",
-            estado: item.estado || "",
-            resultado_VIH: item.resultado_VIH ?? "",
-            resultado_hepatitisB: item.resultado_hepatitisB ?? "",
-            resultado_hepatitisC: item.resultado_hepatitisC ?? "",
-            fechaLab: item.fechaLab || "",
-          }));
+          const data = response.data.map((item: any) => {
+            // Nueva lógica mejorada para determinar si ya fue analizada
+            const hasVIH = item.resultado_VIH && (Array.isArray(item.resultado_VIH) ? item.resultado_VIH.length > 0 : item.resultado_VIH !== '');
+            const hasHepatitisB = item.resultado_hepatitisB && (Array.isArray(item.resultado_hepatitisB) ? item.resultado_hepatitisB.length > 0 : item.resultado_hepatitisB !== '');
+            const hasHepatitisC = item.resultado_hepatitisC && (Array.isArray(item.resultado_hepatitisC) ? item.resultado_hepatitisC.length > 0 : item.resultado_hepatitisC !== '');
+  
+            const yaAnalizada = hasVIH || hasHepatitisB || hasHepatitisC;
+  
+            return {
+              id: item._id,
+              numero_consecutivo: item.numero_consecutivo,
+              no_hc: item.historiaClinica?.no_hc,
+              estado: item.estado || "",
+              resultado_VIH: Array.isArray(item.resultado_VIH) ? item.resultado_VIH[0] || "" : item.resultado_VIH || "",
+              fecha_VIH: Array.isArray(item.fecha_VIH) ? item.fecha_VIH[0] || "" : item.fecha_VIH || "",
+              resultado_hepatitisB: Array.isArray(item.resultado_hepatitisB) ? item.resultado_hepatitisB[0] || "" : item.resultado_hepatitisB || "",
+              fecha_hepatitisB: Array.isArray(item.fecha_hepatitisB) ? item.fecha_hepatitisB[0] || "" : item.fecha_hepatitisB || "",
+              resultado_hepatitisC: Array.isArray(item.resultado_hepatitisC) ? item.resultado_hepatitisC[0] || "" : item.resultado_hepatitisC || "",
+              fecha_hepatitisC: Array.isArray(item.fecha_hepatitisC) ? item.fecha_hepatitisC[0] || "" : item.fecha_hepatitisC || "",
+              yaAnalizada,
+            };
+          });
           setRows(data);
         } else {
           console.error("Error: Datos inválidos recibidos del servidor.");
@@ -99,7 +196,7 @@ export default function LabSuma() {
         console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchInitialRows();
   }, []);
   useEffect(() => {
@@ -139,31 +236,14 @@ export default function LabSuma() {
   };
 
   const handleProcessRowUpdate = (newRow: any) => {
-    if (!newRow.resultado_VIH || !newRow.resultado_hepatitisB || !newRow.resultado_hepatitisC) {
-      console.error("Error: Campos vacíos en la fila.");
-      return newRow;
-    }
+    
     const updatedRows = rows.map((row) => (row.id === newRow.id ? newRow : row));
     setRows(updatedRows);
     return newRow;
   };
 
-  const hasEmptyFields = () => {
-    return rows.some((row) => {
-      return (
-        row.resultado_VIH === "" ||
-        row.resultado_hepatitisB === "" ||
-        row.resultado_hepatitisC === "" ||
-        row.fechaLab === ""
-      );
-    });
-  };
-
-  
-  const handleSave = async () => {
-    if (hasEmptyFields()) {
-      setOpenEmptyFieldsModal(true);
-    } else {
+ const handleSave = async () => {
+   
       try {
         for (const row of rows) {
           if (!row.id) {
@@ -173,10 +253,13 @@ export default function LabSuma() {
   
           const payload = {
             resultado_VIH: Array.isArray(row.resultado_VIH) ? row.resultado_VIH : [row.resultado_VIH],
+            fecha_VIH: Array.isArray(row.fecha_VIH) ? row.fecha_VIH : [row.fecha_VIH],
             resultado_hepatitisB: Array.isArray(row.resultado_hepatitisB) ? row.resultado_hepatitisB : [row.resultado_hepatitisB],
+            fecha_hepatitisB: Array.isArray(row.fecha_hepatitisB) ? row.fecha_hepatitisB : [row.fecha_hepatitisB],
             resultado_hepatitisC: Array.isArray(row.resultado_hepatitisC) ? row.resultado_hepatitisC : [row.resultado_hepatitisC],
+            fecha_hepatitisC: Array.isArray(row.fecha_hepatitisC) ? row.fecha_hepatitisC : [row.fecha_hepatitisC],
             estado: row.estado,
-            fechaLab: row.fechaLab,
+            
           };
   
           console.log(`Endpoint llamado: ${API_URL}/update-laboratorio/${row.id}`);
@@ -194,7 +277,7 @@ export default function LabSuma() {
       } catch (error) {
         console.error("Error general al actualizar los datos:", error.response?.data || error.message);
       }
-    }
+    
   };
       
 
@@ -210,7 +293,9 @@ export default function LabSuma() {
   return (
     <>
       <Navbar />
-      <Box sx={{ marginTop: "60px", width: "100%" }}>
+      <Box sx={{ marginTop: "60px", width: "100%" 
+        
+}}>
         <Typography
           variant="h4"
           gutterBottom
@@ -224,23 +309,34 @@ export default function LabSuma() {
           Laboratorio Suma
         </Typography>
 
-        <Box sx={{ height: 400, width: "100%", mb: 2 }}>
-          <DataGrid
-            sx={{ height: 400 }}
-            rows={rows}
-            columns={columns}
-
-            editMode="row"
-            processRowUpdate={handleProcessRowUpdate}
-            onRowClick={handleRowClick}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10 },
-              },
-            }}
-            pageSizeOptions={[10]}
-          />
-        </Box>
+        
+                  <Box sx={{ 
+                    height: 400, 
+                    width: "100%", 
+                    mb: 2,
+                    
+                    '& .celda-invalida': {
+                      backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 0, 0, 0.3)'
+                      }
+                    }
+                  }}>
+                    <DataGrid
+                      rows={rows}
+                      columns={columns}
+                      processRowUpdate={handleProcessRowUpdate}
+                      onRowClick={handleRowClick}
+                     
+                      initialState={{
+                        pagination: {
+                          paginationModel: { pageSize: 10 },
+                        },
+                      }}
+                      pageSizeOptions={[10]}
+                      editMode="row"
+                    />
+                  </Box>
 
         <Box
           sx={{

@@ -66,7 +66,7 @@ export default function App() {
           <CitadosPS />
         </ProtectedRoute>} />
 
-      <Route path="/historiadonante/:id" element={
+      <Route path="/historiadonante/:id/:historiaClinicaId" element={
         <ProtectedRoute allowedRoles={["Médico de selección"]}>
           <HistoriaDonante />
         </ProtectedRoute>} />
@@ -132,10 +132,26 @@ export default function App() {
         }
       />
       <Route
+        path="/donaciones-sangre/:id"
+        element={
+          <ProtectedRoute allowedRoles={["Técnico de donación"]}>
+            <DonacionesSangre />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/donaciones-sangre"
         element={
           <ProtectedRoute allowedRoles={["Técnico de donación"]}>
             <DonacionesSangre />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/donaciones-plasma/:id"
+        element={
+          <ProtectedRoute allowedRoles={["Técnico de donación"]}>
+            <DonacionesPlasma />
           </ProtectedRoute>
         }
       />
@@ -253,7 +269,7 @@ export default function App() {
       <Route
         path="/bajas"
         element={
-          <ProtectedRoute allowedRoles={["Técnico de produccin"]}>
+          <ProtectedRoute allowedRoles={["Técnico de producción"]}>
             <Bajas />
           </ProtectedRoute>
         }

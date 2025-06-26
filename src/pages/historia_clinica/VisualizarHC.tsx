@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, Button, MenuItem, Select, TextField, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Grid, Paper, Modal } from '@mui/material';
@@ -8,6 +7,8 @@ import { useParams } from 'react-router-dom';
 import BotonPersonalizado from '../../components/Button';
 import ErrorIcon from '@mui/icons-material/Error';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+
+
 
 // Estilos para modales
 const modalStyle = {
@@ -101,13 +102,47 @@ export default function VisualizarHC() {
   const [openErrorModal, setOpenErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [sexos, setSexos] = useState<{ _id: string; nombre: string }[]>([]);
+  const [coloresPiel, setColoresPiel] = useState<{ _id: string; nombre: string }[]>([]);
+  const [provincias, setProvincias] = useState<{ _id: string; nombre_provincia: string }[]>([]);
+  const [gruposSanguineos, setGruposSanguineos] = useState<{ _id: string; nombre: string }[]>([]);
+  const [factores, setFactores] = useState<{ _id: string; signo: string }[]>([]);
+
   const { id } = useParams();
+
+  useEffect(() => {
+    const fetchCatalogos = async () => {
+      try {
+        const [sexosRes, coloresRes, provinciasRes, gruposRes, factoresRes] = await Promise.all([
+          axios.get('http://localhost:3000/sexo'),
+          axios.get('http://localhost:3000/color-piel'),
+          axios.get('http://localhost:3000/provincia'),
+          axios.get('http://localhost:3000/grupos-sanguineos'),
+          axios.get('http://localhost:3000/factores'),
+        ]);
+        setSexos(sexosRes.data);
+        setColoresPiel(coloresRes.data);
+        setProvincias(provinciasRes.data);
+        setGruposSanguineos(gruposRes.data);
+        setFactores(factoresRes.data);
+      } catch (error) {
+        setErrorMessage('Error al cargar catálogos');
+        setOpenErrorModal(true);
+      }
+    };
+    fetchCatalogos();
+  }, []);
 
   // Cargar datos del backend al montar el componente
   useEffect(() => {
     axios.get(`http://localhost:3000/historia-clinica/datos/${id}`)
       .then(res => {
         const d = res.data;
+        const sexoId = sexos.find(s => s.nombre === d.sexo)?._id || '';
+        const provinciaId = provincias.find(p => p.nombre_provincia === d.provincia)?._id || '';
+        const colorPielId = coloresPiel.find(c => c.nombre === d.color_piel)?._id || '';
+        const grupoSanguineoId = gruposSanguineos.find(g => g.nombre === d.grupo_sanguine)?._id || '';
+        const factorId = factores.find(f => f.signo === d.factor)?._id || '';
         setHistoryData({
           generalData: {
             ci: d.ci || '',
@@ -115,8 +150,11 @@ export default function VisualizarHC() {
             primer_apellido: d.primer_apellido || '',
             segundo_apellido: d.segundo_apellido || '',
             edad: d.edad || '',
-            sexo: d.sexo || '',
-            color_piel: d.color_piel || '',
+            sexo: sexoId,
+            provincia: provinciaId,
+            color_piel: colorPielId,
+            grupo_sanguine: grupoSanguineoId,
+            factor: factorId,
             no_hc: d.no_hc || '',
             estado_civil: d.estado_civil || '',
             municipio: d.municipio || '',
@@ -125,12 +163,9 @@ export default function VisualizarHC() {
             ocupacion: d.ocupacion || '',
             cat_ocupacional: d.cat_ocupacional || '',
             telefono: d.telefono || '',
-            provincia: d.provincia || '',
             centro_laboral: d.centro_laboral || '',
             telefonoLaboral: d.telefonoLaboral || '',
             otra_localizacion: d.otra_localizacion || '',
-            grupo_sanguine: d.grupo_sanguine || '',
-            factor: d.factor || '',
             estilo_vida: d.estilo_vida || '',
             alimentacion: d.alimentacion || '',
             genero_vida: d.genero_vida || '',
@@ -199,7 +234,7 @@ export default function VisualizarHC() {
         }));
         setDonacionesPrevias(donaciones);
       });
-  }, [id]);
+  }, [id, sexos, provincias, coloresPiel, gruposSanguineos, factores]);
 
 
 
@@ -231,7 +266,7 @@ export default function VisualizarHC() {
       gd.nombre.trim() === '' ||
       gd.primer_apellido.trim() === '' ||
       gd.segundo_apellido.trim() === '' ||
-      gd.edad.trim() === '' ||
+      gd.edad === '' ||
       gd.sexo.trim() === '' ||
       gd.color_piel.trim() === '' ||
       gd.no_hc.trim() === '' ||
@@ -261,8 +296,6 @@ export default function VisualizarHC() {
       { rows: historyData.alergias, requiredFields: ['alergia'] },
       { rows: historyData.habitosToxicos, requiredFields: ['habito', 'intensidad'] },
       { rows: historyData.estanciaExtranjero, requiredFields: ['fecha', 'pais', 'estadia', 'motivo'] },
-      { rows: historyData.donacionesPrevias, requiredFields: ['fecha', 'lugar', 'reaccion', 'motivo'] },
-      { rows: historyData.transfusionesPrevias, requiredFields: ['fecha', 'lugar', 'diagnostico', 'reaccion', 'observaciones'] },
     ];
 
     return tables.some(({ rows, requiredFields }) =>
@@ -285,8 +318,6 @@ export default function VisualizarHC() {
       alergias: "Alergias",
       habitosToxicos: "Hábitos Tóxicos",
       estanciaExtranjero: "Estancia en el Extranjero",
-      donacionesPrevias: "Donaciones Previas",
-      transfusionesPrevias: "Transfusiones Previas"
     };
 
     return Object.entries(requiredTables).filter(([key, name]) => {
@@ -354,6 +385,7 @@ export default function VisualizarHC() {
         es_donanteControlado: historyData.generalData.donante === 'Donante Controlado',
         es_posibleDonante: historyData.generalData.donante === 'Posible Donante',
         es_donanteActivo: historyData.generalData.donante === 'Donante Activo',
+
         alergias: historyData.alergias
           .filter(item => item.alergia && item.alergia.trim() !== '')
           .map(item => item.alergia),
@@ -426,25 +458,8 @@ export default function VisualizarHC() {
   const handleCloseSuccessModal = () => setOpenSuccessModal(false);
   const handleCloseErrorModal = () => setOpenErrorModal(false);
 
+  const onlyLetters = (value: string) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value);
 
-  // Función para validar nombres (solo letras y espacios)
-  const validateName = (value) => {
-    return /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value);
-  };
-
-  // Modificar los campos de nombre, apellidos:
-  <TextField
-    label="Nombre"
-    value={historyData.generalData.nombre}
-    onChange={(e) => {
-      if (validateName(e.target.value) || e.target.value === '') {
-        handleGeneralChange('nombre', e.target.value);
-      }
-    }}
-    fullWidth
-    error={historyData.generalData.nombre && !validateName(historyData.generalData.nombre)}
-    helperText={historyData.generalData.nombre && !validateName(historyData.generalData.nombre) ? "Solo se permiten letras" : ""}
-  />
 
   // Maneja el cambio en el radio group Donante
   const handleDonanteChange = (event) => {
@@ -454,62 +469,76 @@ export default function VisualizarHC() {
     }));
   };
 
-  // Generador de IDs únicos
-  const generateUniqueId = () => Date.now() + Math.floor(Math.random() * 10000);
+
 
   // Antecedentes personales
   const addAntecedentePersonalRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      antecedentesPersonales: [
-        ...(Array.isArray(prev.antecedentesPersonales) ? prev.antecedentesPersonales : []),
-        { id: generateUniqueId(), antecedente: '', año: '' }
-      ]
-    }));
+    setHistoryData(prev => {
+      const personales = Array.isArray(prev.antecedentesPersonales) ? prev.antecedentesPersonales : [];
+      const newId = personales.length > 0
+        ? Math.max(...personales.map(r => Number(r.id) || 0)) + 1
+        : 1;
+      return {
+        ...prev,
+        antecedentesPersonales: [...personales, { id: newId, antecedente: '', año: '' }] // Añadido año inicial
+      };
+    });
   };
 
   // Antecedentes familiares
   const addAntecedenteFRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      antecedentesFamiliares: [
-        ...(Array.isArray(prev.antecedentesFamiliares) ? prev.antecedentesFamiliares : []),
-        { id: generateUniqueId(), antecedente: '', parentesco: '' }
-      ]
-    }));
+    setHistoryData(prev => {
+      const antecedentes = Array.isArray(prev.antecedentesFamiliares) ? prev.antecedentesFamiliares : [];
+      const newId = antecedentes.length > 0
+        ? Math.max(...antecedentes.map(r => Number(r.id) || 0)) + 1
+        : 1;
+      return {
+        ...prev,
+        antecedentesFamiliares: [...antecedentes, { id: newId, antecedente: '', parentesco: '' }]
+      };
+    });
   };
 
   // Alergias
   const addAlergiaRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      alergias: [
-        ...(Array.isArray(prev.alergias) ? prev.alergias : []),
-        { id: generateUniqueId(), alergia: '' }
-      ]
-    }));
+    setHistoryData(prev => {
+      const alergias = Array.isArray(prev.alergias) ? prev.alergias : [];
+      const newId = alergias.length > 0
+        ? Math.max(...alergias.map(r => Number(r.id) || 0)) + 1
+        : 1;
+      return {
+        ...prev,
+        alergias: [...alergias, { id: newId, alergia: '' }]
+      };
+    });
   };
 
   // Hábitos tóxicos (corregido)
   const addHabitoRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      habitosToxicos: [
-        ...(Array.isArray(prev.habitosToxicos) ? prev.habitosToxicos : []),
-        { id: generateUniqueId(), habito: '', intensidad: 'Leve' }
-      ]
-    }));
+    setHistoryData(prev => {
+      const habitosToxicos = Array.isArray(prev.habitosToxicos) ? prev.habitosToxicos : [];
+      const newId = habitosToxicos.length > 0
+        ? Math.max(...habitosToxicos.map(r => Number(r.id) || 0)) + 1
+        : 1;
+      return {
+        ...prev,
+        habitosToxicos: [...habitosToxicos, { id: newId, habito: '', intensidad: '' }]
+      };
+    });
   };
 
   // Estancia en el extranjero
   const addEstanciaRow = () => {
-    setHistoryData(prev => ({
-      ...prev,
-      estanciaExtranjero: [
-        ...(Array.isArray(prev.estanciaExtranjero) ? prev.estanciaExtranjero : []),
-        { id: generateUniqueId(), fecha: '', pais: '', estadia: '', motivo: '' }
-      ]
-    }));
+    setHistoryData(prev => {
+      const estanciaExtranjero = Array.isArray(prev.estanciaExtranjero) ? prev.estanciaExtranjero : [];
+      const newId = estanciaExtranjero.length > 0
+        ? Math.max(...prev.estanciaExtranjero.map(r => r.id || 0)) + 1
+        : 1;
+      return {
+        ...prev,
+        estanciaExtranjero: [...estanciaExtranjero, { id: newId, fecha: '', pais: '', estadia: '', motivo: '' }]
+      };
+    });
   };
 
 
@@ -527,21 +556,51 @@ export default function VisualizarHC() {
 
   // Columnas para las tablas DataGrid
   const appColumns = [
-    { field: 'antecedente', headerName: 'Antecedente', flex: 1, editable: true },
-    { field: 'año', headerName: 'Año', width: 120, editable: true },
+    {
+      field: 'antecedente', headerName: 'Antecedente', flex: 1, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = onlyLetters(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
+    {
+      field: 'año', headerName: 'Año', width: 120, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = /^\d+$/.test(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
   ];
 
   const apfColumns = [
-    { field: 'antecedente', headerName: 'Antecedente', flex: 1, editable: true },
-    { field: 'parentesco', headerName: 'Parentesco', flex: 1, editable: true },
+    {
+      field: 'antecedente', headerName: 'Antecedente', flex: 1, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = onlyLetters(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
+    {
+      field: 'parentesco', headerName: 'Parentesco', flex: 1, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = onlyLetters(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
   ];
 
   const alergiasColumns = [
-    { field: 'alergia', headerName: 'Alergia', flex: 1, editable: true },
+    {
+      field: 'alergia', headerName: 'Alergia', flex: 1, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = onlyLetters(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
   ];
 
   const habitosColumns = [
-    { field: 'habito', headerName: 'Hábito', flex: 1, editable: true },
+    {
+      field: 'habito', headerName: 'Hábito', flex: 1, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = onlyLetters(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
     {
       field: 'intensidad', headerName: 'Intensidad', width: 150, editable: true, renderEditCell: (params) => (
         <Select
@@ -561,32 +620,64 @@ export default function VisualizarHC() {
   ];
 
   const estanciaColumns = [
-    { field: 'pais', headerName: 'País', flex: 1, editable: true },
+    { field: 'fecha', headerName: 'Fecha', width: 130, editable: true },
+    {
+      field: 'pais', headerName: 'País', flex: 1, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = onlyLetters(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
     { field: 'estadia', headerName: 'Estadía', flex: 1, editable: true },
-    { field: 'motivo', headerName: 'Motivo', flex: 1, editable: true },
+    {
+      field: 'motivo', headerName: 'Motivo', flex: 1, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = onlyLetters(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
   ];
 
   const donacionesColumns = [
     { field: 'fecha', headerName: 'Fecha', flex: 1, editable: true },
-    { field: 'lugar', headerName: 'Lugar', flex: 1, editable: true },
+    {
+      field: 'lugar', headerName: 'Lugar', flex: 1, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = onlyLetters(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
     { field: 'reaccion', headerName: 'Reacción', flex: 1, editable: true },
     /*{ field: 'motivo', headerName: 'Motivo', flex: 1, editable: true },*/
   ];
 
   const transfusionesColumns = [
     { field: 'fecha', headerName: 'Fecha', flex: 1, editable: true },
-    { field: 'lugar', headerName: 'Lugar', flex: 1, editable: true },
+    {
+      field: 'lugar', headerName: 'Lugar', flex: 1, editable: true, preProcessEditCellProps: (params) => {
+        const isValid = onlyLetters(params.props.value || '');
+        return { ...params.props, error: !isValid };
+      },
+    },
     { field: 'diagnostico', headerName: 'Diagnostico', flex: 1, editable: true },
     { field: 'reaccion', headerName: 'Reacción', flex: 1, editable: true },
     { field: 'observaciones', headerName: 'Observaciones', flex: 1, editable: true },
   ];
+
+  // Validación de CI
+  const validarCI = (ci: string): string => {
+    if (!/^\d{11}$/.test(ci))
+      return "El CI debe tener exactamente 11 dígitos numéricos.";
+    const mes = parseInt(ci.slice(2, 4), 10);
+    const dia = parseInt(ci.slice(4, 6), 10);
+    if (mes < 1 || mes > 12) return "El mes en el CI no es válido.";
+    if (dia < 1 || dia > 31) return "El día en el CI no es válido.";
+    return "";
+  };
 
 
 
   return (
     <>
       <Navbar />
-      <Box sx={{ p: 3, maxWidth: 1900, margin: 'auto', mt: 8 }}>
+      <Box sx={{ p: 6, maxWidth: 1900, margin: 'auto', mt: 8 }}>
         {/* Título general */}
         <Typography variant="h4" align="center" gutterBottom sx={{ mb: 3, fontWeight: 'bold', color: '#13b09e' }}>
           Historia Clínica
@@ -601,61 +692,87 @@ export default function VisualizarHC() {
               <TextField
                 label="No. CI"
                 value={historyData.generalData.ci}
-                onChange={(e) => handleGeneralChange('ci', e.target.value)}
+                onChange={(e) => {
+                  // Solo permite números y máximo 11 caracteres
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  handleGeneralChange('ci', value);
+                }}
                 fullWidth
+                error={!!validarCI(historyData.generalData.ci) && historyData.generalData.ci.length > 0}
+                helperText={historyData.generalData.ci.length > 0 ? validarCI(historyData.generalData.ci) : ""}
+                inputProps={{ maxLength: 11 }}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Nombre"
                 value={historyData.generalData.nombre}
-                onChange={(e) => handleGeneralChange('nombre', e.target.value)}
+                onChange={(e) => {
+                  if (onlyLetters(e.target.value) || e.target.value === '') {
+                    handleGeneralChange('nombre', e.target.value);
+                  }
+                }}
                 fullWidth
+                error={historyData.generalData.nombre && !onlyLetters(historyData.generalData.nombre)}
+                helperText={historyData.generalData.nombre && !onlyLetters(historyData.generalData.nombre) ? "Solo se permiten letras" : ""}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Primer Apellido"
                 value={historyData.generalData.primer_apellido}
-                onChange={(e) => handleGeneralChange('primer_apellido', e.target.value)}
+                onChange={(e) => {
+                  if (onlyLetters(e.target.value) || e.target.value === '') {
+                    handleGeneralChange('primer_apellido', e.target.value);
+                  }
+                }}
                 fullWidth
+                error={historyData.generalData.primer_apellido && !onlyLetters(historyData.generalData.primer_apellido)}
+                helperText={historyData.generalData.primer_apellido && !onlyLetters(historyData.generalData.primer_apellido) ? "Solo se permiten letras" : ""}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Segundo Apellido"
                 value={historyData.generalData.segundo_apellido}
-                onChange={(e) => handleGeneralChange('segundo_apellido', e.target.value)}
+                onChange={(e) => {
+                  if (onlyLetters(e.target.value) || e.target.value === '') {
+                    handleGeneralChange('segundo_apellido', e.target.value);
+                  }
+                }}
                 fullWidth
+                error={historyData.generalData.segundo_apellido && !onlyLetters(historyData.generalData.segundo_apellido)}
+                helperText={historyData.generalData.segundo_apellido && !onlyLetters(historyData.generalData.segundo_apellido) ? "Solo se permiten letras" : ""}
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth>
-                <FormLabel>Sexo</FormLabel>
-                <Select
-                  name="sexo"
-                  value={historyData.generalData.sexo}
-                  onChange={(e) => handleGeneralChange('sexo', e.target.value)}
-                >
-                  <MenuItem value="F">F</MenuItem>
-                  <MenuItem value="M">M</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
+
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Edad"
                 value={historyData.generalData.edad}
-                onChange={(e) => handleGeneralChange('edad', e.target.value)}
+                onChange={(e) => {
+                  // Solo permite números o vacío
+                  if (/^\d*$/.test(e.target.value)) {
+                    handleGeneralChange('edad', e.target.value);
+                  }
+                }}
                 fullWidth
+                error={historyData.generalData.edad && !/^\d+$/.test(historyData.generalData.edad)}
+                helperText={historyData.generalData.edad && !/^\d+$/.test(historyData.generalData.edad) ? "Solo se permiten números" : ""}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Estado Civil"
                 value={historyData.generalData.estado_civil}
-                onChange={(e) => handleGeneralChange('estado_civil', e.target.value)}
+                onChange={(e) => {
+                  if (onlyLetters(e.target.value) || e.target.value === '') {
+                    handleGeneralChange('estado_civil', e.target.value);
+                  }
+                }}
                 fullWidth
+                error={historyData.generalData.estado_civil && !onlyLetters(historyData.generalData.estado_civil)}
+                helperText={historyData.generalData.estado_civil && !onlyLetters(historyData.generalData.estado_civil) ? "Solo se permiten letras" : ""}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
@@ -666,20 +783,7 @@ export default function VisualizarHC() {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth>
-                <FormLabel>Color Piel</FormLabel>
-                <Select
-                  name="color_piel"
-                  value={historyData.generalData.color_piel}
-                  onChange={(e) => handleGeneralChange('color_piel', e.target.value)}
-                >
-                  <MenuItem value="negro">negro</MenuItem>
-                  <MenuItem value="blanco">blanco</MenuItem>
-                  <MenuItem value="mestizo">mestizo</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
+
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Consejo Popular"
@@ -701,24 +805,45 @@ export default function VisualizarHC() {
               <TextField
                 label="Ocupación"
                 value={historyData.generalData.ocupacion}
-                onChange={(e) => handleGeneralChange('ocupacion', e.target.value)}
+                onChange={(e) => {
+                  if (onlyLetters(e.target.value) || e.target.value === '') {
+                    handleGeneralChange('ocupacion', e.target.value);
+                  }
+                }}
                 fullWidth
+                error={historyData.generalData.ocupacion && !onlyLetters(historyData.generalData.ocupacion)}
+                helperText={historyData.generalData.ocupacion && !onlyLetters(historyData.generalData.ocupacion) ? "Solo se permiten letras" : ""}
               />
             </Grid>
+
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Teléfono"
                 value={historyData.generalData.telefono}
-                onChange={(e) => handleGeneralChange('telefono', e.target.value)}
+                onChange={(e) => {
+                  // Solo permite números o vacío
+                  if (/^\d*$/.test(e.target.value)) {
+                    handleGeneralChange('telefono', e.target.value);
+                  }
+                }}
                 fullWidth
+                error={historyData.generalData.telefono && !/^\d+$/.test(historyData.generalData.telefono)}
+                helperText={historyData.generalData.telefono && !/^\d+$/.test(historyData.generalData.telefono) ? "Solo se permiten números" : ""}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Municipio"
                 value={historyData.generalData.municipio}
-                onChange={(e) => handleGeneralChange('municipio', e.target.value)}
+                onChange={(e) => {
+                  if (onlyLetters(e.target.value) || e.target.value === '') {
+                    handleGeneralChange('municipio', e.target.value);
+                  }
+                }}
                 fullWidth
+                error={historyData.generalData.municipio && !onlyLetters(historyData.generalData.municipio)}
+                helperText={historyData.generalData.municipio && !onlyLetters(historyData.generalData.municipio) ? "Solo se permiten letras" : ""}
+
               />
             </Grid>
 
@@ -730,26 +855,19 @@ export default function VisualizarHC() {
                 fullWidth
               />
             </Grid>
-
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth>
-                <FormLabel>Provincia</FormLabel>
-                <Select
-                  name="Provincia"
-                  value={historyData.generalData.provincia}
-                  onChange={(e) => handleGeneralChange('provincia', e.target.value)}
-                >
-                  <MenuItem value="Pinar">Pinar</MenuItem>
-                  <MenuItem value="Habana">Habana</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Teléfono Laboral"
                 value={historyData.generalData.telefonoLaboral}
-                onChange={(e) => handleGeneralChange('telefonoLaboral', e.target.value)}
+                onChange={(e) => {
+                  // Solo permite números o vacío
+                  if (/^\d*$/.test(e.target.value)) {
+                    handleGeneralChange('telefonoLaboral', e.target.value);
+                  }
+                }}
                 fullWidth
+                error={historyData.generalData.telefonoLaboral && !/^\d+$/.test(historyData.generalData.telefonoLaboral)}
+                helperText={historyData.generalData.telefonoLaboral && !/^\d+$/.test(historyData.generalData.telefonoLaboral) ? "Solo se permiten números" : ""}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
@@ -762,19 +880,19 @@ export default function VisualizarHC() {
             </Grid>
 
 
+
             {/* Select Grupo Sanguíneo */}
             <Grid item xs={12} sm={3}>
               <FormControl fullWidth>
-                <FormLabel>Grupo Sanguíneo</FormLabel>
+                <FormLabel>Grupo sanguíneo</FormLabel>
                 <Select
                   name="grupo_sanguine"
                   value={historyData.generalData.grupo_sanguine}
                   onChange={(e) => handleGeneralChange('grupo_sanguine', e.target.value)}
                 >
-                  <MenuItem value="A">A</MenuItem>
-                  <MenuItem value="B">B</MenuItem>
-                  <MenuItem value="AB">AB</MenuItem>
-                  <MenuItem value="O">O</MenuItem>
+                  {gruposSanguineos.map((grupo) => (
+                    <MenuItem key={grupo._id} value={grupo._id}>{grupo.nombre}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -788,8 +906,24 @@ export default function VisualizarHC() {
                   value={historyData.generalData.factor}
                   onChange={(e) => handleGeneralChange('factor', e.target.value)}
                 >
-                  <MenuItem value="+">+</MenuItem>
-                  <MenuItem value="-">-</MenuItem>
+                  {factores.map((factor) => (
+                    <MenuItem key={factor._id} value={factor._id}>{factor.signo}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth>
+                <FormLabel>Sexo</FormLabel>
+                <Select
+                  name="sexo"
+                  value={historyData.generalData.sexo}
+                  onChange={(e) => handleGeneralChange('sexo', e.target.value)}
+                >
+                  {sexos.map((sexo) => (
+                    <MenuItem key={sexo._id} value={sexo._id}>{sexo.nombre}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -807,6 +941,20 @@ export default function VisualizarHC() {
                   <MenuItem value="Empleado">Empleado</MenuItem>
                   <MenuItem value="Trabajador por cuenta propia">Trabajador por cuenta propia</MenuItem>
                   <MenuItem value="Otro">Otro</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth>
+                <FormLabel>Color de piel</FormLabel>
+                <Select
+                  name="color_piel"
+                  value={historyData.generalData.color_piel}
+                  onChange={(e) => handleGeneralChange('color_piel', e.target.value)}
+                >
+                  {coloresPiel.map((color) => (
+                    <MenuItem key={color._id} value={color._id}>{color.nombre}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -860,6 +1008,21 @@ export default function VisualizarHC() {
               </FormControl>
             </Grid>
 
+            <Grid item xs={12} sm={3}>
+              <FormControl sx={{ width: 100 }}>
+                <FormLabel>Provincia</FormLabel>
+                <Select
+                  name="provincia"
+                  value={historyData.generalData.provincia}
+                  onChange={(e) => handleGeneralChange('provincia', e.target.value)}
+                >
+                  {provincias.map((prov) => (
+                    <MenuItem key={prov._id} value={prov._id}>{prov.nombre_provincia}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
             {/* RadioGroup Donante */}
             <Grid item xs={12} sm={6}>
               <FormControl component="fieldset">
@@ -879,8 +1042,8 @@ export default function VisualizarHC() {
           </Grid>
         </Paper>
 
-        {/* Sección Antecedentes Patológicos Personales (APP) */}
-        <SectionHeader title="Antecedentes Patologicos Personales (APP)" />
+        {/* Sección APP con botón Agregar */}
+        <SectionHeader title="Antecedentes Personales" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addAntecedentePersonalRow}>Agregar Antecedente</Button>
         </Box>
@@ -892,13 +1055,20 @@ export default function VisualizarHC() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
-            editMode="cell"
-            onCellEditCommit={(params) => handleTableEdit('antecedentesPersonales', params)}
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                antecedentesPersonales: prev.antecedentesPersonales.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Antecedentes Patológicos Familiares (APF) */}
-        <SectionHeader title="Antecdentes Patologicos Familiares (APF)" />
+        <SectionHeader title="Antecedentes Familiares" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addAntecedenteFRow}>Agregar Antecedente</Button>
         </Box>
@@ -910,12 +1080,19 @@ export default function VisualizarHC() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
-            editMode="cell"
-            onCellEditCommit={(params) => handleTableEdit('antecedentesFamiliares', params)}
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                antecedentesFamiliares: prev.antecedentesFamiliares.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Alergias */}
         <SectionHeader title="Alergias" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addAlergiaRow}>Agregar Alergia</Button>
@@ -928,12 +1105,19 @@ export default function VisualizarHC() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
-            editMode="cell"
-            onCellEditCommit={(params) => handleTableEdit('alergias', params)}
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                alergias: prev.alergias.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Hábitos Tóxicos */}
         <SectionHeader title="Habitos Toxicos" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addHabitoRow}>Agregar Hábito</Button>
@@ -946,12 +1130,19 @@ export default function VisualizarHC() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
-            editMode="cell"
-            onCellEditCommit={handleHabitoEditCommit}
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                habitosToxicos: prev.habitosToxicos.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 
-        {/* Sección Estancia en el Extranjero */}
         <SectionHeader title="Estancia en el Extranjero" />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           <Button variant="outlined" onClick={addEstanciaRow}>Agregar Estancia</Button>
@@ -964,6 +1155,16 @@ export default function VisualizarHC() {
             rowsPerPageOptions={[5]}
             disableSelectionOnClick
             hideFooterSelectedRowCount
+            processRowUpdate={(newRow, oldRow) => {
+              setHistoryData(prev => ({
+                ...prev,
+                estanciaExtranjero: prev.estanciaExtranjero.map(row =>
+                  row.id === newRow.id ? newRow : row
+                )
+              }));
+              return newRow;
+            }}
+            experimentalFeatures={{ newEditingApi: true }}
           />
         </Paper>
 

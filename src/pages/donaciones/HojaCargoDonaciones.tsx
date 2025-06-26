@@ -1,89 +1,257 @@
 import * as React from "react";
-import { DataGrid, GridRowsProp, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
-import { Box, Typography } from "@mui/material";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
-
-// Columnas base (las de la lista de espera, ajusta los nombres según tu backend)
-const columnasBase: GridColDef[] = [
-  { field: "noRegistro", headerName: "No. Registro", width: 120 },
-  { field: "fechaD", headerName: "Fecha D", width: 140 },
-  { field: "nombreTecnico", headerName: "Nombre Técnico", width: 180 },
-  { field: "ci", headerName: "CI", width: 120 },
-  { field: "nombre", headerName: "Nombre", width: 180 },
-  { field: "sexo", headerName: "Sexo", width: 80 },
-  { field: "edad", headerName: "Edad", width: 80 },
-  { field: "grupo", headerName: "Grupo", width: 80 },
-  { field: "rh", headerName: "Rh", width: 60 },
-];
-
-// Columnas específicas de sangre (incluyendo No.Tubuladura al principio)
-const columnasSangre: GridColDef[] = [
-  { field: "noTubuladura", headerName: "No.Tubuladura", width: 140 },
-  { field: "noBolsa", headerName: "NO. Bolsa", width: 120 },
-  { field: "tipoBolsa", headerName: "Tipo de Bolsa", width: 150 },
-  { field: "volumen", headerName: "Volumen", width: 100 },
-  { field: "reacciones", headerName: "Reacciones", width: 150 },
-  { field: "otraReaccion", headerName: "Otra Reacción", width: 150 },
-];
-
-// Columnas específicas de plasma
-const columnasPlasma: GridColDef[] = [
-  { field: "tcm", headerName: "TCM", width: 80 },
-  { field: "tp", headerName: "TP", width: 80 },
-  { field: "tmin", headerName: "T(min)", width: 80 },
-  { field: "ciclos", headerName: "Ciclos", width: 80 },
-  { field: "acd", headerName: "ACD", width: 80 },
-  { field: "loteAcd", headerName: "Lote Kit ACD", width: 150 },
-  { field: "loteBach", headerName: "Lote Kit Bach", width: 150 },
-  { field: "reaccionesPlasma", headerName: "Reacciones Plasma", width: 150 },
-  { field: "otraReaccionPlasma", headerName: "Otra Reacción Plasma", width: 150 },
-];
-
-// Unimos todas las columnas
-const columnas: GridColDef[] = [
-  ...columnasBase,
-  ...columnasSangre,
-  ...columnasPlasma,
-];
-
-// Ejemplo de datos (ajusta los nombres de los campos según tu backend)
-const rows: GridRowsProp = [
-  {
-    id: 1,
-    noRegistro: "001",
-    fechaD: "2024-06-15",
-    nombreTecnico: "Lic. Pérez",
-    ci: "99010112345",
-    nombre: "Juan Pérez",
-    sexo: "M",
-    edad: 30,
-    grupo: "A",
-    rh: "+",
-    noTubuladura: "TUB123",
-    noBolsa: "12345",
-    tipoBolsa: "Cuádruple",
-    volumen: "450ml",
-    reacciones: "Ninguna",
-    otraReaccion: "",
-    tcm: "10",
-    tp: "12",
-    tmin: "30",
-    ciclos: "2",
-    acd: "ACD1",
-    loteAcd: "L123",
-    loteBach: "B456",
-    reaccionesPlasma: "Mareo",
-    otraReaccionPlasma: "",
-  },
-  // ...más filas
-];
+import dayjs, { Dayjs } from "dayjs";
+import axios from "axios";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import Button from "../../components/Button"; // Usa tu botón personalizado
 
 export default function HojaCargoDonaciones() {
-  const navigate = useNavigate();
+  const columnas: GridColDef[] = [
+    {
+      field: "modificar",
+      headerName: "",
+      width: 80,
+      sortable: false,
+      filterable: false,
+      align: "center",
+      renderCell: (params) => (
+        <IconButton
+          onClick={(e) => {
+            e.stopPropagation();
+            handleModifyClick(params.row);
+          }}
+          aria-label="modificar"
+        >
+          <EditIcon sx={{ color: "red" }} />
+        </IconButton>
+      ),
+    },
+    { field: "fechaD", headerName: "Fecha Donación", width: 200 },
+    { field: "no_registro", headerName: "No. Registro", width: 200 },
+    { field: "ci", headerName: "CI", width: 120 },
+    { field: "no_hc", headerName: "No. HC", width: 120 },
+    { field: "nombre", headerName: "Nombre", width: 250 },
+    { field: "sexo", headerName: "Sexo", width: 80 },
+    { field: "edad", headerName: "Edad", width: 80 },
+    { field: "grupo", headerName: "Grupo", width: 80 },
+    { field: "rh", headerName: "Rh", width: 60 },
+    { field: "componenteNombre", headerName: "Componente Donado", width: 180 },
+    { field: "no_tubuladura", headerName: "No.Tubuladura", width: 140 },
+    { field: "no_lote", headerName: "NO. Bolsa", width: 120 },
+    { field: "tipo_bolsa", headerName: "Tipo de Bolsa", width: 150 },
+    { field: "volumen", headerName: "Volumen", width: 100 },
+    { field: "reaccion", headerName: "Reacciones", width: 150 },
+    { field: "TCM", headerName: "TCM", width: 80 },
+    { field: "TP", headerName: "TP", width: 80 },
+    { field: "tiempo", headerName: "T(min)", width: 80 },
+    { field: "ciclos", headerName: "Ciclos", width: 80 },
+    { field: "ACD", headerName: "ACD", width: 80 },
+    { field: "no_lote_kitACD", headerName: "Lote Kit ACD", width: 150 },
+    { field: "no_lote_kitBach", headerName: "Lote Kit Bach", width: 150 },
+    { field: "nombre_unidad", headerName: "Nombre Unidad", width: 150 },
+    {
+      field: "responsableExtraccion",
+      headerName: "Responsable de Extraccion",
+      width: 180,
+    },
+  ];
 
-  const handleRowClick = () => {
-    navigate(`/inscripcion/`);
+  const navigate = useNavigate();
+  const [rows, setRows] = React.useState<any[]>([]);
+  const [fechaInicio, setFechaInicio] = React.useState<Dayjs | null>(
+    dayjs().startOf("day")
+  );
+  const [fechaFin, setFechaFin] = React.useState<Dayjs | null>(
+    dayjs().endOf("day")
+  );
+  const [errorFechaInicio, setErrorFechaInicio] = React.useState<string | null>(
+    null
+  );
+  const [errorFechaFin, setErrorFechaFin] = React.useState<string | null>(null);
+  const [openModifyConfirm, setOpenModifyConfirm] = React.useState(false);
+  const [rowToModify, setRowToModify] = React.useState<any>(null);
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [searchNoRegistro, setSearchNoRegistro] = React.useState("");
+  const [filteredRows, setFilteredRows] = React.useState<any[]>([]);
+  const [isSearchActive, setIsSearchActive] = React.useState(false);
+
+  // --- Modificar: abre modal de confirmación ---
+  const handleModifyClick = (row: any) => {
+    setRowToModify(row);
+    setOpenModifyConfirm(true);
+  };
+
+  // --- Confirmar modificación: redirige según tipo de bolsa ---
+  const handleConfirmModify = () => {
+    if (!rowToModify) return;
+    const id = rowToModify.id || rowToModify._id;
+    if (rowToModify.componenteNombre?.includes("Plasma")) {
+      navigate(`/donaciones-plasma/${id}`, {
+        state: { datosDonante: rowToModify },
+      });
+    } else {
+      navigate(`/donaciones-sangre/${id}`, {
+        state: { datosDonante: rowToModify },
+      });
+    }
+    setOpenModifyConfirm(false);
+  };
+
+  // --- Validación de fechas ---
+  const validarFechas = () => {
+    if (!fechaInicio) {
+      setErrorFechaInicio("La fecha de inicio es obligatoria");
+      return false;
+    }
+    if (!fechaFin) {
+      setErrorFechaFin("La fecha fin es obligatoria");
+      return false;
+    }
+    if (fechaInicio.isAfter(fechaFin)) {
+      setErrorFechaInicio(
+        "La fecha de inicio no puede ser posterior a la fecha fin"
+      );
+      setErrorFechaFin("La fecha fin no puede ser anterior a la fecha inicio");
+      return false;
+    }
+    setErrorFechaInicio(null);
+    setErrorFechaFin(null);
+    return true;
+  };
+
+  // --- Buscar por rango de fechas ---
+  const handleBuscar = async () => {
+    if (!validarFechas()) return;
+    try {
+      const res = await axios.get(
+        "http://localhost:3000/registro-donacion/hoja-cargo-donaciones",
+        {
+          params: {
+            inicio: fechaInicio ? fechaInicio.format("YYYY-MM-DD") : "",
+            fin: fechaFin ? fechaFin.format("YYYY-MM-DD") : "",
+          },
+        }
+      );
+
+      const mappedRows = res.data.map((reg: any) => ({
+        id: reg.id || reg._id,
+        fechaD: reg.fechaD,
+        no_registro: reg.no_registro || "",
+        ci: reg.ci || "",
+        no_hc: reg.no_hc || "",
+        nombre: reg.nombre || "",
+        sexo: reg.sexo || "",
+        edad: reg.edad || "",
+        grupo: reg.grupo || "",
+        rh: reg.rh || "",
+        componente: reg.componente?._id || reg.componente || "",
+        componenteNombre:
+          reg.componente?.nombreComponente || reg.componenteNombre || "",
+        componenteObj: reg.componente || null,
+        no_tubuladura: reg.no_tubuladura || "",
+        no_lote: reg.no_lote || "",
+        tipo_bolsa: reg.tipo_bolsa || "",
+        volumen: reg.volumen || "",
+        reaccion: reg.reaccion || "",
+        TCM: reg.TCM || "",
+        TP: reg.TP || "",
+        tiempo: reg.tiempo || "",
+        ciclos: reg.ciclos || "",
+        ACD: reg.ACD || "",
+        no_lote_kitACD: reg.no_lote_kitACD || "",
+        no_lote_kitBach: reg.no_lote_kitBach || "",
+        nombre_tecnico: reg.nombre_tecnico || "",
+        nombre_unidad: reg.nombre_unidad || "",
+        responsableExtraccion: reg.responsableExtraccion || "",
+      }));
+      setRows(mappedRows);
+      setFilteredRows(mappedRows);
+      setIsSearchActive(false);
+    } catch (error) {
+      setRows([]);
+      setFilteredRows([]);
+      setIsSearchActive(false);
+    }
+  };
+
+  // --- Cargar donaciones por defecto cuando cambian las fechas ---
+  React.useEffect(() => {
+    handleBuscar();
+    // eslint-disable-next-line
+  }, [fechaInicio, fechaFin]);
+
+  // --- Handlers para los pickers ---
+  const handleFechaInicioChange = (newValue: Dayjs | null) => {
+    setFechaInicio(newValue);
+    if (!newValue) {
+      setErrorFechaInicio("La fecha de inicio es obligatoria");
+    } else if (fechaFin && newValue.isAfter(fechaFin)) {
+      setErrorFechaInicio(
+        "La fecha de inicio no puede ser posterior a la fecha fin"
+      );
+    } else {
+      setErrorFechaInicio(null);
+      if (fechaFin && fechaFin.isBefore(newValue)) {
+        setErrorFechaFin(
+          "La fecha fin no puede ser anterior a la fecha inicio"
+        );
+      } else {
+        setErrorFechaFin(null);
+      }
+    }
+  };
+
+  const handleFechaFinChange = (newValue: Dayjs | null) => {
+    setFechaFin(newValue);
+    if (!newValue) {
+      setErrorFechaFin("La fecha fin es obligatoria");
+    } else if (fechaInicio && newValue.isBefore(fechaInicio)) {
+      setErrorFechaFin("La fecha fin no puede ser anterior a la fecha inicio");
+    } else {
+      setErrorFechaFin(null);
+      if (fechaInicio && fechaInicio.isAfter(newValue)) {
+        setErrorFechaInicio(
+          "La fecha de inicio no puede ser posterior a la fecha fin"
+        );
+      } else {
+        setErrorFechaInicio(null);
+      }
+    }
+  };
+
+  // --- Buscador por No. Registro Donación ---
+  const handleSearch = () => {
+    setFilteredRows(
+      rows.filter(
+        (row) =>
+          !searchNoRegistro || row.no_registro?.toString() === searchNoRegistro
+      )
+    );
+    setIsSearchActive(true);
+    setSearchOpen(false);
+  };
+
+  const handleClearSearch = () => {
+    setSearchNoRegistro("");
+    setSearchOpen(false);
+    setIsSearchActive(false);
+    handleBuscar(); // Esto recarga los datos según las fechas actuales
   };
 
   return (
@@ -104,6 +272,60 @@ export default function HojaCargoDonaciones() {
       >
         Hoja de Cargo
       </Typography>
+
+      <Box sx={{ position: "relative", width: "100%" }}>
+        {/* Buscador en la esquina superior derecha */}
+        <IconButton
+          color="primary"
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1,
+            backgroundColor: "white",
+            boxShadow: 2,
+            "&:hover": { backgroundColor: "#f0f0f0" },
+          }}
+          onClick={() => setSearchOpen(true)}
+        >
+          <SearchIcon />
+        </IconButton>
+      </Box>
+
+      {/* Dialogo de búsqueda */}
+      <Dialog open={searchOpen} onClose={() => setSearchOpen(false)}>
+        <DialogTitle>Buscar por No. Registro Donación</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="No. Registro Donación"
+              value={searchNoRegistro}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Solo letras, números, punto y guion, sin espacios
+                if (
+                  /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9.\-]*$/.test(value) ||
+                  value === ""
+                ) {
+                  setSearchNoRegistro(e.target.value);
+                }
+              }}
+              fullWidth
+            />
+            <Button
+              variant="contained"
+              onClick={handleSearch}
+              disabled={!searchNoRegistro}
+            >
+              Buscar
+            </Button>
+            <Button variant="outlined" onClick={handleClearSearch}>
+              Limpiar búsqueda
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
       <Box
         style={{
           display: "flex",
@@ -113,14 +335,69 @@ export default function HojaCargoDonaciones() {
       >
         <Box
           style={{
-            height: 450,
             width: "98%",
           }}
         >
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                mb: 2,
+                mt: 2,
+                justifyContent: "flex-start",
+              }}
+            >
+              <DateTimePicker
+                label="Fecha y Hora Inicio"
+                value={fechaInicio}
+                onChange={handleFechaInicioChange}
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    sx: { width: 230 },
+                    error: !!errorFechaInicio,
+                    helperText: errorFechaInicio,
+                  },
+                }}
+              />
+              <DateTimePicker
+                label="Fecha y Hora Fin"
+                value={fechaFin}
+                onChange={handleFechaFinChange}
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    sx: { width: 230 },
+                    error: !!errorFechaFin,
+                    helperText: errorFechaFin,
+                  },
+                }}
+              />
+            </Box>
+          </LocalizationProvider>
+          {/* Puedes mostrar un mensaje o badge según el estado: */}
+          <Typography
+            align="center"
+            variant="h2"
+            component="h2"
+            mt={8}
+            sx={{
+              fontSize: { xs: "1rem", md: "2rem" },
+              textAlign: "center",
+              backgroundColor: "#00796B",
+              color: "white",
+              mb: 2,
+              fontFamily: '"Open Sans"',
+            }}
+          >
+            {isSearchActive
+              ? "Resultado de búsqueda por No. Registro Donación"
+              : "Donaciones en el rango de fechas seleccionado"}
+          </Typography>
           <DataGrid
-            rows={rows}
+            rows={filteredRows}
             columns={columnas}
-            onRowClick={handleRowClick}
             sx={{
               "& .MuiDataGrid-columnHeaders": {
                 position: "sticky",
@@ -147,6 +424,26 @@ export default function HojaCargoDonaciones() {
             pageSizeOptions={[10]}
           />
         </Box>
+        {/* Modal de confirmación de modificación */}
+        <Dialog
+          open={openModifyConfirm}
+          onClose={() => setOpenModifyConfirm(false)}
+          aria-labelledby="modify-confirm-dialog-title"
+        >
+          <DialogTitle id="modify-confirm-dialog-title">
+            Confirmación
+          </DialogTitle>
+          <DialogContent>
+            ¿Está seguro que desea modificar la donacion de{" "}
+            <strong>{rowToModify?.nombre}</strong>?
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenModifyConfirm(false)}>No</Button>
+            <Button onClick={handleConfirmModify} autoFocus>
+              Sí
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </>
   );

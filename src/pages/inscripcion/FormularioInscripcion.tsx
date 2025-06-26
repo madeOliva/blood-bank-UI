@@ -16,13 +16,42 @@ import {
 } from "@mui/material";
 import Navbar from "../../components/navbar/Navbar";
 import BotonPersonalizado from "../../components/Button";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+
+// --- Funciones de validación ---
+const soloLetrasEspacios = (texto: string) => /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/.test(texto);
+const soloLetrasSinEspacios = (texto: string) => /^[A-Za-zÁÉÍÓÚáéíóúÑñ]*$/.test(texto);
+const soloNumeros = (texto: string) => /^\d*$/.test(texto);
+const letrasNumerosEspacios = (texto: string) =>
+  /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s]*$/.test(texto);
+const letrasNumerosSinEspacios = (texto: string) =>
+  /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ]*$/.test(texto);
+const letrasNumerosPuntoGuionSinEspacios = (texto: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9.\-]*$/.test(texto);
+
+const municipiosPinarDelRio = [
+  { codigo: "101", nombre: "Pinar del Río" },
+  { codigo: "102", nombre: "Consolación del Sur" },
+  { codigo: "103", nombre: "Guane" },
+  { codigo: "104", nombre: "La Palma" },
+  { codigo: "105", nombre: "Los Palacios" },
+  { codigo: "106", nombre: "Mantua" },
+  { codigo: "107", nombre: "Minas de Matahambre" },
+  { codigo: "108", nombre: "San Juan y Martínez" },
+  { codigo: "109", nombre: "San Luis" },
+  { codigo: "110", nombre: "Sandino" },
+  { codigo: "111", nombre: "Viñales" },
+];
 
 const FormularioInscripcion: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const historiaClinica = location.state?.historiaClinica;
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+  console.log(usuario.name);
 
   const camposVacios = {
     no_hc: "",
@@ -43,6 +72,8 @@ const FormularioInscripcion: React.FC = () => {
     telefonoLaboral: "",
     centroLaboral: "",
     otraLocalizacion: "",
+    direccion: "",
+    fecha_nacimiento: "",
   };
 
   // Estado para los campos del formulario
@@ -67,6 +98,8 @@ const FormularioInscripcion: React.FC = () => {
     factor: "",
     consejo_popular: "",
     no_consultorio: "",
+    direccion: "",
+    fecha_nacimiento: "",
   });
 
   //Estados para los datos de los select , el checbox y la HC
@@ -101,7 +134,22 @@ const FormularioInscripcion: React.FC = () => {
     factor: "",
     consejo_popular: "",
     no_consultorio: "",
+    direccion: "",
+    fecha_nacimiento: "",
   });
+
+  //Para Calcular la edad
+  function calcularEdad(fechaNacimiento: string): number {
+    if (!fechaNacimiento) return 0;
+    const hoy = new Date();
+    const nacimiento = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const m = hoy.getMonth() - nacimiento.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+      edad--;
+    }
+    return edad;
+  }
 
   // Estados para el modal de éxito
   const [openSuccess, setOpenSuccess] = useState(false);
@@ -110,6 +158,38 @@ const FormularioInscripcion: React.FC = () => {
   // Estados para el modal de error
   const [openError, setOpenError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Efecto para cargar datos de la historia clínica cundo se seleccione una de la lista de citados
+  useEffect(() => {
+    if (historiaClinica) {
+      setForm({
+        ...form,
+        ci: historiaClinica.ci,
+        nombre: historiaClinica.nombre,
+        primer_apellido: historiaClinica.primer_apellido,
+        segundo_apellido: historiaClinica.segundo_apellido,
+        sexo: historiaClinica.sexo?._id || historiaClinica.sexo,
+        edad: historiaClinica.edad ? String(historiaClinica.edad) : "",
+        municipio: historiaClinica.municipio,
+        provincia: historiaClinica.provincia?._id || historiaClinica.provincia,
+        color_piel: historiaClinica.color_piel,
+        grupo_sanguine:
+          historiaClinica.grupo_sanguine?._id || historiaClinica.grupo_sanguine,
+        factor: historiaClinica.factor?._id || historiaClinica.factor,
+        consejo_popular: historiaClinica.consejo_popular,
+        no_consultorio: historiaClinica.no_consultorio,
+        ocupacion: historiaClinica.ocupacion,
+        telefono: historiaClinica.telefono,
+        telefonoLaboral: historiaClinica.telefonoLaboral,
+        centroLaboral: historiaClinica.centro_laboral,
+        otraLocalizacion: historiaClinica.otra_localizacion,
+        no_hc: historiaClinica.no_hc,
+        direccion: historiaClinica.direccion,
+        fecha_nacimiento: historiaClinica.fecha_nacimiento,
+      });
+      setShowOtraLocalizacion(!!historiaClinica.otra_localizacion);
+    }
+  }, [historiaClinica]);
 
   useEffect(() => {
     // Solo buscar si el CI tiene 11 dígitos
@@ -129,6 +209,7 @@ const FormularioInscripcion: React.FC = () => {
               edad: res.data.edad ? String(res.data.edad) : "",
               municipio: res.data.municipio || "",
               provincia: res.data.provincia?._id || res.data.provincia || "",
+              direccion: res.data.direccion || "",
               color_piel: res.data.color_piel || "",
               grupo_sanguine:
                 res.data.grupo_sanguine?._id || res.data.grupo_sanguine || "",
@@ -140,28 +221,35 @@ const FormularioInscripcion: React.FC = () => {
               telefonoLaboral: res.data.telefonoLaboral || "",
               centroLaboral: res.data.centro_laboral || "",
               otraLocalizacion: res.data.otra_localizacion || "",
+              fecha_nacimiento: res.data.fecha_nacimiento
+                ? res.data.fecha_nacimiento.slice(0, 10)
+                : prev.fecha_nacimiento, // <-- SOLO si viene, si no, deja la que ya estaba
+              // ...otros campos...
             }));
+            setShowOtraLocalizacion(!!res.data.otra_localizacion);
             setIdHistoriaClinica(res.data._id || "");
           }
         })
         .catch(() => {
           // Si no existe, limpia los campos (opcional)
           setForm({ ...form, ...camposVacios });
+          setShowOtraLocalizacion(false);
           setIdHistoriaClinica("");
         });
-    }else {
-    // Si el CI no tiene 11 dígitos, limpia los campos dependientes
-    setForm((prev) => ({
-      ...prev,
-      ...camposVacios,
-      ci: prev.ci, // Mantén el valor actual del CI
-    }));
-    setIdHistoriaClinica("");
-  }
+    } else {
+      // Si el CI no tiene 11 dígitos, limpia los campos dependientes
+      setForm((prev) => ({
+        ...prev,
+        ...camposVacios,
+        ci: prev.ci, // Mantén el valor actual del CI
+      }));
+      setShowOtraLocalizacion(false);
+      setIdHistoriaClinica("");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.ci]);
 
-  // Cargar datos del registro si hay id
+  // Cargar datos del registro si hay id (Esto es cuando voy a modificar)
   useEffect(() => {
     if (id) {
       axios
@@ -182,6 +270,7 @@ const FormularioInscripcion: React.FC = () => {
               : "",
             municipio: res.data.historiaClinica?.municipio || "",
             provincia: res.data.historiaClinica?.provincia || "",
+            direccion: res.data.historiaClinica?.direccion || "",
             color_piel: res.data.historiaClinica?.color_piel || "",
             grupo_sanguine:
               res.data.historiaClinica?.grupo_sanguine?._id ||
@@ -199,11 +288,16 @@ const FormularioInscripcion: React.FC = () => {
             centroLaboral: res.data.historiaClinica?.centro_laboral || "",
             otraLocalizacion: res.data.historiaClinica?.otra_localizacion || "",
             componente: res.data.componente?._id || res.data.componente || "",
+            fecha_nacimiento: res.data.historiaClinica?.fecha_nacimiento
+              ? res.data.historiaClinica.fecha_nacimiento.slice(0, 10)
+              : "",
           });
           setShowOtraLocalizacion(!!res.data.otraLocalizacion);
           setIdHistoriaClinica(res.data.historiaClinica?._id || "");
         })
-        .catch(() => {});
+        .catch(() => {
+          setShowOtraLocalizacion(false);
+        });
     }
   }, [id]);
 
@@ -330,10 +424,36 @@ const FormularioInscripcion: React.FC = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any
   ) => {
     const { name, value } = e.target;
-    if (name === "telefono" || name === "telefonoLaboral" || name === "edad") {
-      if (!/^\d*$/.test(value)) return;
+
+    //Validaciones por campo
+  
+    if (name=== "ci"|| name === "telefono" || name === "telefonoLaboral" || name === "edad" || name==="no_consultorio") {
+      if (!soloNumeros(value)) return;
     }
-    setForm({ ...form, [name]: value });
+
+    if (name === "nombre" || name === "primer_apellido" || name === "segundo_apellido") {
+      if (!soloLetrasSinEspacios(value)) return;
+    }
+    if ( name === "centroLaboral" || name === "ocupacion" || name === "consejo_popular") {
+      if (!soloLetrasEspacios(value)) return;
+    }
+
+    if(name==="no_hc"){
+      if (!letrasNumerosPuntoGuionSinEspacios(value)) return;
+    }
+
+    if (name === "direccion" || name === "otraLocalizacion") {
+      // Permite letras, números, espacios y algunos signos básicos de dirección
+      if (!/^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s\.,#\-º°]*$/.test(value)) return;
+    }
+
+
+    if (name === "fecha_nacimiento") {
+      const nuevaEdad = calcularEdad(value);
+      setForm({ ...form, [name]: value, edad: nuevaEdad.toString() });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
     setErrors({ ...errors, [name]: "" });
   };
 
@@ -374,6 +494,9 @@ const FormularioInscripcion: React.FC = () => {
           telefono: form.telefono,
           telefonoLaboral: form.telefonoLaboral,
           centro_laboral: form.centroLaboral,
+          otra_localizacion: form.otraLocalizacion,
+          direccion: form.direccion,
+          fecha_nacimiento: form.fecha_nacimiento,
         },
         componente: form.componente,
       };
@@ -402,7 +525,9 @@ const FormularioInscripcion: React.FC = () => {
             telefono: form.telefono,
             telefonoLaboral: form.telefonoLaboral,
             centro_laboral: form.centroLaboral,
-            // ...otros campos si tienes
+            otra_localizacion: form.otraLocalizacion,
+            direccion: form.direccion,
+            fecha_nacimiento: form.fecha_nacimiento,
           }
         );
 
@@ -416,8 +541,15 @@ const FormularioInscripcion: React.FC = () => {
           navigate("/hoja-cargo");
         }, 1800);
       } else {
-        await axios.post(`http://localhost:3000/registro-donacion/`, data);
-        //alert("Registro exitoso");
+        const datosAEnviar = {
+          ...data,
+          responsableInscripcion: usuario.name, // o el campo correcto
+        };
+        console.log("Responsable que se envía:", usuario.name, datosAEnviar);
+        await axios.post(
+          "http://localhost:3000/registro-donacion",
+          datosAEnviar
+        );
         setSuccessMessage("¡Se ha registrado correctamente!");
         setOpenSuccess(true);
         setTimeout(() => {
@@ -467,6 +599,7 @@ const FormularioInscripcion: React.FC = () => {
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
+                      sx={{ minWidth: 230 }}
                       label="Carnet de Identidad"
                       variant="outlined"
                       name="ci"
@@ -474,7 +607,7 @@ const FormularioInscripcion: React.FC = () => {
                       onChange={handleChange}
                       error={!!errors.ci}
                       helperText={
-                        errors.ci || "Debe tener 11 dígitos. Ej: 99010112345"
+                        errors.ci || "Debe tener 11 dígitos. Ej: 99010112345" 
                       }
                       inputProps={{
                         inputMode: "numeric",
@@ -487,6 +620,7 @@ const FormularioInscripcion: React.FC = () => {
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
+                      sx={{ minWidth: 200, maxWidth: 250 }}
                       label="No. HC"
                       variant="outlined"
                       name="no_hc"
@@ -499,16 +633,34 @@ const FormularioInscripcion: React.FC = () => {
                 </Grid>
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Nombre"
-                  variant="outlined"
-                  name="nombre"
-                  value={form.nombre}
-                  onChange={handleChange}
-                  error={!!errors.nombre}
-                  helperText={errors.nombre}
-                />
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Fecha de Nacimiento"
+                      name="fecha_nacimiento"
+                      type="date"
+                      value={form.fecha_nacimiento}
+                      onChange={handleChange}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                      variant="outlined"
+                      sx={{ minWidth: 230 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      sx={{ minWidth: 230 }}
+                      label="Nombre"
+                      variant="outlined"
+                      name="nombre"
+                      value={form.nombre}
+                      onChange={handleChange}
+                      error={!!errors.nombre}
+                      helperText={errors.nombre}
+                    />
+                  </Grid>
+                </Grid>
               </Grid>
               {/* Primer Apellido y Segundo Apellido juntos */}
               <Grid item xs={12}>
@@ -556,6 +708,7 @@ const FormularioInscripcion: React.FC = () => {
                       type="number"
                       InputProps={{ sx: { minWidth: 0, maxWidth: 105 } }}
                       fullWidth
+                      disabled
                     />
                   </Grid>
                   <Grid item xs={4}>
@@ -772,16 +925,28 @@ const FormularioInscripcion: React.FC = () => {
               <Grid item xs={12}>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Municipio"
-                      variant="outlined"
-                      name="municipio"
-                      value={form.municipio}
-                      onChange={handleChange}
-                      error={!!errors.municipio}
-                      helperText={errors.municipio}
-                    />
+                    <FormControl fullWidth error={!!errors.municipio}>
+                      <InputLabel>Municipio</InputLabel>
+                      <Select
+                        name="municipio"
+                        value={form.municipio}
+                        label="Municipio"
+                        onChange={handleChange}
+                        sx={{ minWidth: 210 }}
+                      >
+                        <MenuItem value="">Seleccione</MenuItem>
+                        {municipiosPinarDelRio.map((mun) => (
+                          <MenuItem key={mun.codigo} value={mun.nombre}>
+                            {mun.nombre}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {errors.municipio && (
+                        <Typography color="error" variant="caption">
+                          {errors.municipio}
+                        </Typography>
+                      )}
+                    </FormControl>
                   </Grid>
 
                   <Grid item xs={6}>
@@ -810,6 +975,20 @@ const FormularioInscripcion: React.FC = () => {
                     </FormControl>
                   </Grid>
                 </Grid>
+              </Grid>
+              {/*Direccion Particular*/}
+              <Grid item xs={12}>
+                <TextField
+                  label="Dirección Particular"
+                  name="direccion"
+                  value={form.direccion}
+                  onChange={handleChange}
+                  multiline
+                  minRows={2}
+                  maxRows={2}
+                  fullWidth
+                  variant="outlined"
+                />
               </Grid>
 
               {/* Otra Localización */}

@@ -1,44 +1,88 @@
-import React, { useState } from 'react';
-import { Box, Button, Snackbar, Typography, TextField, Paper } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box, Button, Snackbar, Typography, TextField, Paper, Modal } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import dayjs, { Dayjs } from 'dayjs';
 import Navbar from '../../components/navbar/Navbar';
+import axios from 'axios';
+import BotonPersonalizado from '../../components/Button';
 
-interface Paciente {
-  id: number;
+const modalStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  boxShadow: 24,
+  p: 4,
+  borderRadius: 2,
+  textAlign: 'center',
+};
+
+type PacienteDieta = {
+  id: string;
   nombre: string;
-  fechaUltimaDieta: string;
+  primer_apellido: string;
+  segundo_apellido: string;
+  fechaDieta: string;
   fechaActualizar: Dayjs;
-}
-
-const pacientesIniciales: Paciente[] = [
-  { id: 1, nombre: 'Maddie Buckley', fechaUltimaDieta: '22-11-2024', fechaActualizar: dayjs() },
-  { id: 2, nombre: 'Fred Weasley', fechaUltimaDieta: '14-10-2024', fechaActualizar: dayjs() },
-  { id: 3, nombre: 'Will Turner', fechaUltimaDieta: '2-10-2024', fechaActualizar: dayjs() },
-  { id: 4, nombre: 'Yudith Carbó', fechaUltimaDieta: '7-8-2024', fechaActualizar: dayjs() },
-  { id: 5, nombre: 'Eddie Diaz', fechaUltimaDieta: '16-9-2024', fechaActualizar: dayjs() },
-];
+};
 
 export default function DietaPacientes() {
-  const [rows, setRows] = useState<Paciente[]>(pacientesIniciales);
+  const [rows, setRows] = useState<PacienteDieta[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
+
+  useEffect(() => {
+    axios.get('http://localhost:3000/historia-clinica/donantes-activos')
+      .then(res => {
+        const pacientesConDieta = res.data
+          .filter((p: any) => p.fechaDieta && p.fechaDieta.trim() !== '')
+          .map((p: any, idx: number) => ({
+            id: p._id,
+            nombre: p.nombre,
+            primer_apellido: p.primer_apellido,
+            segundo_apellido: p.segundo_apellido,
+            fechaDieta: p.fechaDieta,
+            fechaActualizar: dayjs(),
+          }));
+        setRows(pacientesConDieta);
+      });
+  }, []);
+
+  const handleGuardar = async () => {
+    try {
+      await Promise.all(
+        rows.map(row =>
+          axios.put(`http://localhost:3000/historia-clinica/${row.id}`, {
+            fechaDieta: row.fechaActualizar.format('YYYY-MM-DD'),
+          })
+        )
+      );
+      // Actualiza la columna fechaDieta localmente después de guardar
+      setRows(prevRows =>
+        prevRows.map(row => ({
+          ...row,
+          fechaDieta: row.fechaActualizar.format('YYYY-MM-DD'),
+        }))
+      );
+      setSnackbarOpen(true);
+    } catch (error) {
+      alert('Error al actualizar las fechas de dieta');
+    }
+  };
+
   // Manejador para cambiar la fecha
-  const handleDateChange = (id: number, newDate: Dayjs | null) => {
+  const handleDateChange = (id: string, newDate: Dayjs | null) => {
     if (!newDate) return;
     setRows((prevRows) =>
       prevRows.map((row) =>
         row.id === id ? { ...row, fechaActualizar: newDate } : row
       )
     );
-  };
-
-  // Manejador para el botón aceptar
-  const handleGuardar = () => {
-    setSnackbarOpen(true);
   };
 
   // Columnas del DataGrid
@@ -50,32 +94,43 @@ export default function DietaPacientes() {
       headerAlign: 'center',
       align: 'center',
       sortable: false,
+      renderCell: (params) => params.api.getAllRowIds().indexOf(params.id) + 1,
     },
     {
       field: 'nombre',
-      headerName: 'Nombre y Apellidos',
+      headerName: 'Nombre',
       flex: 1,
-      minWidth: 250,  // Aumentado para mostrar nombres completos
+      minWidth: 250,
       headerAlign: 'center',
       align: 'left',
       sortable: true,
-      renderCell: (params) => (
-        <Typography fontWeight={700} sx={{ whiteSpace: 'normal', lineHeight: '1.2' }}>
-          {params.value}
-        </Typography>
-      ),
     },
     {
-      field: 'fechaUltimaDieta',
+      field: 'primer_apellido',
+      headerName: 'Primer Apellido',
+      flex: 1,
+      minWidth: 250,
+      headerAlign: 'center',
+      align: 'left',
+      sortable: true,
+    },
+    {
+      field: 'segundo_apellido',
+      headerName: 'Segundo Apellido',
+      flex: 1,
+      minWidth: 250,
+      headerAlign: 'center',
+      align: 'left',
+      sortable: true,
+    },
+    {
+      field: 'fechaDieta',
       headerName: 'Fecha Última Dieta',
       flex: 1,
       minWidth: 180,
       headerAlign: 'center',
       align: 'center',
       sortable: false,
-      renderCell: (params) => (
-        <Typography fontWeight={700}>{params.value}</Typography>
-      ),
     },
     {
       field: 'fechaActualizar',
@@ -90,8 +145,8 @@ export default function DietaPacientes() {
           <DatePicker
             value={params.row.fechaActualizar}
             onChange={(newDate) => handleDateChange(params.row.id, newDate)}
-            maxDate={dayjs()}
             format="DD-MM-YYYY"
+            minDate={dayjs()} 
             slots={{
               openPickerIcon: CalendarTodayIcon,
             }}
@@ -110,35 +165,35 @@ export default function DietaPacientes() {
 
   return (
     <>
-      <Navbar/>
-      <Box sx={{ 
-        width: '95%',  // Cambiado a 95% para más espacio
-        maxWidth: 1400,  // Máximo ancho
-        mx: 'auto', 
+      <Navbar />
+      <Box sx={{
+        width: '100%',
+        maxWidth: 1400,
+        mx: 'auto',
         mt: 6,
         mb: 4
       }}>
         {/* Listón de título */}
-          <Typography
-                  variant="h4"
-                  component="h5"
-                  sx={{
-                    fontSize: { xs: "2rem", md: "3rem" },
-                    backgroundColor: "primary.dark",
-                    color: "white",
-                    textAlign: "center",
-                    marginBlock: 5,
-                    mt: 8,
-                  }}
-                >
-                 Listado de Pacientes con Dieta
-                </Typography>
-        
+        <Typography
+          variant="h4"
+          component="h5"
+          sx={{
+            fontSize: { xs: "2rem", md: "3rem" },
+            backgroundColor: "primary.dark",
+            color: "white",
+            textAlign: "center",
+            marginBlock: 5,
+            mt: 8,
+          }}
+        >
+          Listado de Pacientes con Dieta
+        </Typography>
+
         {/* Tabla */}
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            borderRadius: 2, 
+        <Paper
+          elevation={3}
+          sx={{
+            borderRadius: 2,
             overflow: 'hidden',
             height: 'calc(100vh - 340px)'  // Altura dinámica
           }}
@@ -146,7 +201,7 @@ export default function DietaPacientes() {
           <DataGrid
             rows={rows}
             columns={columns}
-            autoHeight={false}  // Desactivado para usar altura fija
+            autoHeight={false}
             hideFooter
             disableColumnMenu
             sx={{
@@ -168,10 +223,19 @@ export default function DietaPacientes() {
                 },
               },
               '& .MuiDataGrid-virtualScroller': {
-                overflowX: 'hidden',  // Evita doble scroll
-              }
+                overflowX: 'hidden',
+              },
+              '& .row-expirada': {
+                backgroundColor: 'rgba(255,0,0,0.2) !important', // fondo rojo claro
+              },
             }}
             getRowId={(row) => row.id}
+            getRowClassName={(params) => {
+              if (params.row.fechaDieta && dayjs(params.row.fechaDieta).isBefore(dayjs(), 'day')) {
+                return 'row-expirada';
+              }
+              return '';
+            }}
             initialState={{
               sorting: {
                 sortModel: [{ field: 'nombre', sort: 'asc' }],
@@ -179,53 +243,41 @@ export default function DietaPacientes() {
             }}
           />
         </Paper>
-        
+
         {/* Botón aceptar */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'center',
           mt: 4,
           bottom: 20,
           zIndex: 1
         }}>
-          <Button
-            variant="contained"
-            sx={{
-              background: '#009688',
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: '1.1rem',
-              px: 6,
-              py: 1.5,
-              borderRadius: 2,
-              boxShadow: 3,
-              '&:hover': { 
-                background: '#00796b',
-                transform: 'scale(1.05)',
-                transition: 'transform 0.3s'
-              },
-            }}
+          <BotonPersonalizado
+            sx={{ width: 225 }}
             onClick={handleGuardar}
           >
-            Guardar 
-          </Button>
+            Guardar
+          </BotonPersonalizado>
         </Box>
-        
-        {/* Mensaje de guardado */}
-        <Snackbar
+
+        <Modal
           open={snackbarOpen}
-          autoHideDuration={2500}
           onClose={() => setSnackbarOpen(false)}
-          message="¡Las fechas de dieta se actualizaron correctamente!"
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          sx={{ 
-            '& .MuiSnackbarContent-root': {
-              fontSize: '1.1rem',
-              padding: '12px 24px',
-              borderRadius: 2
-            } 
-          }}
-        />
+        >
+          <Box sx={modalStyle}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              ¡Las fechas de dieta se actualizaron correctamente!
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setSnackbarOpen(false)}
+              sx={{ mt: 2 }}
+            >
+              Aceptar
+            </Button>
+          </Box>
+        </Modal>
       </Box>
     </>
   );
