@@ -55,7 +55,7 @@ const columns: GridColDef<RowData>[] = [
   { field: "VolGlobulos", headerName: "Volumen de Globulos Rojos", width: 210, editable: false, },
   { field: "VolPlaquetas", headerName: "Volumen de Plaquetas", width: 170, editable: false, },
   {
-    field: "Acciones", headerName: "Acciones", width: 250,
+    field: "Acciones", headerName: "Acciones", width: 130,
     renderCell: (params) => {
       const navigate = useNavigate();
       const [rows, setRows] = useState<RowData[]>([]);
