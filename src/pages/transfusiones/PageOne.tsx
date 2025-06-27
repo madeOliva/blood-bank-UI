@@ -2,12 +2,9 @@ import Box from "@mui/material/Box";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/navbar/Navbar"
-import { Button, Checkbox, Container, Modal, TextField, Typography } from "@mui/material";
+import { Button, Checkbox, Typography } from "@mui/material";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import { useState } from "react";
-import DisabledByDefaultRoundedIcon from '@mui/icons-material/DisabledByDefaultRounded';
-import AssignmentLateIcon from '@mui/icons-material/AssignmentLate';
-import SendIcon from '@mui/icons-material/Send';
 import { useEffect } from "react";
 import axios from "axios";
 
@@ -26,8 +23,6 @@ type RowData = {
   Cama: string;
   Sexo: string;
   Edad: string | number;
-  Estado: string;
-  FHAceptada: string;
   VolGlobulos: number;
   VolPlaquetas: number;
 };
@@ -57,87 +52,17 @@ const columns: GridColDef<RowData>[] = [
   { field: "Cama", headerName: "Cama", width: 100, editable: false, },
   { field: "Sexo", headerName: "Sexo", width: 100, editable: false, },
   { field: "Edad", headerName: "Edad", width: 100, editable: false, },
-  { field: "Estado", headerName: "Estado", width: 110, editable: false, },
   { field: "VolGlobulos", headerName: "Volumen de Globulos Rojos", width: 210, editable: false, },
   { field: "VolPlaquetas", headerName: "Volumen de Plaquetas", width: 170, editable: false, },
-  { field: "FHAceptada", headerName: "Fecha/Hora Aceptada", width: 170, editable: false, },
   {
     field: "Acciones", headerName: "Acciones", width: 250,
     renderCell: (params) => {
       const navigate = useNavigate();
-      const [open2, setOpen2] = useState(false);
-      const handleOpen2 = () => setOpen2(true);
-      const handleClose2 = () => setOpen2(false);
       const [rows, setRows] = useState<RowData[]>([]);
 
       return (
         <>
-          <Button
-            variant="contained"
-            size="small"
-            endIcon={<AssignmentLateIcon sx={{ ml: -1 }} />}
-            sx={{ mr: 1 }}
-            onClick={handleOpen2}
-          >
-            Observaciones
-          </Button>
-          <Modal
-            open={open2}
-            onClose={handleClose2}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-          >
-            <Container sx={{
-              width: "80%", height: "52%", display: 'flex',
-              background: "white",
-              mt: "65px",
-              p: "0px",
-            }}>
-              <Box sx={{ marginTop: "20px", mb: "20px", width: "100%", height: "60%" }}>
-                <Typography
-                  padding={1}
-                  sx={{
-                    width: "100%",
-                    fontSize: "20px",
-                    textAlign: "center",
-                    bgcolor: "primary.dark",
-                    color: "white",
-                  }}
-                >
-                  Observacion
-                </Typography>
-                <Box sx={{ mt: "10px", width: "100%" }}>
-                  <TextField multiline minRows={7} maxRows={7} fullWidth id="outlined-basic" label="Observacion" variant="outlined" />
-                </Box>
-                <Button
-                  variant="contained"
-                  size="small"
-                  endIcon={<SendIcon sx={{ marginLeft: -1 }} />}
-                  sx={{ mt: "10px" }}
-                  onClick={() => {
-                    setRows(prevRows =>
-                      prevRows.map(rows =>
-                        rows.id === params.row.id ? { ...rows, Estado: "Revision OT" } : rows
-                      )
-                    );
-                    handleClose2();
-                  }}
-                >
-                  Enviar
-                </Button>
-                <Button
-                  variant="contained"
-                  size="small"
-                  color='error'
-                  endIcon={<DisabledByDefaultRoundedIcon sx={{ marginLeft: -1 }} />}
-                  sx={{ mt: "10px", ml: "10px" }}
-                  onClick={handleClose2}
-                >
-                  Cancelar
-                </Button>
-              </Box>
-            </Container>
-          </Modal>
+
           <Button
             variant="contained"
             size="small"
@@ -184,10 +109,8 @@ export default function PageOne() {
           Cama: item.cama,
           Sexo: item.sexo,
           Edad: item.edad,
-          Estado: "Pendiente", // Ajusta según tu backend
           VolGlobulos: item.cant_gr,
           VolPlaquetas: item.cant_cp,
-          FHAceptada: "",      // Ajusta según tu backend
         }));
         setRows(rowsWithId);
       });

@@ -1,11 +1,7 @@
 import Box from '@mui/material/Box';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Alert, Button, Container, Modal, Snackbar, Typography } from '@mui/material';
+import { Alert, Button, Snackbar } from '@mui/material';
 import { ReactElement, useEffect, useState } from 'react';
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import DataGridSol from './DataGridSolicitud';
-import SendIcon from '@mui/icons-material/Send';
-import DisabledByDefaultRoundedIcon from '@mui/icons-material/DisabledByDefaultRounded';
 import axios from 'axios';
 import CheckIcon from '@mui/icons-material/Check';
 
@@ -21,19 +17,15 @@ interface ComponenteTransfundir {
     factor: string;
     volumen_inicial: number;
     volumen_final: number;
-    estado: string;
 }
 
 // Componente para la columna "Acciones"
-const AccionesCell = (params: GridRenderCellParams<ComponenteTransfundir>) => {
-    const [openModal, setOpenModal] = useState(false);
+const AccionesCell = (params: GridRenderCellParams<ComponenteTransfundir> & { fetchRows: () => void }) => {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-    const handleOpenModal = () => setOpenModal(true);
-    const handleCloseModal = () => setOpenModal(false);
     const handleSnackbarClose = () => setSnackbarOpen(false);
 
     const handleAceptar = async () => {
@@ -52,7 +44,6 @@ const AccionesCell = (params: GridRenderCellParams<ComponenteTransfundir>) => {
             factor: params.row.factor,
             volumen_inicial: params.row.volumen_inicial,
             volumen_final: params.row.volumen_final,
-            estado: params.row.estado,
         };
 
         try {
@@ -64,6 +55,7 @@ const AccionesCell = (params: GridRenderCellParams<ComponenteTransfundir>) => {
             console.log('Registro eliminado:', deleteResponse.data);
             setSuccess(true);
             setSnackbarOpen(true);
+            params.fetchRows();
             console.log('Respuesta del servidor:', response.data);
         } catch (err: any) {
             setError(err.response?.data?.message || err.message || 'Error desconocido');
@@ -96,77 +88,6 @@ const AccionesCell = (params: GridRenderCellParams<ComponenteTransfundir>) => {
                 {loading ? 'Enviando...' : 'Aceptar'}
             </Button>
 
-            <Button
-                variant="contained"
-                size="small"
-                color="error"
-                endIcon={<AssignmentIcon sx={{ marginLeft: -1 }} />}
-                sx={{ ml: 1, mt: "10px" }}
-                onClick={handleOpenModal}
-            >
-                Solicitar
-            </Button>
-
-            <Modal
-                open={openModal}
-                onClose={handleCloseModal}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Container sx={{
-                    width: "80%",
-                    height: "82%",
-                    display: 'flex',
-                    background: "white",
-                    mt: "65px",
-                    borderRadius: "10px",
-                    flexDirection: 'column',
-                    p: 2,
-                }}>
-                    <Typography
-                        id="modal-title"
-                        padding={1}
-                        sx={{
-                            width: "100%",
-                            fontSize: "20px",
-                            textAlign: "center",
-                            bgcolor: "primary.dark",
-                            color: "white",
-                            borderRadius: 1,
-                            mb: 2,
-                        }}
-                    >
-                        Solicitud de Componentes
-                    </Typography>
-
-                    <Box sx={{ flexGrow: 1, mb: 2 }}>
-                        <DataGridSol />
-                    </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                            variant="contained"
-                            size="small"
-                            endIcon={<SendIcon sx={{ marginLeft: 0 }} />}
-                            sx={{ mr: 1 }}
-                            onClick={() => alert('Funcionalidad de enviar solicitud pendiente')}
-                        >
-                            Enviar
-                        </Button>
-
-                        <Button
-                            variant="contained"
-                            size="small"
-                            color='error'
-                            endIcon={<DisabledByDefaultRoundedIcon sx={{ marginLeft: 0, fontSize: "large" }} />}
-                            onClick={handleCloseModal}
-                        >
-                            Cancelar
-                        </Button>
-                    </Box>
-                </Container>
-            </Modal>
-
             <Snackbar
                 open={snackbarOpen && alertContent !== undefined}
                 autoHideDuration={4000}
@@ -183,19 +104,25 @@ export default function DataGridServicio() {
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const fetchRows = () => {
+        setLoading(true);
         axios.get('http://localhost:3000/stockdelbancodelhas/paciente/Servicio')
             .then(response => {
-                const rowsWithId = response.data.map((item: any, index: number) => ({
-                    id: index + 1,
+                const rowsWithId = response.data.map((item: any, idx: number) => ({
+                    id: idx + 1, // id necesario para DataGrid
                     ...item,
                 }));
                 setRows(rowsWithId);
                 setLoading(false);
             })
             .catch(error => {
+                console.error('Error al cargar datos:', error);
                 setLoading(false);
             });
+    };
+
+    useEffect(() => {
+        fetchRows();
     }, []);
 
     const columns: GridColDef[] = [
@@ -210,12 +137,11 @@ export default function DataGridServicio() {
         { field: 'factor', headerName: 'Factor', width: 100 },
         { field: 'volumen_inicial', headerName: 'Volumen Inicial', width: 150, type: 'number' },
         { field: 'volumen_final', headerName: 'Volumen Final', width: 150, type: 'number' },
-        { field: 'estado', headerName: 'Estado', width: 130 },
         {
             field: "Acciones",
             headerName: "Acciones",
-            width: 220,
-            renderCell: (params) => <AccionesCell {...params} />,
+            width: 115,
+            renderCell: (params) => <AccionesCell {...params} fetchRows={fetchRows} />,
             sortable: false,
             filterable: false,
             editable: false,
@@ -248,7 +174,6 @@ export default function DataGridServicio() {
                     },
                 }}
                 pageSizeOptions={[5]}
-                checkboxSelection
                 disableRowSelectionOnClick
             />
         </Box>
