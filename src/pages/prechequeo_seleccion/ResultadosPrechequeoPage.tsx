@@ -30,49 +30,46 @@ function Water({ row }: { row: any }) {
 export default function ResultadosPrechequeo() {
 
   const [rows, setRows] = useState<any[]>([]);
- useEffect(() => {
-  const fetchRows = async () => {
-    try {
-      const res = await axios.get("http://localhost:3000/registro-donacion/datos");
-      const mappedRows = res.data
-        .filter((reg: any) => {
-          const esPlasma = reg.componente?.nombreComponente?.toLowerCase() === 'plasma';
-          const aptoInterrogatorioNulo = reg.apto_interrogatorio === null || reg.apto_interrogatorio === undefined;
-          const aptoPrechequeoLleno = reg.apto_prechequeo !== null && reg.apto_prechequeo !== undefined;
+  useEffect(() => {
+    const fetchRows = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/registro-donacion/datos");
+        const mappedRows = res.data
+          .filter((reg: any) => {
+            const esPlasma = reg.componente?.nombreComponente?.toLowerCase() === 'plasma';
+            const aptoInterrogatorioNulo = reg.apto_interrogatorio === null || reg.apto_interrogatorio === undefined;
+            const aptoPrechequeoLleno = reg.apto_prechequeo !== null && reg.apto_prechequeo !== undefined;
 
-          if (esPlasma) {
-            return aptoInterrogatorioNulo ;
-          } else {
-            return aptoInterrogatorioNulo && aptoPrechequeoLleno;
-          }
-        })
-        .map((reg: any, idx: number) => ({
-          id: idx + 1,
-          _id: reg._id,
-          historiaClinicaId: reg.historiaClinicaId,
-          nombre: reg.nombre,
-          primer_apellido: reg.primer_apellido,
-          segundo_apellido: reg.segundo_apellido,
-          examenP_grupo: reg.examenP_grupo,
-          examenP_factor: reg.examenP_factor,
-          examenP_hemoglobina: reg.examenP_hemoglobina,
-          apto_prechequeo:
-            reg.apto_prechequeo === true
-              ? 'Apto'
-              : reg.apto_prechequeo === false
-                ? 'No Apto'
-                : '',
-        }));
-      setRows(mappedRows);
-    } catch (error) {
-      console.error("Error al cargar los registros:", error);
-    }
-  };
-  fetchRows();
-}, []);
+            if (esPlasma) {
+              return aptoInterrogatorioNulo;
+            } else {
+              return aptoInterrogatorioNulo && aptoPrechequeoLleno;
+            }
+          })
+          .map((reg: any, idx: number) => ({
+            id: idx + 1,
+            _id: reg._id,
+            historiaClinicaId: reg.historiaClinicaId,
+            ci: reg.ci,
+            nombre: reg.nombre,
+            primer_apellido: reg.primer_apellido,
+            segundo_apellido: reg.segundo_apellido,
+            examenP_grupo: reg.examenP_grupo,
+            examenP_factor: reg.examenP_factor,
+            examenP_hemoglobina: reg.examenP_hemoglobina,
+            apto_prechequeo: reg.apto_prechequeo ?? '',
+          }));
+
+        setRows(mappedRows);
+      } catch (error) {
+        console.error("Error al cargar los registros:", error);
+      }
+    };
+    fetchRows();
+  }, []);
 
 
-  // ...dentro del componente Prechequeo:
+  
   const [busquedaCI, setBusquedaCI] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -179,7 +176,7 @@ export default function ResultadosPrechequeo() {
         Listado de posibles donantes
       </Typography>
 
-      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2, marginTop:5 }}>
+      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2, marginTop: 5 }}>
         <TextField
           label="Buscar por CI"
           value={busquedaCI}

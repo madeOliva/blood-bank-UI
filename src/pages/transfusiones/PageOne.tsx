@@ -24,7 +24,6 @@ type RowData = {
   Sexo: string;
   Edad: string | number;
   VolGlobulos: number;
-  VolPlaquetas: number;
 };
 
 const columns: GridColDef<RowData>[] = [
@@ -52,8 +51,7 @@ const columns: GridColDef<RowData>[] = [
   { field: "Cama", headerName: "Cama", width: 100, editable: false, },
   { field: "Sexo", headerName: "Sexo", width: 100, editable: false, },
   { field: "Edad", headerName: "Edad", width: 100, editable: false, },
-  { field: "VolGlobulos", headerName: "Volumen de Globulos Rojos", width: 210, editable: false, },
-  { field: "VolPlaquetas", headerName: "Volumen de Plaquetas", width: 170, editable: false, },
+  { field: "VolGlobulos", headerName: "Volumen a Transfundir", width: 210, editable: false, },
   {
     field: "Acciones", headerName: "Acciones", width: 130,
     renderCell: (params) => {
@@ -110,7 +108,6 @@ export default function PageOne() {
           Sexo: item.sexo,
           Edad: item.edad,
           VolGlobulos: item.cant_gr,
-          VolPlaquetas: item.cant_cp,
         }));
         setRows(rowsWithId);
       });

@@ -36,7 +36,6 @@ interface RowData {
   factor: string;
   lugar: string;
   VolGlobulos: number;
-  VolPlaquetas: number;
   resultado_laboratorio_grupo: string;
   resultado_laboratorio_factor: string;
 }
@@ -57,8 +56,7 @@ const columns: GridColDef<RowData>[] = [
   { field: "grupo", headerName: "Grupo", width: 100, editable: false },
   { field: "factor", headerName: "Factor", width: 100, editable: false },
   { field: "lugar", headerName: "Lugar de la Transfusion", width: 180, editable: false },
-  { field: "VolGlobulos", headerName: "Volumen de Globulos Rojos", width: 210, editable: false },
-  { field: "VolPlaquetas", headerName: "Volumen de Plaquetas", width: 200, editable: false },
+  { field: "VolGlobulos", headerName: "Volumen a transfundir", width: 210, editable: false },
   { field: "resultado_laboratorio_grupo", headerName: "Resultado Laboratorio Grupo", width: 120 },
   { field: "resultado_laboratorio_factor", headerName: "Resultado Laboratorio Factor", width: 120 },
 ];
@@ -489,7 +487,6 @@ export default function TransfusionPage() {
           factor: item.factor,
           lugar: item.lugar_transf,
           VolGlobulos: item.cant_gr || 0,
-          VolPlaquetas: item.cant_cp || 0,
           resultado_laboratorio_grupo: resultado?.resultado_laboratorio_grupo || "",
           resultado_laboratorio_factor: resultado?.resultado_laboratorio_factor || "",
         };

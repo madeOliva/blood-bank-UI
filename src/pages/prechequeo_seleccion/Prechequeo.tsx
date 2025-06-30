@@ -186,9 +186,17 @@ function ModalWindow({ row, onRemove }: { row: any, onRemove: (ci: string) => vo
               // Solo permite números enteros
               const value = e.target.value.replace(/\D/g, '');
               setHemoglobina(value);
-              if (value && Number(value) < 125) {
-                setError('La hemoglobina tiene que ser mayor a 125');
+              if (value) {
+                const numValue = Number(value);
+                if (numValue >= 125) {
+                  setApto(true); // Marca "Apto"
+                  setError('');
+                } else {
+                  setApto(false); // Marca "No apto"
+                  setError('La hemoglobina tiene que ser mayor o igual a 125');
+                }
               } else {
+                setApto(null);
                 setError('');
               }
             }}
