@@ -27,48 +27,38 @@ export default function PlasmaIndustria() {
   const [openErrorModal, setOpenErrorModal] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
 
-  const fetchData = () => {
+ const fetchData = () => {
   axios
-    .get(
-      "http://localhost:3000/componentes-obtenidos/componentes_obtenidos?estado=liberado"
-    )
+    .get("http://localhost:3000/componentes-obtenidos/componentes_obtenidos")
     .then((res) => {
-      const data = Array.isArray(res.data)
-        ? res.data
-            .filter(
-              (item: any) =>
-                item.estado_obtencion?.toLowerCase() === "liberado" &&
-                item.componentes?.some(
-                  (c: any) =>
-                    c.componente?.toUpperCase() === "PFC" &&
-                    (!c.no_lote || c.no_lote === "")
-                )
-            )
-          .flatMap((item: any) =>
-  item.componentes
-    .filter(
-      (c: any) =>
-        c.componente?.toUpperCase() === "PFC" &&
-        (!c.no_lote || c.no_lote === "") &&
-        !!c._id // Solo los que tienen _id real
+      console.log("DATA RECIBIDA:", res.data);
+     const data = Array.isArray(res.data)
+  ? res.data.flatMap((item: any) =>
+      item.componentes
+        .filter(
+          (c: any) =>
+            (c.tipo?.toUpperCase() === "PFC" || c.componente?.toUpperCase() === "PFC") &&
+            String(c.estado_obtencion).toLowerCase() === "liberado" &&
+            (!c.no_lote || c.no_lote === "") &&
+            !!c._id
+        )
+        .map((pfc: any) => ({
+          id: pfc._id,
+          _id: item._id,
+          no_consecutivo: item.no_consecutivo ?? "",
+          no_lote: pfc.no_lote ?? "",
+          no_hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+          sexo:
+            typeof item.registro_donacion?.historiaClinica?.sexo === "object"
+              ? item.registro_donacion?.historiaClinica?.sexo?.nombre ?? ""
+              : item.registro_donacion?.historiaClinica?.sexo ?? "",
+          edad: item.registro_donacion?.historiaClinica?.edad ?? "",
+          fecha_donacion: item.registro_donacion?.fechaD ?? "",
+          fecha_obtencion: pfc.fecha_obtencion ?? "",
+          volumen: pfc.volumen ?? ""
+        }))
     )
-    .map((pfc: any) => ({
-      id: pfc._id, // Solo el ObjectId real del componente
-      _id: item._id,
-      no_consecutivo: item.registro_donacion?.no_consecutivo ?? "",
-      no_lote: pfc.no_lote ?? "",
-      no_hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
-      sexo:
-        typeof item.registro_donacion?.historiaClinica?.sexo === "object"
-          ? item.registro_donacion?.historiaClinica?.sexo?.nombre ?? ""
-          : item.registro_donacion?.historiaClinica?.sexo ?? "",
-      edad: item.registro_donacion?.historiaClinica?.edad ?? "",
-      fecha_donacion: item.registro_donacion?.fechaD ?? "",
-      fecha_obtencion: pfc.fecha_obtencion ?? "",
-      volumen: pfc.volumen ?? ""
-    }))
-)
-        : [];
+  : [];
       setRows(data);
     })
     .catch(() => setRows([]));
@@ -98,29 +88,29 @@ export default function PlasmaIndustria() {
     setLotes((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleSaveAllLotes = async () => {
-    const updates = Object.entries(lotes).filter(([_, lote]) => lote && lote.trim() !== "");
-    if (updates.length === 0) {
-      setOpenErrorModal(true);
-      return;
-    }
-    setLoading(true);
-    try {
- await Promise.all(
-  updates.map(([id, lote]) => {
-    return axios.patch(
-      `http://localhost:3000/componentes-obtenidos/lote/${id}`,
-      { no_lote: lote }
+ const handleSaveAllLotes = async () => {
+  const updates = Object.entries(lotes).filter(([_, lote]) => lote && lote.trim() !== "");
+  if (updates.length === 0) {
+    setOpenErrorModal(true);
+    return;
+  }
+  setLoading(true);
+  try {
+    await Promise.all(
+      updates.map(([id, lote]) => {
+        return axios.patch(
+          `http://localhost:3000/componentes-obtenidos/lote/${id}`,
+          { no_lote: lote, envio_industria: true }
+        );
+      })
     );
-  })
-);
-      setOpenSuccessModal(true);
-      fetchData();
-      setLotes({});
-    } finally {
-      setLoading(false);
-    }
-  };
+    setOpenSuccessModal(true);
+    fetchData();
+    setLotes({});
+  } finally {
+    setLoading(false);
+  }
+};
 
   const columns: GridColDef[] = [
     { field: "no_consecutivo", headerName: "No", width: 100 },
@@ -138,8 +128,8 @@ export default function PlasmaIndustria() {
       ),
     },
     { field: "no_hc", headerName: "No. HC", width: 150 },
-    { field: "sexo", headerName: "Sexo", width: 60 },
-    { field: "edad", headerName: "Edad", width: 60 },
+    { field: "sexo", headerName: "Sexo", width: 100 },
+    { field: "edad", headerName: "Edad", width: 100 },
     {
       field: "fecha_donacion",
       headerName: "Fecha Donación",
@@ -154,14 +144,15 @@ export default function PlasmaIndustria() {
       renderCell: (params) =>
         params.value ? new Date(params.value).toLocaleDateString() : "",
     },
-    { field: "volumen", headerName: "Volumen (ml)", width: 120 },
+    { field: "volumen", headerName: "Volumen", width: 120 },
   ];
 
   return (
     <>
       <Navbar />
       <Box sx={{ marginTop: "25" }}>
-        <Typography
+       <Typography
+          variant="h5"
           sx={{
             fontSize: { xs: "2rem", md: "3rem" },
             mt: 8,
@@ -170,19 +161,29 @@ export default function PlasmaIndustria() {
             color: "white",
           }}
         >
-          Plasma Industria
+          Envío de Plasma para Industria
         </Typography>
 
-        <Box sx={{ height: 400, width: "100%" }}>
+        <Box 
+         sx={{
+            height: 450,
+            width: "90%",
+            mb: 2,
+            marginBlockEnd: 1,
+            marginLeft: 7,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}>
           <DataGrid
             rows={rows}
             columns={columns}
-            pageSizeOptions={[5, 10, 25]}
             initialState={{
               pagination: {
-                paginationModel: { pageSize: 5, page: 0 },
+                paginationModel: { pageSize: 10 },
               },
             }}
+            pageSizeOptions={[10]}
             getRowId={(row) => row.id}
             disableRowSelectionOnClick
           />
@@ -191,7 +192,7 @@ export default function PlasmaIndustria() {
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
           <BotonPersonalizado
             onClick={handleSaveAllLotes}
-            sx={{ width: 225 }}
+            sx={{ width: 150 }}
             disabled={loading}
           >
             {loading

@@ -64,20 +64,20 @@ export default function PruebasReanalizar() {
       : "";
   return estado === "analizada" || estado === "reanalizada";
 })
-            .map((item: any, idx: number) => ({
-              id: item.id || item._id || idx,
-              no: item.no ?? idx + 1,
-              hc: item.hc ?? "",
-              grupo: item.grupo ?? "",
-              factor: item.factor ?? "",
-              volumen: item.volumen ?? "",
-              hiv: item.hiv ?? "",
-              hbsag: item.hbsag ?? "",
-              hcv: item.hcv ?? "",
-              bdrl: item.bdrl ?? "",
-              contratipaje: item.contratipaje ?? "",
-              du: item.du ?? "",
-            }))
+.map((item: any, idx: number) => ({
+  id: item.id || item._id || idx,
+  no: item.no_consecutivo ?? idx + 1,
+  hc: item.hc ?? item.historiaClinica?.no_hc ?? "",
+  grupo: item.grupo ?? item.historiaClinica?.grupo_sanguine?.nombre ?? item.historiaClinica?.grupo_sanguine ?? "",
+  factor: item.factor ?? item.historiaClinica?.factor?.signo ?? item.historiaClinica?.factor ?? "",
+  volumen: item.volumen ?? "",
+  hiv: Array.isArray(item.resultado_VIH) ? (item.resultado_VIH[0] ?? "") : (item.resultado_VIH ?? ""),
+  hbsag: Array.isArray(item.resultado_hepatitisB) ? (item.resultado_hepatitisB[0] ?? "") : (item.resultado_hepatitisB ?? ""),
+  hcv: Array.isArray(item.resultado_hepatitisC) ? (item.resultado_hepatitisC[0] ?? "") : (item.resultado_hepatitisC ?? ""),
+  bdrl: Array.isArray(item.resultado_serologia) ? (item.resultado_serologia[0] ?? "") : (item.resultado_serologia ?? ""),
+  contratipaje: Array.isArray(item.resultado_contratipaje) ? (item.resultado_contratipaje[0] ?? "") : (item.resultado_contratipaje ?? ""),
+  du: Array.isArray(item.resultado_DU) ? (item.resultado_DU[0] ?? "") : (item.resultado_DU ?? ""),
+}))
         );
       })
       .catch(error => {
@@ -108,32 +108,31 @@ export default function PruebasReanalizar() {
       });
       // Recarga los datos y filtra solo los de estado "analizada"
       const response = await axios.get('http://localhost:3000/registro-donacion/donaciones-diarias');
-      setRows(
-        response.data
-          .filter((item: any) => {
-            if (typeof item.estado === "string") {
-              return item.estado.toLowerCase() === "analizada";
-            }
-            if (item.estado && item.estado.nombre) {
-              return item.estado.nombre.toLowerCase() === "analizada";
-            }
-            return false;
-          })
-          .map((item: any, idx: number) => ({
-            id: item.id || item._id || idx,
-            no: item.no ?? idx + 1,
-            hc: item.hc ?? "",
-            grupo: item.grupo ?? "",
-            factor: item.factor ?? "",
-            volumen: item.volumen ?? "",
-            hiv: item.hiv ?? "",
-            hbsag: item.hbsag ?? "",
-            hcv: item.hcv ?? "",
-            bdrl: item.bdrl ?? "",
-            contratipaje: item.contratipaje ?? "",
-            du: item.du ?? "",
-          }))
-      );
+     setRows(
+  response.data
+    .filter((item: any) => {
+      const estado = typeof item.estado === "string"
+        ? item.estado.toLowerCase()
+        : item.estado && item.estado.nombre
+          ? item.estado.nombre.toLowerCase()
+          : "";
+      return estado === "analizada" || estado === "reanalizada";
+    })
+    .map((item: any, idx: number) => ({
+  id: item.id || item._id || idx,
+  no: item.no_consecutivo ?? idx + 1,
+  hc: item.hc ?? item.historiaClinica?.no_hc ?? "",
+  grupo: item.grupo ?? item.historiaClinica?.grupo_sanguine?.nombre ?? item.historiaClinica?.grupo_sanguine ?? "",
+  factor: item.factor ?? item.historiaClinica?.factor?.signo ?? item.historiaClinica?.factor ?? "",
+  volumen: item.volumen ?? "",
+  hiv: Array.isArray(item.resultado_VIH) ? (item.resultado_VIH[0] ?? "") : (item.resultado_VIH ?? ""),
+  hbsag: Array.isArray(item.resultado_hepatitisB) ? (item.resultado_hepatitisB[0] ?? "") : (item.resultado_hepatitisB ?? ""),
+  hcv: Array.isArray(item.resultado_hepatitisC) ? (item.resultado_hepatitisC[0] ?? "") : (item.resultado_hepatitisC ?? ""),
+  bdrl: Array.isArray(item.resultado_serologia) ? (item.resultado_serologia[0] ?? "") : (item.resultado_serologia ?? ""),
+  contratipaje: Array.isArray(item.resultado_contratipaje) ? (item.resultado_contratipaje[0] ?? "") : (item.resultado_contratipaje ?? ""),
+  du: Array.isArray(item.resultado_DU) ? (item.resultado_DU[0] ?? "") : (item.resultado_DU ?? ""),
+}))
+);
       setSuccessMessage("La muestra fue desechada correctamente.");
       setOpenSuccess(true);
       setTimeout(() => setOpenSuccess(false), 3000);
@@ -165,33 +164,32 @@ export default function PruebasReanalizar() {
         estado: "aceptada",
       });
       // Recarga los datos y filtra solo los de estado "analizada"
-      const response = await axios.get('http://localhost:3000/registro-donacion/donaciones-diarias');
-      setRows(
-        response.data
-          .filter((item: any) => {
-            if (typeof item.estado === "string") {
-              return item.estado.toLowerCase() === "analizada";
-            }
-            if (item.estado && item.estado.nombre) {
-              return item.estado.nombre.toLowerCase() === "analizada";
-            }
-            return false;
-          })
-          .map((item: any, idx: number) => ({
-            id: item.id || item._id || idx,
-            no: item.no ?? idx + 1,
-            hc: item.hc ?? "",
-            grupo: item.grupo ?? "",
-            factor: item.factor ?? "",
-            volumen: item.volumen ?? "",
-            hiv: item.hiv ?? "",
-            hbsag: item.hbsag ?? "",
-            hcv: item.hcv ?? "",
-            bdrl: item.bdrl ?? "",
-            contratipaje: item.contratipaje ?? "",
-            du: item.du ?? "",
-          }))
-      );
+    const response = await axios.get('http://localhost:3000/registro-donacion/donaciones-diarias');
+setRows(
+  response.data
+    .filter((item: any) => {
+      const estado = typeof item.estado === "string"
+        ? item.estado.toLowerCase()
+        : item.estado && item.estado.nombre
+          ? item.estado.nombre.toLowerCase()
+          : "";
+      return estado === "analizada" || estado === "reanalizada";
+    })
+   .map((item: any, idx: number) => ({
+  id: item.id || item._id || idx,
+  no: item.no_consecutivo ?? idx + 1,
+  hc: item.hc ?? item.historiaClinica?.no_hc ?? "",
+  grupo: item.grupo ?? item.historiaClinica?.grupo_sanguine?.nombre ?? item.historiaClinica?.grupo_sanguine ?? "",
+  factor: item.factor ?? item.historiaClinica?.factor?.signo ?? item.historiaClinica?.factor ?? "",
+  volumen: item.volumen ?? "",
+  hiv: Array.isArray(item.resultado_VIH) ? (item.resultado_VIH[0] ?? "") : (item.resultado_VIH ?? ""),
+  hbsag: Array.isArray(item.resultado_hepatitisB) ? (item.resultado_hepatitisB[0] ?? "") : (item.resultado_hepatitisB ?? ""),
+  hcv: Array.isArray(item.resultado_hepatitisC) ? (item.resultado_hepatitisC[0] ?? "") : (item.resultado_hepatitisC ?? ""),
+  bdrl: Array.isArray(item.resultado_serologia) ? (item.resultado_serologia[0] ?? "") : (item.resultado_serologia ?? ""),
+  contratipaje: Array.isArray(item.resultado_contratipaje) ? (item.resultado_contratipaje[0] ?? "") : (item.resultado_contratipaje ?? ""),
+  du: Array.isArray(item.resultado_DU) ? (item.resultado_DU[0] ?? "") : (item.resultado_DU ?? ""),
+}))
+);
       setSuccessMessage("La muestra fue enviada exitosamente.");
       setOpenSuccess(true);
       setTimeout(() => setOpenSuccess(false), 3000);
@@ -231,20 +229,20 @@ export default function PruebasReanalizar() {
             }
             return false;
           })
-          .map((item: any, idx: number) => ({
-            id: item.id || item._id || idx,
-            no: item.no_consecutivo ?? idx + 1,
-            hc: item.hc ?? "",
-            grupo: item.grupo ?? "",
-            factor: item.factor ?? "",
-            volumen: item.volumen ?? "",
-            hiv: item.hiv ?? "",
-            hbsag: item.hbsag ?? "",
-            hcv: item.hcv ?? "",
-            bdrl: item.bdrl ?? "",
-            contratipaje: item.contratipaje ?? "",
-            du: item.du ?? "",
-          }))
+ .map((item: any, idx: number) => ({
+  id: item.id || item._id || idx,
+  no: item.no_consecutivo ?? idx + 1,
+  hc: item.hc ?? item.historiaClinica?.no_hc ?? "",
+  grupo: item.grupo ?? item.historiaClinica?.grupo_sanguine?.nombre ?? item.historiaClinica?.grupo_sanguine ?? "",
+  factor: item.factor ?? item.historiaClinica?.factor?.signo ?? item.historiaClinica?.factor ?? "",
+  volumen: item.volumen ?? "",
+  hiv: Array.isArray(item.resultado_VIH) ? (item.resultado_VIH[0] ?? "") : (item.resultado_VIH ?? ""),
+  hbsag: Array.isArray(item.resultado_hepatitisB) ? (item.resultado_hepatitisB[0] ?? "") : (item.resultado_hepatitisB ?? ""),
+  hcv: Array.isArray(item.resultado_hepatitisC) ? (item.resultado_hepatitisC[0] ?? "") : (item.resultado_hepatitisC ?? ""),
+  bdrl: Array.isArray(item.resultado_serologia) ? (item.resultado_serologia[0] ?? "") : (item.resultado_serologia ?? ""),
+  contratipaje: Array.isArray(item.resultado_contratipaje) ? (item.resultado_contratipaje[0] ?? "") : (item.resultado_contratipaje ?? ""),
+  du: Array.isArray(item.resultado_DU) ? (item.resultado_DU[0] ?? "") : (item.resultado_DU ?? ""),
+}))
       );
       setSuccessMessage("La muestra fue marcada como revisada.");
       setOpenSuccess(true);
@@ -391,13 +389,11 @@ export default function PruebasReanalizar() {
                     value={motivoDesecho}
                     onChange={e => setMotivoDesecho(e.target.value)}
                   >
-                    <FormControlLabel value="Lipemia" control={<Radio />} label="Lipemia" />
-                    <FormControlLabel value="Hemolisis" control={<Radio />} label="Hemolisis" />
-                    <FormControlLabel value="Bajo Volumen" control={<Radio />} label="Bajo Volumen" />
-                    <FormControlLabel value="Sobre Volumen" control={<Radio />} label="Sobre Volumen" />
-                    <FormControlLabel value="Venipunción" control={<Radio />} label="Venipunción" />
-                    <FormControlLabel value="Return" control={<Radio />} label="Return" />
+
+               
+                    <FormControlLabel value="Rotura" control={<Radio />} label="Return" />
                     <FormControlLabel value="No tener muestra(los dos tubos del laboratorio)" control={<Radio />} label="No tener muestra(los dos tubos del laboratorio)" />
+                    <FormControlLabel value="Análisis Alterados" control={<Radio />} label="Análisis Alterados" />
                   </RadioGroup>
                 </FormControl>
               </AccordionDetails>

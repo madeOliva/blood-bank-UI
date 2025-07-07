@@ -512,7 +512,7 @@ const sortedRows = useMemo(() => {
               setPedidoCentralModalOpen(true);
             }}
           >
-             Viveres
+             Víveres
           </Button>
           <Button
             variant="contained"

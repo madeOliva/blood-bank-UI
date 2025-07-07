@@ -47,43 +47,63 @@ export default function EntradaProduccion() {
   const [openNoElementsModal, setOpenNoElementsModal] = useState(false);
 
   // Cargar datos desde el backend con estado "aceptada"
-  useEffect(() => {
-    axios.get("http://localhost:3000/componentes-obtenidos/ids")
-      .then(resIds => {
-        const usados = resIds.data.map((u: any) => String(u));
-        axios.get("http://localhost:3000/registro-donacion/donaciones-diarias")
-          .then(response => {
-            const aceptadas = Array.isArray(response.data)
-              ? response.data
-                  .filter((item: any) =>
-                    item.estado?.toLowerCase() === "aceptada" &&
-                    !usados.includes(String(item.id ?? item._id ?? ""))
-                  )
-              : [];
-            setRows(
-              aceptadas.map((item: any, idx: number) => ({
-                id: item.id || item._id || idx,
-                no_consecutivo: item.no_consecutivo ?? idx + 1,
-                no_hc: item.historiaClinica?.no_hc ?? item.hc ?? "",
-                grupo_acta: item.grupo ?? "",
-                factor_acta: item.factor ?? "",
-                sexo: item.sexo ?? "",
-                edad: item.edad ?? "",
-                volumen_acta: item.volumen ?? "",
-                componente_a_obtener: "",
-                no_centrifuga: null,
-                temperatura: null,
-                velocidad: null,
-                estado_obtencion: item.estado_obtencion ?? "",
-                causa_baja: "",
-                componentes: [],
-                registro_donacion: item.id || item._id,
-              }))
-            );
-          })
-          .catch(() => setRows([]));
-      });
-  }, []);
+useEffect(() => {
+  // Primero obtenemos los componentes_obtenidos
+  axios.get("http://localhost:3000/componentes-obtenidos/componentes_obtenidos")
+    .then(resComponentes => {
+      const idsConComponentes = Array.isArray(resComponentes.data)
+        ? [
+            ...new Set(
+              resComponentes.data
+                .map((c: any) =>
+                  c.registro_donacion
+                    ? (typeof c.registro_donacion === "string"
+                        ? c.registro_donacion
+                        : c.registro_donacion._id || c.registro_donacion.id)
+                    : null
+                )
+                .filter(Boolean)
+                .map((id: any) => id.toString())
+            ),
+          ]
+        : [];
+
+      // Luego obtenemos las donaciones_diarias y filtramos
+      axios.get("http://localhost:3000/registro-donacion/donaciones-diarias")
+        .then(res => {
+          const data = Array.isArray(res.data)
+            ? res.data
+                .filter((item: any) =>
+                  typeof item.estado === "string" &&
+                  item.estado.trim().toLowerCase() === "aceptada" &&
+                  !idsConComponentes.includes(item._id?.toString())
+                )
+                .map((item: any, idx: number) => ({
+                  id: item.id || item._id,
+                  no_consecutivo: item.no_consecutivo ?? idx + 1,
+                  no_hc: item.hc ?? item.no_hc ?? "",
+                  grupo_acta: item.grupo ?? item.grupo_acta ?? "",
+                  factor_acta: item.factor ?? item.factor_acta ?? "",
+                  sexo: item.sexo ?? "",
+                  edad: item.edad ?? "",
+                  volumen_acta: item.volumen_acta ?? item.volumen ?? "",
+                  componente_a_obtener: item.componente_a_obtener ?? "",
+                  no_centrifuga: item.no_centrifuga ?? null,
+                  temperatura: item.temperatura ?? null,
+                  velocidad: item.velocidad ?? null,
+                  estado_obtencion: item.estado_obtencion ?? "",
+                  causa_baja: item.causa_baja ?? "",
+                  componentes: item.componentes ?? [],
+                  registro_donacion: item.registro_donacion ?? item,
+                }))
+            : [];
+          setRows(data);
+        })
+        .catch(() => setRows([]));
+    })
+    .catch(() => setRows([]));
+}, []);
+
 
   useEffect(() => {
     if (openEmptyFieldsModal) {
@@ -92,12 +112,12 @@ export default function EntradaProduccion() {
     }
   }, [openEmptyFieldsModal]);
 
-  useEffect(() => {
-    if (openNoElementsModal) {
-      const timer = setTimeout(() => setOpenNoElementsModal(false), 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [openNoElementsModal]);
+ useEffect(() => {
+  if (openModal) {
+    const timer = setTimeout(() => setOpenModal(false), 3000);
+    return () => clearTimeout(timer);
+  }
+}, [openModal]);
 
   // Validaciones
   const isValidDate = (dateString: string): boolean => {
@@ -185,93 +205,130 @@ export default function EntradaProduccion() {
   }, []);
 
   // Guardar datos en backend
-  const handleSave = async () => {
-    if (rows.length === 0) {
-      setOpenNoElementsModal(true);
-      return;
-    }
-    try {
-      let updatedRows = [...rows];
-      let errors: Record<number, string[]> = {};
-      let hasErrors = false;
-      for (const row of rows) {
-        const rowErrors = validateRow(row);
-        if (rowErrors.length > 0) {
-          errors[row.id] = rowErrors;
-          hasErrors = true;
-          continue;
-        }
-        await axios.put("http://localhost:3000/centrifugacion", {
-          _id: row.id,
+const handleSave = async () => {
+  if (rows.length === 0) {
+    setOpenNoElementsModal(true);
+    return;
+  }
+  try {
+    let errors: Record<number, string[]> = {};
+    let filasGuardadas: number[] = [];
+
+    for (const row of rows) {
+      const rowErrors = validateRow(row);
+
+      // Si es "Obtenido" o "Baja" y no hay componentes, crea uno automáticamente
+      let componentesAGuardar = row.componentes;
+      if (
+        (row.estado_obtencion?.toLowerCase() === "obtenido" || row.estado_obtencion?.toLowerCase() === "baja") &&
+        (!row.componentes || row.componentes.length === 0)
+      ) {
+        componentesAGuardar = [{
+          componente: row.componente_a_obtener,
+          volumen: row.volumen_acta,
+          fecha_obtencion: new Date().toISOString().slice(0, 10), // Fecha actual YYYY-MM-DD
+        }];
+      }
+
+      // Validación extra para BAJA: debe tener al menos un componente
+      if (
+        row.estado_obtencion &&
+        row.estado_obtencion.toLowerCase() === "baja" &&
+        (!componentesAGuardar || componentesAGuardar.length === 0)
+      ) {
+        rowErrors.push("Debe haber al menos un componente para la baja");
+      }
+
+      if (rowErrors.length > 0) {
+        errors[row.id] = rowErrors;
+        continue;
+      }
+
+      // --- Console log para depuración ---
+      const dataToSend = {
+        _id: row.id,
+        no_consecutivo: row.no_consecutivo,
+        no_hc: row.no_hc,
+        grupo_acta: row.grupo_acta,
+        factor_acta: row.factor_acta,
+        sexo: row.sexo,
+        edad: row.edad,
+        volumen_acta: row.volumen_acta,
+        componente_a_obtener: row.componente_a_obtener,
+        no_centrifuga: row.no_centrifuga,
+        temperatura: row.temperatura,
+        velocidad: row.velocidad,
+        estado_obtencion: row.estado_obtencion.toLowerCase(),
+        ...(row.causa_baja ? { causa_baja: row.causa_baja } : {}),
+        registro_donacion: row.registro_donacion?.id || row.registro_donacion?._id, // SOLO EL ID
+      };
+      console.log("Datos enviados a /centrifugacion:", dataToSend);
+
+      // Guardar/actualizar solo las filas válidas
+      await axios.put("http://localhost:3000/centrifugacion", dataToSend);
+
+      // Guardar en componentes_obtenidos si es "obtenido"
+      if (
+        row.estado_obtencion &&
+        row.estado_obtencion.toLowerCase() === "obtenido" &&
+        Array.isArray(componentesAGuardar) &&
+        componentesAGuardar.length > 0
+      ) {
+        const data = {
           no_consecutivo: row.no_consecutivo,
           no_hc: row.no_hc,
-          grupo_acta: row.grupo_acta,
-          factor_acta: row.factor_acta,
-          sexo: row.sexo,
-          edad: row.edad,
-          volumen_acta: row.volumen_acta,
-          componente_a_obtener: row.componente_a_obtener,
-          no_centrifuga: row.no_centrifuga,
-          temperatura: row.temperatura,
-          velocidad: row.velocidad,
           estado_obtencion: row.estado_obtencion.toLowerCase(),
-          ...(row.causa_baja ? { causa_baja: row.causa_baja } : {}),
-          registro_donacion: row.registro_donacion,
-        });
-        if (
-          row.estado_obtencion &&
-          row.estado_obtencion.toLowerCase() === "obtenido" &&
-          Array.isArray(row.componentes) &&
-          row.componentes.length > 0
-        ) {
-          const data = {
-            no_consecutivo: row.no_consecutivo,
-            no_hc: row.no_hc,
+          componentes: componentesAGuardar.map(comp => ({
+            tipo: comp.componente,
+            volumen: comp.volumen,
+            fecha_obtencion: comp.fecha_obtencion,
             estado_obtencion: row.estado_obtencion.toLowerCase(),
-            componentes: row.componentes,
-            registro_donacion: row.registro_donacion,
-          };
-          await axios.post("http://localhost:3000/componentes-obtenidos", data);
-        }
-        if (
-          row.estado_obtencion &&
-          row.estado_obtencion.toLowerCase() === "baja" &&
-          row.causa_baja
-        ) {
-          const data = {
-            no_consecutivo: row.no_consecutivo,
-            no_hc: row.no_hc,
-            estado_obtencion: row.estado_obtencion.toLowerCase(),
-            causa_baja: row.causa_baja,
-            registro_donacion: row.registro_donacion,
-            centrifugacion: row.id,
-          };
-          await axios.post("http://localhost:3000/componentes-obtenidos", data);
-          updatedRows = updatedRows.filter(r => r.id !== row.id);
-        }
-        if (
-          row.estado_obtencion &&
-          row.estado_obtencion.toLowerCase() === "pendiente"
-        ) {
-          const data = {
-            no_consecutivo: row.no_consecutivo,
-            estado_obtencion: row.estado_obtencion.toLowerCase(),
-            registro_donacion: row.registro_donacion,
-          };
-          await axios.post("http://localhost:3000/componentes-obtenidos", data);
-        }
+          })),
+          registro_donacion: row.registro_donacion?.id || row.registro_donacion?._id, // SOLO EL ID
+        };
+        await axios.post("http://localhost:3000/componentes-obtenidos", data);
       }
-      setValidationErrors(errors);
-      setRows(updatedRows);
-      if (Object.keys(errors).length > 0) {
-        setOpenEmptyFieldsModal(true);
-      } else {
-        setOpenModal(true);
-      }
-    } catch (error) {
-      alert("Error al guardar los datos.");
-    }
+
+      // Guardar en componentes_obtenidos si es "baja"
+   if (
+  row.estado_obtencion &&
+  row.estado_obtencion.toLowerCase() === "baja" &&
+  row.causa_baja &&
+  Array.isArray(componentesAGuardar) &&
+  componentesAGuardar.length > 0
+) {
+  const data = {
+    no_consecutivo: row.no_consecutivo,
+    no_hc: row.no_hc,
+    estado_obtencion: row.estado_obtencion.toLowerCase(),
+    componentes: componentesAGuardar.map(comp => ({
+      tipo: comp.componente,
+      volumen: comp.volumen,
+      fecha_obtencion: comp.fecha_obtencion,
+      estado_obtencion: "baja",
+      causa_baja: row.causa_baja, // <-- Agrega esto
+    })),
+    registro_donacion: row.registro_donacion?.id || row.registro_donacion?._id,
+    causa_baja: row.causa_baja,
   };
+  await axios.post("http://localhost:3000/componentes-obtenidos", data);
+}
+
+      filasGuardadas.push(row.id);
+    }
+
+    setValidationErrors(errors);
+    setRows(prevRows => prevRows.filter(row => !filasGuardadas.includes(row.id)));
+
+    if (filasGuardadas.length > 0) {
+      setOpenModal(true);
+    } else if (Object.keys(errors).length > 0) {
+      setOpenEmptyFieldsModal(true);
+    }
+  } catch (error) {
+    alert("Error al guardar los datos.");
+  }
+};
 
   // Manejo de componentes obtenidos
   const handleAddComponentesObtenidos = useCallback((rowId: number) => {
@@ -290,11 +347,16 @@ export default function EntradaProduccion() {
   }, []);
 
   const handleAddComponente = useCallback(() => {
-    if (componentesTemp.length < 3) {
-      setComponentesTemp(prev => [...prev, { componente: '', volumen: '', fecha_obtencion: '' }]);
-    }
-  }, [componentesTemp.length]);
+  if (componentesTemp.length < 3) {
+    const today = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
+    setComponentesTemp(prev => [
+      ...prev,
+      { componente: '', volumen: '', fecha_obtencion: today }
+    ]);
+  }
+}, [componentesTemp.length]);
 
+  // Remove a componente by index
   const handleRemoveComponente = useCallback((idx: number) => {
     setComponentesTemp(prev => prev.filter((_, i) => i !== idx));
   }, []);
@@ -316,13 +378,13 @@ export default function EntradaProduccion() {
   }, []);
 
   const procesoColumns: GridColDef[] = [
-    { field: "no_consecutivo", headerName: "No. Consecutivo", width: 130 },
-    { field: "no_hc", headerName: "No. Historia Clínica", width: 160 },
-    { field: "grupo_acta", headerName: "Grupo", width: 90 },
-    { field: "factor_acta", headerName: "Factor", width: 90 },
-    { field: "sexo", headerName: "Sexo", width: 90 },
-    { field: "edad", headerName: "Edad", width: 90 },
-    { field: "volumen_acta", headerName: "Volumen", width: 100 },
+    { field: "no_consecutivo", headerName: "No", width: 60 },
+    { field: "no_hc", headerName: "No. HC", width: 90},
+    { field: "grupo_acta", headerName: "Grupo", width: 60 },
+    { field: "factor_acta", headerName: "Factor", width: 60 },
+    { field: "sexo", headerName: "Sexo", width: 50 },
+    { field: "edad", headerName: "Edad", width: 60 },
+    { field: "volumen_acta", headerName: "Volumen", width: 90 },
     {
       field: 'componente_a_obtener',
       headerName: 'Comp. a Obtener',
@@ -362,6 +424,7 @@ export default function EntradaProduccion() {
             <option value="PC">PC</option>
             <option value="PFC">PFC</option>
             <option value="CRIO">CRIO</option>
+            <option value="BC">BC</option>
           </TextField>
         );
       },
@@ -473,7 +536,7 @@ export default function EntradaProduccion() {
     },
     {
       field: "estado_obtencion",
-      headerName: "Estado Obtencion",
+      headerName: "Estado Obtención",
       width: 140,
       editable: false,
       renderCell: (params) => {
@@ -511,7 +574,7 @@ export default function EntradaProduccion() {
     {
       field: "detalles",
       headerName: "Detalles",
-      width: 180,
+      width: 150,
       renderCell: (params) => {
         if (params.row.estado_obtencion === "Baja") {
           const value = params.row.causa_baja ?? "";
@@ -566,8 +629,9 @@ export default function EntradaProduccion() {
   return (
     <>
       <Navbar />
-      <Box>
+      <Box sx={{marginTop: "25"}}>
         <Typography
+        variant='h5'
           sx={{
             fontSize: { xs: "2rem", md: "3rem" },
             mt: 8,
@@ -576,20 +640,20 @@ export default function EntradaProduccion() {
             color: "white",
           }}
         >
-          Proceso de Componentes
+          Procesamiento de Componentes
         </Typography>
-        <Paper
-          sx={{
-            overflow: "auto",
-            width: "100%",
-            minWidth: "fit-content",
-            flex: 1,
+        
+          <Box sx={{ 
+            height: 450,
+            width: "90%",
+            marginBlockEnd: 1,
+            marginLeft: 7,
             display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <Box sx={{ flex: 1 }}>
+            alignItems: "center",
+            justifyContent: "spa",
+             }}>
             <DataGrid
+            sx={{height: 450}}
               rows={rows}
               columns={procesoColumns}
               processRowUpdate={handleProcessRowUpdate}
@@ -608,18 +672,17 @@ export default function EntradaProduccion() {
               getRowClassName={(params) =>
                 validationErrors[params.id as number]?.length > 0 ? "error-row" : ""
               }
-              sx={{ flex: 1 }}
+             
             />
           </Box>
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <BotonPersonalizado
               onClick={handleSave}
-              sx={{ width: 225 }}
+              sx={{ width: 150 }}
             >
               Guardar
             </BotonPersonalizado>
           </Box>
-        </Paper>
       </Box>
       {/* Modal de éxito */}
       <Dialog
@@ -729,6 +792,7 @@ export default function EntradaProduccion() {
                 <option value="PC">PC</option>
                 <option value="PFC">PFC</option>
                 <option value="CRIO">CRIO</option>
+                <option value="BC">BC</option>
               </TextField>
               <TextField
                 label="Volumen(ml)"

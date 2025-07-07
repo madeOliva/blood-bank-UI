@@ -314,7 +314,7 @@ export default function Plan() {
               </FormControl>
 
               <TextField
-                label="Lugar de la Donacion"
+                label="Lugar de la Donación"
                 variant="outlined"
                 sx={inputStyle}
                 value={lugarDonacion}

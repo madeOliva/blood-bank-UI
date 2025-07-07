@@ -30,14 +30,13 @@ type BajaRow = {
   no_hc: any;
   componente_a_obtener: any;
   causa_baja: any;
-  fechaD?: string; // <-- Asegúrate de que este campo exista en tu backend
+  fechaD?: string;
 };
 
 export default function Bajas() {
   const [rows, setRows] = useState<BajaRow[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchFechaDesde, setSearchFechaDesde] = useState("");
-  const [searchFechaHasta, setSearchFechaHasta] = useState("");
+  const [searchComponente, setSearchComponente] = useState("");
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [filteredRows, setFilteredRows] = useState<BajaRow[]>([]);
 
@@ -45,14 +44,18 @@ export default function Bajas() {
     axios.get("http://localhost:3000/componentes-obtenidos/bajas")
       .then(res => {
         const data = Array.isArray(res.data)
-          ? res.data.map((item: any, idx: number) => ({
-              id: item._id || idx + 1,
-              no_consecutivo: item.no_consecutivo ?? item.no_registro ?? idx + 1,
-              no_hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
-              componente_a_obtener: item.centrifugacion?.componente_a_obtener ?? "",
-              causa_baja: item.causa_baja ?? item.motivo_desecho ?? "",
-              fechaD: item.registro_donacion?.fechaD ?? "", // <-- Asegúrate de que este campo exista
-            }))
+          ? res.data.flatMap((item: any, idx: number) =>
+              (item.componentes || [])
+                .filter((comp: any) => comp.estado_obtencion === "desechada")
+                .map((comp: any, compIdx: number) => ({
+                  id: comp._id || `${item._id}_${compIdx}`,
+                  no_consecutivo: item.no_consecutivo ?? idx + 1,
+                  no_hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+                  componente_a_obtener: comp.tipo ?? comp.componente ?? "",
+                  causa_baja: comp.causa_baja ?? item.causa_baja ?? "",
+                  fechaD: item.registro_donacion?.fechaD ?? "",
+                }))
+            )
           : [];
         setRows(data);
         setFilteredRows(data);
@@ -63,23 +66,24 @@ export default function Bajas() {
       });
   }, []);
 
-  // Buscador por rango de fechas usando fechaD
+  // Buscador por componente_a_obtener
   const handleSearch = () => {
-    if (!searchFechaDesde || !searchFechaHasta) return;
-    const desde = new Date(searchFechaDesde);
-    const hasta = new Date(searchFechaHasta);
-    const filtered = rows.filter((row) => {
-      const fecha = new Date(row.fechaD as string);
-      return fecha >= desde && fecha <= hasta;
-    });
+    if (!searchComponente) {
+      setFilteredRows(rows);
+      setIsSearchActive(false);
+      setSearchOpen(false);
+      return;
+    }
+    const filtered = rows.filter((row) =>
+      String(row.componente_a_obtener).toLowerCase().includes(searchComponente.toLowerCase())
+    );
     setFilteredRows(filtered);
     setIsSearchActive(true);
     setSearchOpen(false);
   };
 
   const handleClearSearch = () => {
-    setSearchFechaDesde("");
-    setSearchFechaHasta("");
+    setSearchComponente("");
     setSearchOpen(false);
     setIsSearchActive(false);
     setFilteredRows(rows);
@@ -107,29 +111,19 @@ export default function Bajas() {
         </IconButton>
       </Box>
       <Dialog open={searchOpen} onClose={() => setSearchOpen(false)}>
-        <DialogTitle>Buscar por rango de fechas de donación</DialogTitle>
+        <DialogTitle>Buscar por componente</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
-              label="Fecha desde"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={searchFechaDesde}
-              onChange={e => setSearchFechaDesde(e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Fecha hasta"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={searchFechaHasta}
-              onChange={e => setSearchFechaHasta(e.target.value)}
+              label="Componente"
+              value={searchComponente}
+              onChange={e => setSearchComponente(e.target.value)}
               fullWidth
             />
             <Button
               variant="contained"
               onClick={handleSearch}
-              disabled={!searchFechaDesde || !searchFechaHasta}
+              disabled={!searchComponente}
             >
               Buscar
             </Button>
@@ -142,6 +136,7 @@ export default function Bajas() {
 
       <Box sx={{ marginTop: "25" }}>
         <Typography
+          variant="h5"
           sx={{
             fontSize: { xs: "2rem", md: "3rem" },
             mt: 8,
@@ -150,16 +145,16 @@ export default function Bajas() {
             color: "white",
           }}
         >
-          Registro de Bajas
+          Componentes de Desecho
         </Typography>
 
         <Box
-          sx={{
+           sx={{
             height: 450,
             width: "90%",
             mb: 2,
             marginBlockEnd: 1,
-            marginLeft: 7,
+            marginLeft: 9,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",

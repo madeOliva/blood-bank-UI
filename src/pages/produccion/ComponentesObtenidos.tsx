@@ -19,8 +19,8 @@ type ComponenteObtenidoRow = {
 const columns: GridColDef[] = [
   { field: "no_consecutivo", headerName: "No", width: 100 },
   { field: "no_hc", headerName: "No. HC", width: 150 },
-  { field: "sexo", headerName: "Sexo", width: 60 },
-  { field: "edad", headerName: "Edad", width: 60 },
+  { field: "sexo", headerName: "Sexo", width: 100 },
+  { field: "edad", headerName: "Edad", width: 100 },
   {
     field: "fecha_donacion",
     headerName: "Fecha Donación",
@@ -39,14 +39,13 @@ const columns: GridColDef[] = [
     renderCell: (params) =>
       params.value ? new Date(params.value).toLocaleDateString() : "",
   },
-  { field: "volumen", headerName: "Volumen (ml)", width: 120 },
+  { field: "volumen", headerName: "Volumen", width: 120 },
 ];
 
 export default function ComponentesObtenidos() {
   const [rows, setRows] = useState<ComponenteObtenidoRow[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchFechaDesde, setSearchFechaDesde] = useState("");
-  const [searchFechaHasta, setSearchFechaHasta] = useState("");
+  const [searchFechaObtencion, setSearchFechaObtencion] = useState("");
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [filteredRows, setFilteredRows] = useState<ComponenteObtenidoRow[]>([]);
 
@@ -55,28 +54,26 @@ export default function ComponentesObtenidos() {
       .get("http://localhost:3000/componentes-obtenidos/componentes_obtenidos")
       .then((res) => {
         const data = Array.isArray(res.data)
-          ? res.data
-              .filter((item: any) => item.estado_obtencion === "liberado")
-              .flatMap((item: any) =>
-                (item.componentes || [])
-                  .filter((comp: any) => !!comp._id)
-                  .map((comp: any) => ({
-                    id: comp._id,
-                    no_consecutivo: item.registro_donacion?.no_consecutivo ?? "",
-                    no_hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
-                    sexo:
-                      typeof item.registro_donacion?.historiaClinica?.sexo === "object"
-                        ? item.registro_donacion?.historiaClinica?.sexo?.nombre ?? ""
-                        : item.registro_donacion?.historiaClinica?.sexo ?? "",
-                    edad: item.registro_donacion?.historiaClinica?.edad ?? "",
-                    fecha_donacion: item.registro_donacion?.fechaD ?? "",
-                    fecha_obtencion: comp.fecha_obtencion ?? "",
-                    volumen: comp.volumen ?? "",
-                  }))
-              )
+          ? res.data.flatMap((item: any) =>
+              (item.componentes || [])
+                .filter((comp: any) => comp.estado_obtencion === "liberado")
+                .map((comp: any) => ({
+                  id: comp._id,
+                  no_consecutivo: item.no_consecutivo ?? "",
+                  no_hc: item.registro_donacion?.historiaClinica?.no_hc ?? "",
+                  sexo:
+                    typeof item.registro_donacion?.historiaClinica?.sexo === "object"
+                      ? item.registro_donacion?.historiaClinica?.sexo?.nombre ?? ""
+                      : item.registro_donacion?.historiaClinica?.sexo ?? "",
+                  edad: item.registro_donacion?.historiaClinica?.edad ?? "",
+                  fecha_donacion: item.registro_donacion?.fechaD ?? "",
+                  fecha_obtencion: comp.fecha_obtencion ?? "",
+                  volumen: comp.volumen ?? "",
+                }))
+            )
           : [];
         setRows(data);
-        setFilteredRows(data); // Inicializa filtrados igual que rows
+        setFilteredRows(data);
       })
       .catch(() => {
         setRows([]);
@@ -84,23 +81,21 @@ export default function ComponentesObtenidos() {
       });
   }, []);
 
-  // Funciones de búsqueda solo por fecha
-  const handleSearch = () => {
-    if (!searchFechaDesde || !searchFechaHasta) return;
-    const desde = new Date(searchFechaDesde);
-    const hasta = new Date(searchFechaHasta);
-    const filtered = rows.filter((row) => {
-      const fecha = new Date(row.fecha_donacion as string);
-      return fecha >= desde && fecha <= hasta;
-    });
-    setFilteredRows(filtered);
-    setIsSearchActive(true);
-    setSearchOpen(false);
-  };
+  // Búsqueda por una sola fecha de obtención
+const handleSearch = () => {
+  if (!searchFechaObtencion) return;
+const filtered = rows.filter((row) => {
+  const rowDateStr = String(row.fecha_obtencion).trim().slice(0, 10);
+  return rowDateStr === searchFechaObtencion;
+});
+console.log("Filtrados:", filtered);
+  setFilteredRows(filtered);
+  setIsSearchActive(true);
+  setSearchOpen(false);
+};
 
   const handleClearSearch = () => {
-    setSearchFechaDesde("");
-    setSearchFechaHasta("");
+    setSearchFechaObtencion("");
     setSearchOpen(false);
     setIsSearchActive(false);
     setFilteredRows(rows);
@@ -128,29 +123,21 @@ export default function ComponentesObtenidos() {
         </IconButton>
       </Box>
       <Dialog open={searchOpen} onClose={() => setSearchOpen(false)}>
-        <DialogTitle>Buscar por rango de fechas de donación</DialogTitle>
+        <DialogTitle>Buscar por fecha de donacion</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
-              label="Fecha desde"
+              label="Fecha de obtención"
               type="date"
               InputLabelProps={{ shrink: true }}
-              value={searchFechaDesde}
-              onChange={e => setSearchFechaDesde(e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Fecha hasta"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={searchFechaHasta}
-              onChange={e => setSearchFechaHasta(e.target.value)}
+              value={searchFechaObtencion}
+              onChange={e => setSearchFechaObtencion(e.target.value)}
               fullWidth
             />
             <Button
               variant="contained"
               onClick={handleSearch}
-              disabled={!searchFechaDesde || !searchFechaHasta}
+              disabled={!searchFechaObtencion}
             >
               Buscar
             </Button>
@@ -163,7 +150,7 @@ export default function ComponentesObtenidos() {
 
       <Box sx={{ marginTop: "25" }}>
         <Typography
-          variant="h4"
+          variant="h5"
           sx={{
             fontSize: { xs: "2rem", md: "3rem" },
             mt: 8,

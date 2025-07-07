@@ -721,7 +721,7 @@ export default function NavListDrawer() {
                       <ListItemIcon>
                         <ScienceIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                       </ListItemIcon>
-                      <ListItemText primary="Recepción y Centrifugación" />
+                      <ListItemText primary="Procesamiento de Componentes" />
                     </ListItemButton>
                   </ListItem>
 
@@ -739,7 +739,7 @@ export default function NavListDrawer() {
                       <ListItemIcon>
                         <VaccinesIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                       </ListItemIcon>
-                      <ListItemText primary="Componentes obtenidos" />
+                      <ListItemText primary="Componentes Obtenidos" />
                     </ListItemButton>
                   </ListItem>
 
@@ -757,7 +757,7 @@ export default function NavListDrawer() {
                       <ListItemIcon>
                         <DeleteIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                       </ListItemIcon>
-                      <ListItemText primary="Gestión de bajas" />
+                      <ListItemText primary="Componentes de desecho" />
                     </ListItemButton>
                   </ListItem>
 
@@ -775,7 +775,7 @@ export default function NavListDrawer() {
                       <ListItemIcon>
                         <MedicalServicesIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                       </ListItemIcon>
-                      <ListItemText primary="Envíos a industria" />
+                      <ListItemText primary="Envío de Plasma para la industria" />
                     </ListItemButton>
                   </ListItem>
                 </List>
