@@ -9,8 +9,6 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
-import ErrorIcon from '@mui/icons-material/Error';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 
 // Estilos para modales
@@ -88,6 +86,8 @@ export default function HistoriaDonante() {
     const [examenF_temAxilar, setExamenF_temAxilar] = useState('');
     const [observacion_interrogatorio, setObservacion_interrogatorio] = useState('');
 
+    const [openInterrogatorio, setOpenInterrogatorio] = useState(false);
+
     const [apto_interrogatorio, setAptoInterrogatorio] = useState<boolean | null>(null);
     const [apto_examenFisico, setAptoExamenFisico] = useState<boolean | null>(null);
 
@@ -119,6 +119,38 @@ export default function HistoriaDonante() {
     const [gruposSanguineos, setGruposSanguineos] = useState<{ _id: string; nombre: string }[]>([]);
     const [factores, setFactores] = useState<{ _id: string; signo: string }[]>([]);
 
+
+    const examenesFisicosCompletos = () => {
+        return (
+            examenF_hemoglobina !== '' &&
+            examenF_peso !== '' &&
+            examenF_pulso !== '' &&
+            examenF_temSublingual !== '' &&
+            examenF_temAxilar !== '' &&
+            !errorHemoglobina &&
+            !errorPulso &&
+            !errorPeso &&
+            !errorTempAxilar &&
+            !errorTempSublingual
+        );
+    };
+
+    useEffect(() => {
+        if (examenesFisicosCompletos()) {
+            setOpenInterrogatorio(true);
+        }
+    }, [
+        examenF_hemoglobina,
+        examenF_peso,
+        examenF_pulso,
+        examenF_temSublingual,
+        examenF_temAxilar,
+        errorHemoglobina,
+        errorPulso,
+        errorPeso,
+        errorTempAxilar,
+        errorTempSublingual,
+    ]);
 
 
     useEffect(() => {
@@ -405,7 +437,6 @@ export default function HistoriaDonante() {
                 examenF_temSublingual,
                 examenF_temAxilar,
                 examenF_hemoglobina,
-                apto_examenFisico,
                 respuestas_interrogatorio: getRespuestasInterrogatorio(),
                 apto_interrogatorio,
                 observacion_interrogatorio,
@@ -417,7 +448,7 @@ export default function HistoriaDonante() {
                 navigate('/resultadosprechequeo');
             }, 1200);
         } catch (error) {
-            setErrorMessage('Error al guardar la historia clínica y el prechequeo');
+            setErrorMessage('Error al guardar los datos');
             setOpenErrorModal(true);
         }
     };
@@ -832,7 +863,7 @@ export default function HistoriaDonante() {
 
     // Validación simple
     const hayCamposVacios = () => {
-        return !examenF_peso || !examenF_pulso || !examenF_temSublingual || !examenF_temAxilar || !examenF_hemoglobina || !getRespuestasInterrogatorio || apto_examenFisico === null || apto_interrogatorio === null;
+        return !examenF_peso || !examenF_pulso || !examenF_temSublingual || !examenF_temAxilar || !examenF_hemoglobina || !getRespuestasInterrogatorio  || apto_interrogatorio === null;
     };
 
 
@@ -1226,7 +1257,7 @@ export default function HistoriaDonante() {
                     </Grid>
                 </Paper>
 
-                <IconButton onClick={handleClick} sx={{ color: "primary.dark", ml: 150, fontSize: 70 }}>
+                <IconButton onClick={handleClick} sx={{ color: "primary.dark", ml: 150, fontSize: 50 }}>
                     <AddIcon fontSize="inherit" />
                 </IconButton>
 
@@ -1251,7 +1282,7 @@ export default function HistoriaDonante() {
                                             onChange={e => setExamenP_grupo(e.target.value)}
                                             disabled
                                             sx={{
-                                                width: 150,
+                                                width: 100,
                                                 // Cambia el color del texto
                                                 "& .MuiOutlinedInput-root": {
                                                     color: "#000",
@@ -1360,7 +1391,7 @@ export default function HistoriaDonante() {
                             </Typography>
                             <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
                                 <TextField
-                                    label="Peso"
+                                    label="Peso (kg)"
                                     variant="outlined"
                                     size="small"
                                     value={examenF_peso}
@@ -1370,7 +1401,7 @@ export default function HistoriaDonante() {
                                     sx={textFieldSx}
                                 />
                                 <TextField
-                                    label="Pulso"
+                                    label="Pulso (pulsación/min)"
                                     variant="outlined"
                                     size="small"
                                     value={examenF_pulso}
@@ -1380,7 +1411,7 @@ export default function HistoriaDonante() {
                                     sx={textFieldSx}
                                 />
                                 <TextField
-                                    label="Temperatura sublingual"
+                                    label="Temperatura sublingual (℃)"
                                     variant="outlined"
                                     size="small"
                                     value={examenF_temSublingual}
@@ -1390,7 +1421,7 @@ export default function HistoriaDonante() {
                                     sx={textFieldSx}
                                 />
                                 <TextField
-                                    label="Temperatura axilar"
+                                    label="Temperatura axilar (℃)"
                                     variant="outlined"
                                     size="small"
                                     value={examenF_temAxilar}
@@ -1400,7 +1431,7 @@ export default function HistoriaDonante() {
                                     sx={textFieldSx}
                                 />
                                 <TextField
-                                    label="Hemoglobina"
+                                    label="Hemoglobina (g/L)"
                                     variant="outlined"
                                     size="small"
                                     value={examenF_hemoglobina}
@@ -1409,35 +1440,13 @@ export default function HistoriaDonante() {
                                     helperText={errorHemoglobina}
                                     sx={textFieldSx}
                                 />
-                                <Box>
-                                    <FormGroup row>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={apto_examenFisico === true}
-                                                    onChange={() => setAptoExamenFisico(true)}
-                                                />
-                                            }
-                                            label="Apto"
-                                        />
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={apto_examenFisico === false}
-                                                    onChange={() => setAptoExamenFisico(false)}
-                                                />
-                                            }
-                                            label="No Apto"
-                                        />
-                                    </FormGroup>
-                                </Box>
                             </Box>
                         </Box>
                     </Box>
                 )
                 }
 
-                <Accordion  >
+                <Accordion expanded={openInterrogatorio} onChange={() => setOpenInterrogatorio(!openInterrogatorio)}  >
                     <AccordionSummary
                         sx={{ display: "flex", backgroundColor: "white", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" }, marginBlockEnd: 1 }}
                         expandIcon={<ExpandMoreIcon />}
@@ -1469,12 +1478,12 @@ export default function HistoriaDonante() {
 
 
                                 </Box>
-                                <Box display={"flex"} justifyContent={"space-between"} >
+                                <Box display={"flex"} justifyContent={"space-between"} alignItems="center">
                                     <Box sx={{ width: "70%" }}>
                                         <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                            ¿Ha donado sangre o plasma anteriormente?
-                                            ¿Cuándo?
-
+                                            ¿Ha donado sangre o plasma anteriormente? ¿Cuándo?
+                                        </Typography>
+                                        {resp2 === true && (
                                             <TextField
                                                 id="outlined-basic"
                                                 label=""
@@ -1482,22 +1491,17 @@ export default function HistoriaDonante() {
                                                 size="small"
                                                 value={texto2}
                                                 onChange={e => setTexto2(e.target.value)}
-                                                disabled={resp2 !== true}
                                                 sx={{
                                                     width: 300, ml: 2,
-                                                    // Cambia el color del texto
                                                     "& .MuiOutlinedInput-root": {
                                                         color: "#000",
-                                                        // Cambia el color del borde
                                                         "& .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
-                                                        // Cambia el color del borde al hacer foco
                                                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
                                                     },
-                                                    // Cambia el color del label
                                                     "& .MuiInputLabel-outlined": {
                                                         color: "#009688",
                                                     },
@@ -1507,12 +1511,8 @@ export default function HistoriaDonante() {
                                                     },
                                                 }}
                                             />
-                                        </Typography>
-
-
+                                        )}
                                     </Box>
-
-
 
                                     <Box mt={5} mr={1}>
                                         <RadioGroup
@@ -1524,16 +1524,14 @@ export default function HistoriaDonante() {
                                             <FormControlLabel value="NO" control={<Radio />} label="NO" />
                                         </RadioGroup>
                                     </Box>
-
-
                                 </Box>
 
-                                <Box display={"flex"} justifyContent={"space-between"} >
+                                <Box display={"flex"} justifyContent={"space-between"} alignItems="center">
                                     <Box sx={{ width: "70%" }}>
                                         <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                            ¿Ha tenido o presentdo dengue recientemente?
-                                            ¿Cuándo?
-
+                                            ¿Ha tenido o presentado dengue recientemente? ¿Cuándo?
+                                        </Typography>
+                                        {resp3 === true && (
                                             <TextField
                                                 id="outlined-basic"
                                                 label=""
@@ -1541,22 +1539,17 @@ export default function HistoriaDonante() {
                                                 size="small"
                                                 value={texto3}
                                                 onChange={e => setTexto3(e.target.value)}
-                                                disabled={resp3 !== true}
                                                 sx={{
                                                     width: 300, ml: 2,
-                                                    // Cambia el color del texto
                                                     "& .MuiOutlinedInput-root": {
                                                         color: "#000",
-                                                        // Cambia el color del borde
                                                         "& .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
-                                                        // Cambia el color del borde al hacer foco
                                                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
                                                     },
-                                                    // Cambia el color del label
                                                     "& .MuiInputLabel-outlined": {
                                                         color: "#009688",
                                                     },
@@ -1566,12 +1559,8 @@ export default function HistoriaDonante() {
                                                     },
                                                 }}
                                             />
-                                        </Typography>
-
-
+                                        )}
                                     </Box>
-
-
 
                                     <Box mt={5} mr={1}>
                                         <RadioGroup
@@ -1583,13 +1572,15 @@ export default function HistoriaDonante() {
                                             <FormControlLabel value="NO" control={<Radio />} label="NO" />
                                         </RadioGroup>
                                     </Box>
-
-
                                 </Box>
-                                <Box display={"flex"} justifyContent={"space-between"} >
+
+                                <Box display={"flex"} justifyContent={"space-between"} alignItems="center">
                                     <Box sx={{ width: "70%" }}>
                                         <Typography sx={{ mt: 2 }} variant="h6" component="h5">
                                             ¿Alguna vez ha sido rechazado como donante? ¿Por qué?
+                                        </Typography>
+                                        {/* SOLO se muestra el TextField si resp4 es true (o sea, si seleccionó "SI") */}
+                                        {resp4 === true && (
                                             <TextField
                                                 id="outlined-basic"
                                                 label=""
@@ -1599,19 +1590,15 @@ export default function HistoriaDonante() {
                                                 onChange={e => setTexto4(e.target.value)}
                                                 sx={{
                                                     width: 300, ml: 2,
-                                                    // Cambia el color del texto
                                                     "& .MuiOutlinedInput-root": {
                                                         color: "#000",
-                                                        // Cambia el color del borde
                                                         "& .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
-                                                        // Cambia el color del borde al hacer foco
                                                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
                                                     },
-                                                    // Cambia el color del label
                                                     "& .MuiInputLabel-outlined": {
                                                         color: "#009688",
                                                     },
@@ -1621,8 +1608,7 @@ export default function HistoriaDonante() {
                                                     },
                                                 }}
                                             />
-                                        </Typography>
-
+                                        )}
                                     </Box>
                                     <Box mt={2} mr={1}>
                                         <RadioGroup
@@ -1635,6 +1621,7 @@ export default function HistoriaDonante() {
                                         </RadioGroup>
                                     </Box>
                                 </Box>
+
 
                                 <Box display={"flex"} justifyContent={"space-between"} >
                                     <Box sx={{ width: "70%" }}>
@@ -1699,11 +1686,12 @@ export default function HistoriaDonante() {
 
                                 </Box>
 
-                                <Box display={"flex"} justifyContent={"space-between"} >
+                                <Box display={"flex"} justifyContent={"space-between"} alignItems="center">
                                     <Box sx={{ width: "70%" }}>
                                         <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                            ¿Se ha vacunado en el último año?
-                                            ¿Cuáles vacunas?
+                                            ¿Se ha vacunado en el último año? ¿Cuáles vacunas?
+                                        </Typography>
+                                        {resp8 === true && (
                                             <TextField
                                                 id="outlined-basic"
                                                 label=""
@@ -1711,22 +1699,18 @@ export default function HistoriaDonante() {
                                                 size="small"
                                                 value={texto8}
                                                 onChange={e => setTexto8(e.target.value)}
-                                                disabled={resp8 !== true}
                                                 sx={{
-                                                    width: 300, ml: 2,
-                                                    // Cambia el color del texto
+                                                    width: 300,
+                                                    ml: 2,
                                                     "& .MuiOutlinedInput-root": {
                                                         color: "#000",
-                                                        // Cambia el color del borde
                                                         "& .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
-                                                        // Cambia el color del borde al hacer foco
                                                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
                                                     },
-                                                    // Cambia el color del label
                                                     "& .MuiInputLabel-outlined": {
                                                         color: "#009688",
                                                     },
@@ -1736,9 +1720,9 @@ export default function HistoriaDonante() {
                                                     },
                                                 }}
                                             />
-                                        </Typography>
-
+                                        )}
                                     </Box>
+
                                     <Box mt={2} mr={1}>
                                         <RadioGroup
                                             row
@@ -1750,6 +1734,7 @@ export default function HistoriaDonante() {
                                         </RadioGroup>
                                     </Box>
                                 </Box>
+
 
                                 <Box display={"flex"} justifyContent={"space-between"} >
                                     <Box sx={{ width: "70%" }}>
@@ -1772,11 +1757,12 @@ export default function HistoriaDonante() {
 
                                 </Box>
 
-                                <Box display={"flex"} justifyContent={"space-between"} >
+                                <Box display={"flex"} justifyContent={"space-between"} alignItems="center">
                                     <Box sx={{ width: "70%" }}>
                                         <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                            ¿Se encuentra tomando medicamentos?
-                                            ¿Cuáles?
+                                            ¿Se encuentra tomando medicamentos? ¿Cuáles?
+                                        </Typography>
+                                        {resp10 === true && (
                                             <TextField
                                                 id="outlined-basic"
                                                 label=""
@@ -1784,22 +1770,18 @@ export default function HistoriaDonante() {
                                                 size="small"
                                                 value={texto10}
                                                 onChange={e => setTexto10(e.target.value)}
-                                                disabled={resp10 !== true}
                                                 sx={{
-                                                    width: 300, ml: 2,
-                                                    // Cambia el color del texto
+                                                    width: 300,
+                                                    ml: 2,
                                                     "& .MuiOutlinedInput-root": {
                                                         color: "#000",
-                                                        // Cambia el color del borde
                                                         "& .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
-                                                        // Cambia el color del borde al hacer foco
                                                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
                                                     },
-                                                    // Cambia el color del label
                                                     "& .MuiInputLabel-outlined": {
                                                         color: "#009688",
                                                     },
@@ -1809,9 +1791,9 @@ export default function HistoriaDonante() {
                                                     },
                                                 }}
                                             />
-                                        </Typography>
-
+                                        )}
                                     </Box>
+
                                     <Box mt={2} mr={1}>
                                         <RadioGroup
                                             row
@@ -1823,6 +1805,7 @@ export default function HistoriaDonante() {
                                         </RadioGroup>
                                     </Box>
                                 </Box>
+
 
                                 <Box display={"flex"} justifyContent={"space-between"} >
                                     <Box sx={{ width: "70%" }}>
@@ -2066,11 +2049,12 @@ export default function HistoriaDonante() {
 
                                 </Box>
 
-                                <Box display={"flex"} justifyContent={"space-between"} >
+                                <Box display={"flex"} justifyContent={"space-between"} alignItems="center">
                                     <Box sx={{ width: "70%" }}>
                                         <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                            ¿Presenta afecciones o lesiones en la piel?
-                                            Dónde?
+                                            ¿Presenta afecciones o lesiones en la piel? ¿Dónde?
+                                        </Typography>
+                                        {resp23 === true && (
                                             <TextField
                                                 id="outlined-basic"
                                                 label=""
@@ -2078,22 +2062,18 @@ export default function HistoriaDonante() {
                                                 size="small"
                                                 value={texto23}
                                                 onChange={e => setTexto23(e.target.value)}
-                                                disabled={resp23 !== true}
                                                 sx={{
-                                                    width: 300, ml: 2,
-                                                    // Cambia el color del texto
+                                                    width: 300,
+                                                    ml: 2,
                                                     "& .MuiOutlinedInput-root": {
                                                         color: "#000",
-                                                        // Cambia el color del borde
                                                         "& .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
-                                                        // Cambia el color del borde al hacer foco
                                                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
                                                     },
-                                                    // Cambia el color del label
                                                     "& .MuiInputLabel-outlined": {
                                                         color: "#009688",
                                                     },
@@ -2103,10 +2083,9 @@ export default function HistoriaDonante() {
                                                     },
                                                 }}
                                             />
-                                        </Typography>
-
+                                        )}
                                     </Box>
-                                    <Box mt={2} mr={1} >
+                                    <Box mt={2} mr={1}>
                                         <RadioGroup
                                             row
                                             value={resp23 === null ? "" : resp23 ? "SI" : "NO"}
@@ -2117,12 +2096,12 @@ export default function HistoriaDonante() {
                                         </RadioGroup>
                                     </Box>
                                 </Box>
-
-                                <Box display={"flex"} justifyContent={"space-between"} >
+                                <Box display={"flex"} justifyContent={"space-between"} alignItems="center">
                                     <Box sx={{ width: "70%" }}>
                                         <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                            ¿Presenta alguna enfermedad respiratoria?
-                                            Cuál?
+                                            ¿Presenta alguna enfermedad respiratoria? ¿Cuál?
+                                        </Typography>
+                                        {resp24 === true && (
                                             <TextField
                                                 id="outlined-basic"
                                                 label=""
@@ -2130,22 +2109,18 @@ export default function HistoriaDonante() {
                                                 size="small"
                                                 value={texto24}
                                                 onChange={e => setTexto24(e.target.value)}
-                                                disabled={resp24 !== true}
                                                 sx={{
-                                                    width: 300, ml: 5,
-                                                    // Cambia el color del texto
+                                                    width: 300,
+                                                    ml: 5,
                                                     "& .MuiOutlinedInput-root": {
                                                         color: "#000",
-                                                        // Cambia el color del borde
                                                         "& .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
-                                                        // Cambia el color del borde al hacer foco
                                                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
                                                     },
-                                                    // Cambia el color del label
                                                     "& .MuiInputLabel-outlined": {
                                                         color: "#009688",
                                                     },
@@ -2155,10 +2130,9 @@ export default function HistoriaDonante() {
                                                     },
                                                 }}
                                             />
-                                        </Typography>
-
+                                        )}
                                     </Box>
-                                    <Box mt={2} mr={1} >
+                                    <Box mt={2} mr={1}>
                                         <RadioGroup
                                             row
                                             value={resp24 === null ? "" : resp24 ? "SI" : "NO"}
@@ -2169,6 +2143,7 @@ export default function HistoriaDonante() {
                                         </RadioGroup>
                                     </Box>
                                 </Box>
+
                                 <Box display={"flex"} justifyContent={"space-between"} >
                                     <Box sx={{ width: "70%" }}>
                                         <Typography sx={{ mt: 2 }} variant="h6" component="h5">
@@ -2230,11 +2205,12 @@ export default function HistoriaDonante() {
                                     </Box>
                                 </Box>
 
-                                <Box display={"flex"} justifyContent={"space-between"} >
+                                <Box display={"flex"} justifyContent={"space-between"} alignItems="center">
                                     <Box sx={{ width: "60%" }}>
                                         <Typography sx={{ mt: 2 }} variant="h6" component="h5">
-                                            ¿Presenta otra enfermedad infecciosa?
-                                            Cuál?
+                                            ¿Presenta otra enfermedad infecciosa? ¿Cuál?
+                                        </Typography>
+                                        {resp28 === true && (
                                             <TextField
                                                 id="outlined-basic"
                                                 label=""
@@ -2242,22 +2218,18 @@ export default function HistoriaDonante() {
                                                 size="small"
                                                 value={texto28}
                                                 onChange={e => setTexto28(e.target.value)}
-                                                disabled={resp28 !== true}
                                                 sx={{
-                                                    width: 300, ml: 2,
-                                                    // Cambia el color del texto
+                                                    width: 300,
+                                                    ml: 2,
                                                     "& .MuiOutlinedInput-root": {
                                                         color: "#000",
-                                                        // Cambia el color del borde
                                                         "& .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
-                                                        // Cambia el color del borde al hacer foco
                                                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                                                             borderColor: "#00796B",
                                                         },
                                                     },
-                                                    // Cambia el color del label
                                                     "& .MuiInputLabel-outlined": {
                                                         color: "#009688",
                                                     },
@@ -2267,10 +2239,9 @@ export default function HistoriaDonante() {
                                                     },
                                                 }}
                                             />
-                                        </Typography>
-
+                                        )}
                                     </Box>
-                                    <Box mt={2} mr={1} >
+                                    <Box mt={2} mr={1}>
                                         <RadioGroup
                                             row
                                             value={resp28 === null ? "" : resp28 ? "SI" : "NO"}
@@ -2281,6 +2252,7 @@ export default function HistoriaDonante() {
                                         </RadioGroup>
                                     </Box>
                                 </Box>
+
 
                                 <Box display={"flex"} justifyContent={"space-between"} >
                                     <Box sx={{ width: "70%" }}>
@@ -2554,6 +2526,14 @@ export default function HistoriaDonante() {
                                     </Box>
                                 )}
                             </Box>
+
+                        </Box>
+                        {/* Botón Guardar */}
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, bottom: 20, zIndex: 1 }}>
+                            <BotonPersonalizado sx={{ width: '200px' }}
+                                onClick={handleGuardar}>
+                                Aceptar
+                            </BotonPersonalizado>
                         </Box>
                     </AccordionDetails>
                 </Accordion>
@@ -2784,13 +2764,7 @@ export default function HistoriaDonante() {
                 </Accordion>
 
 
-                {/* Botón Guardar */}
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, bottom: 20, zIndex: 1 }}>
-                    <BotonPersonalizado sx={{ width: '200px' }}
-                        onClick={handleGuardar}>
-                        Aceptar
-                    </BotonPersonalizado>
-                </Box>
+
                 {/* Modal de éxito/alerta */}
                 <Dialog
                     open={openModal}

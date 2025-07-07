@@ -40,6 +40,7 @@ export default function ResumenPlanDonaciones() {
   const [filteredRows, setFilteredRows] = useState<RowData[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchDate, setSearchDate] = useState<string>("");
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
   useEffect(() => {
     axios
@@ -101,10 +102,11 @@ export default function ResumenPlanDonaciones() {
     { field: "cdr", headerName: "CDR", width: 100 },
   ];
 
-  // Solo esta función handleSearch (filtrado local)
+  // Buscador por fecha
   const handleSearch = () => {
     if (!searchDate) {
       setFilteredRows(rows);
+      setIsSearchActive(false);
       setSearchOpen(false);
       return;
     }
@@ -112,6 +114,7 @@ export default function ResumenPlanDonaciones() {
       dayjs(row.fechaHora).format("YYYY-MM-DD") === searchDate
     );
     setFilteredRows(data);
+    setIsSearchActive(true);
     setSearchOpen(false);
   };
 
@@ -119,6 +122,7 @@ export default function ResumenPlanDonaciones() {
   const handleClearSearch = () => {
     setSearchDate("");
     setFilteredRows(rows);
+    setIsSearchActive(false);
     setSearchOpen(false);
   };
 
@@ -210,8 +214,8 @@ export default function ResumenPlanDonaciones() {
           <Typography variant="body1" textAlign="center" sx={{ mt: 3 }}>
             No hay datos para mostrar.
           </Typography>
-        )}
-      </Container>
-    </>
-  );
-}
+          )}
+        </Container>
+      </>
+    );
+  }

@@ -41,19 +41,19 @@ useEffect(() => {
             }
             return isToday(fecha);
           })
-          .map((item: any) => ({
-            id: item.id || item._id || item.no,
-            no: item.no,
-            hc: item.hc,
-            sexo: item.sexo,
-            edad: item.edad,
-            grupo: item.grupo,
-            factor: item.factor,
-            volumen: item.volumen,
-            estado: item.estado,
-            entidad: item.entidad,
-            fechaD: item.fechaD?.$date ?? item.fechaD ?? "",
-          }))
+         .map((item: any, idx: number) => ({
+  id: item.id || item._id || item.no_consecutivo || idx,
+  no: item.no_consecutivo ?? idx + 1,
+  hc: item.hc,
+  sexo: item.sexo,
+  edad: item.edad,
+  grupo: item.grupo,
+  factor: item.factor,
+  volumen: item.volumen,
+  estado: item.estado,
+  entidad: item.entidad,
+  fechaD: item.fechaD?.$date ?? item.fechaD ?? "",
+}))
       );
     })
     .catch(error => {
