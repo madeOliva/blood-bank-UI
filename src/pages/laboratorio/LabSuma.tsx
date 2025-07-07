@@ -30,6 +30,15 @@ const isFieldInvalid = (field: string, value: any) => {
   }
 };
 
+const isDateInvalid = (date: any) => {
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dateObj = new Date(date);
+  dateObj.setHours(0, 0, 0, 0);
+  return dateObj < today;
+};
+
 const columns: GridColDef[] = [
   {
     field: "numero_consecutivo",
@@ -49,25 +58,18 @@ const columns: GridColDef[] = [
     editable: true,
     type: "singleSelect",
     renderCell: (params) => {
-          const isInvalid = isFieldInvalid(params.field, params.value);
-          return (
-            <Tooltip title={isInvalid ? "Valor fuera de rango - Debe repetirse este examen" : ""}>
-              <div className={isInvalid ? "celda-invalida" : ""} style={{ width: '100%', height: '100%' }}>
-                {params.value}
-              </div>
-            </Tooltip>
-          );
-        },
+      const isInvalid = isFieldInvalid(params.field, params.value);
+      return (
+        <Tooltip title={isInvalid ? "Valor fuera de rango - Debe repetirse este examen" : ""}>
+          <div className={isInvalid ? "celda-invalida" : ""} style={{ width: '100%', height: '100%' }}>
+            {params.value}
+          </div>
+        </Tooltip>
+      );
+    },
     valueOptions: ["Positivo", "Negativo"],
   },
-  {
-    field: "fecha_VIH",
-    headerName: "Fecha HIV",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params)
-  },
+
   {
     field: "resultado_hepatitisB",
     headerName: "HBsAg",
@@ -86,14 +88,7 @@ const columns: GridColDef[] = [
     editable: true,
     valueOptions: ["Positivo", "Negativo"],
   },
-  {
-    field: "fecha_hepatitisB",
-    headerName: "Fecha HBsAg",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params)
-  },
+
   {
     field: "resultado_hepatitisC",
     headerName: "HCV",
@@ -113,12 +108,22 @@ const columns: GridColDef[] = [
     valueOptions: ["Positivo", "Negativo"],
   },
   {
-    field: "fecha_hepatitisC",
-    headerName: "Fecha HCV",
+    field: "fecha_suma",
+    headerName: "Fecha",
     type: "date",
     width: 120,
     editable: true,
-    valueGetter: (params) => new Date(params)
+    valueGetter: (params) => new Date(params),
+    renderCell: (params) => {
+      const invalid = isDateInvalid(params.value);
+      return (
+        <Tooltip title={invalid ? "No se permite una fecha anterior a hoy" : ""}>
+          <div className={invalid ? "celda-invalida" : ""} style={{ width: '100%', height: '100%' }}>
+            {params.value ? new Date(params.value).toLocaleDateString() : ""}
+          </div>
+        </Tooltip>
+      );
+    }
   },
   {
     field: "estado",
@@ -133,12 +138,8 @@ const columns: GridColDef[] = [
     headerName: "Analizada",
     width: 120,
     renderCell: (params) => {
-      // Verificación más robusta que considera múltiples escenarios
-      const isAnalyzed = 
-        (params.row.resultado_VIH && params.row.resultado_VIH !== "") ||
-        (params.row.resultado_hepatitisB && params.row.resultado_hepatitisB !== "") ||
-        (params.row.resultado_hepatitisC && params.row.resultado_hepatitisC !== "");
-      
+      // Usa el valor calculado al cargar los datos, no los campos editables
+      const isAnalyzed = params.row.yaAnalizada;
       return isAnalyzed ? (
         <Tooltip title="Muestra analizada">
           <CheckCircleOutlineIcon sx={{ color: green[500], fontSize: 28 }} />
@@ -150,6 +151,9 @@ const columns: GridColDef[] = [
       );
     },
   },
+
+
+
 ];
 
 export default function LabSuma() {
@@ -158,47 +162,58 @@ export default function LabSuma() {
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [openEmptyFieldsModal, setOpenEmptyFieldsModal] = useState(false);
-  
+
+  const tieneDatosPrevios = (item: any) => {
+    const tieneVIH = Array.isArray(item.resultado_VIH) && item.resultado_VIH.some(val => val !== "");
+    const tieneHepatitisB = Array.isArray(item.resultado_hepatitisB) && item.resultado_hepatitisB.some(val => val !== "");
+    const tieneHepatitisC = Array.isArray(item.resultado_hepatitisC) && item.resultado_hepatitisC.some(val => val !== "");
+    return tieneVIH || tieneHepatitisB || tieneHepatitisC;
+  };
+
+
+
+  // Modificación en fetchInitialRows
   useEffect(() => {
     const fetchInitialRows = async () => {
       try {
         const response = await axios.get(`${API_URL}/consecutivo-historia-aceptada`);
-        console.log("Datos recibidos del backend:", response.data);
-  
+        console.log("Datos completos recibidos:", response.data);
+
         if (response.data && Array.isArray(response.data)) {
           const data = response.data.map((item: any) => {
-            // Nueva lógica mejorada para determinar si ya fue analizada
-            const hasVIH = item.resultado_VIH && (Array.isArray(item.resultado_VIH) ? item.resultado_VIH.length > 0 : item.resultado_VIH !== '');
-            const hasHepatitisB = item.resultado_hepatitisB && (Array.isArray(item.resultado_hepatitisB) ? item.resultado_hepatitisB.length > 0 : item.resultado_hepatitisB !== '');
-            const hasHepatitisC = item.resultado_hepatitisC && (Array.isArray(item.resultado_hepatitisC) ? item.resultado_hepatitisC.length > 0 : item.resultado_hepatitisC !== '');
-  
-            const yaAnalizada = hasVIH || hasHepatitisB || hasHepatitisC;
-  
+            const yaAnalizada = tieneDatosPrevios(item);
             return {
               id: item._id,
               numero_consecutivo: item.numero_consecutivo,
               no_hc: item.historiaClinica?.no_hc,
               estado: item.estado || "",
-              resultado_VIH: Array.isArray(item.resultado_VIH) ? item.resultado_VIH[0] || "" : item.resultado_VIH || "",
-              fecha_VIH: Array.isArray(item.fecha_VIH) ? item.fecha_VIH[0] || "" : item.fecha_VIH || "",
-              resultado_hepatitisB: Array.isArray(item.resultado_hepatitisB) ? item.resultado_hepatitisB[0] || "" : item.resultado_hepatitisB || "",
-              fecha_hepatitisB: Array.isArray(item.fecha_hepatitisB) ? item.fecha_hepatitisB[0] || "" : item.fecha_hepatitisB || "",
-              resultado_hepatitisC: Array.isArray(item.resultado_hepatitisC) ? item.resultado_hepatitisC[0] || "" : item.resultado_hepatitisC || "",
-              fecha_hepatitisC: Array.isArray(item.fecha_hepatitisC) ? item.fecha_hepatitisC[0] || "" : item.fecha_hepatitisC || "",
+              resultado_VIH: "", // Inicializamos vacío para nuevos registros
+
+              resultado_hepatitisB: "",
+
+              resultado_hepatitisC: "",
+
+
+              fecha_suma: "",
               yaAnalizada,
+              _originalData: {
+                VIH: item.resultado_VIH,
+                HepatitisB: item.resultado_hepatitisB,
+                HepatitisC: item.resultado_hepatitisC,
+
+              }
             };
           });
           setRows(data);
-        } else {
-          console.error("Error: Datos inválidos recibidos del servidor.");
         }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-  
+
     fetchInitialRows();
   }, []);
+
   useEffect(() => {
     if (openModal) {
       const timer = setTimeout(() => setOpenModal(false), 3000);
@@ -236,53 +251,74 @@ export default function LabSuma() {
   };
 
   const handleProcessRowUpdate = (newRow: any) => {
-    
+
     const updatedRows = rows.map((row) => (row.id === newRow.id ? newRow : row));
     setRows(updatedRows);
     return newRow;
   };
+  const campos = [
+    "resultado_VIH",
 
- const handleSave = async () => {
-   
-      try {
-        for (const row of rows) {
-          if (!row.id) {
-            console.error("Error: ID del registro está vacío o no es válido:", row);
-            continue; // Salta esta fila si el ID no es válido
-          }
-  
-          const payload = {
-            resultado_VIH: Array.isArray(row.resultado_VIH) ? row.resultado_VIH : [row.resultado_VIH],
-            fecha_VIH: Array.isArray(row.fecha_VIH) ? row.fecha_VIH : [row.fecha_VIH],
-            resultado_hepatitisB: Array.isArray(row.resultado_hepatitisB) ? row.resultado_hepatitisB : [row.resultado_hepatitisB],
-            fecha_hepatitisB: Array.isArray(row.fecha_hepatitisB) ? row.fecha_hepatitisB : [row.fecha_hepatitisB],
-            resultado_hepatitisC: Array.isArray(row.resultado_hepatitisC) ? row.resultado_hepatitisC : [row.resultado_hepatitisC],
-            fecha_hepatitisC: Array.isArray(row.fecha_hepatitisC) ? row.fecha_hepatitisC : [row.fecha_hepatitisC],
-            estado: row.estado,
-            
-          };
-  
-          console.log(`Endpoint llamado: ${API_URL}/update-laboratorio/${row.id}`);
-          console.log("Payload enviado:", payload);
-  
-          try {
-            await axios.patch(`${API_URL}/update-laboratorio/${row.id}`, payload);
-          } catch (error) {
-            console.error(`Error al actualizar la fila con ID ${row.id}:`, error.response?.data || error.message);
-          }
-        }
-  
-        setOpenModal(true); // Muestra el modal de éxito
-        navigate('/principal_lab'); // Redirige después de guardar
-      } catch (error) {
-        console.error("Error general al actualizar los datos:", error.response?.data || error.message);
-      }
-    
+    "resultado_hepatitisB",
+
+    "resultado_hepatitisC",
+    "fecha_suma",
+  ];
+  const hasInvalidDates = () => {
+    return rows.some(row => isDateInvalid(row.fecha_suma));
   };
-      
+
+  const handleSave = async () => {
+    try {
+      for (const row of rows) {
+        if (!row.id) {
+          console.error("Error: ID del registro está vacío o no es válido:", row);
+          continue;
+        }
+
+        // Construir el payload solo con los campos que tienen valor
+        const payload = {};
+        if (row.resultado_VIH !== undefined && row.resultado_VIH !== null && row.resultado_VIH !== '' && (!Array.isArray(row.resultado_VIH) || row.resultado_VIH.length > 0)) {
+          payload.resultado_VIH = Array.isArray(row.resultado_VIH) ? row.resultado_VIH : [row.resultado_VIH];
+        }
+        if (row.resultado_hepatitisB !== undefined && row.resultado_hepatitisB !== null && row.resultado_hepatitisB !== '' && (!Array.isArray(row.resultado_hepatitisB) || row.resultado_hepatitisB.length > 0)) {
+          payload.resultado_hepatitisB = Array.isArray(row.resultado_hepatitisB) ? row.resultado_hepatitisB : [row.resultado_hepatitisB];
+        }
+        if (row.resultado_hepatitisC !== undefined && row.resultado_hepatitisC !== null && row.resultado_hepatitisC !== '' && (!Array.isArray(row.resultado_hepatitisC) || row.resultado_hepatitisC.length > 0)) {
+          payload.resultado_hepatitisC = Array.isArray(row.resultado_hepatitisC) ? row.resultado_hepatitisC : [row.resultado_hepatitisC];
+        }
+        if (row.fecha_suma !== undefined && row.fecha_suma !== null && row.fecha_suma !== '' && (!Array.isArray(row.fecha_suma) || row.fecha_suma.length > 0)) {
+          payload.fecha_suma = Array.isArray(row.fecha_suma) ? row.fecha_suma : [row.fecha_suma];
+        }
+        if (row.estado !== undefined && row.estado !== null && row.estado !== '') {
+          payload.estado = row.estado;
+        }
+
+        // Si el payload está vacío, no envía nada
+        if (Object.keys(payload).length === 0) {
+          console.warn(`Fila con ID ${row.id} no tiene datos para actualizar.`);
+          continue;
+        }
+
+        console.log(`Endpoint llamado: ${API_URL}/update-laboratorio/${row.id}`);
+        console.log("Payload enviado:", payload);
+
+        try {
+          await axios.patch(`${API_URL}/update-laboratorio/${row.id}`, payload);
+        } catch (error) {
+          console.error(`Error al actualizar la fila con ID ${row.id}:`, error.response?.data || error.message);
+        }
+      }
+
+      setOpenModal(true);
+      navigate('/principal_lab');
+    } catch (error) {
+      console.error("Error general al actualizar los datos:", error.response?.data || error.message);
+    }
+  };
 
 
-    const handleCloseModal = () => {
+  const handleCloseModal = () => {
     setOpenModal(false);
   };
 
@@ -293,9 +329,10 @@ export default function LabSuma() {
   return (
     <>
       <Navbar />
-      <Box sx={{ marginTop: "60px", width: "100%" 
-        
-}}>
+      <Box sx={{
+        marginTop: "60px", width: "100%"
+
+      }}>
         <Typography
           variant="h4"
           gutterBottom
@@ -309,34 +346,34 @@ export default function LabSuma() {
           Laboratorio Suma
         </Typography>
 
-        
-                  <Box sx={{ 
-                    height: 400, 
-                    width: "100%", 
-                    mb: 2,
-                    
-                    '& .celda-invalida': {
-                      backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255, 0, 0, 0.3)'
-                      }
-                    }
-                  }}>
-                    <DataGrid
-                      rows={rows}
-                      columns={columns}
-                      processRowUpdate={handleProcessRowUpdate}
-                      onRowClick={handleRowClick}
-                     
-                      initialState={{
-                        pagination: {
-                          paginationModel: { pageSize: 10 },
-                        },
-                      }}
-                      pageSizeOptions={[10]}
-                      editMode="row"
-                    />
-                  </Box>
+
+        <Box sx={{
+          height: 400,
+          width: "100%",
+          mb: 2,
+
+          '& .celda-invalida': {
+            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 0, 0, 0.3)'
+            }
+          }
+        }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            processRowUpdate={handleProcessRowUpdate}
+            onRowClick={handleRowClick}
+
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 10 },
+              },
+            }}
+            pageSizeOptions={[10]}
+            editMode="row"
+          />
+        </Box>
 
         <Box
           sx={{
@@ -376,13 +413,24 @@ export default function LabSuma() {
           />
         </Box>
 
+
         <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
-          <BotonPersonalizado onClick={handleSave} sx={{ width: 200 }}>
+          <BotonPersonalizado onClick={handleSave} sx={{ width: 200 }} disabled={hasInvalidDates()}>
             Guardar Cambios
           </BotonPersonalizado>
         </Box>
       </Box>
 
+      {hasInvalidDates() && (
+        <Typography
+          variant="body2"
+          color="error"
+          sx={{ textAlign: "center", mt: 1 }}
+        >
+          Corrija las fechas inválidas (anteriores a hoy) para habilitar el guardado
+        </Typography>
+      )}
+      
       {/* Modal de confirmación */}
       <Dialog
         open={openModal}
