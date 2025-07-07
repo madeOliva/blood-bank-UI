@@ -1,4 +1,4 @@
-import * as React from 'react';
+/*import * as React from 'react';
 import Box from '@mui/material/Box';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Button } from '@mui/material';
@@ -139,4 +139,4 @@ export default function DataGridSol() {
             />
         </Box>
     );
-}
+}*/

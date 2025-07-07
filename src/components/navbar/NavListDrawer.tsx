@@ -827,7 +827,7 @@ export default function NavListDrawer() {
                             <ListItemIcon>
                               <ScienceIcon sx={{ color: "secondary.main", marginLeft: 3 }} />
                             </ListItemIcon>
-                            <ListItemText primary="Recepción de Muestras" />
+                            <ListItemText primary="Muestras Examinadas" />
                           </ListItemButton>
                         </ListItem>
                       )}

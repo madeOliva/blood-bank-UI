@@ -90,7 +90,6 @@ export default function ModalWindow() {
                                 value={factor}
                                 label="Factor"
                                 onChange={handleChangeF}
-                                co
                             >
                                 <MenuItem value={10}></MenuItem>
                                 <MenuItem value={20}>positivo</MenuItem>

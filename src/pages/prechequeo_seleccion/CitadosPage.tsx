@@ -1,11 +1,13 @@
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Navbar from "../../components/navbar/Navbar";
-import { Box, Button, Container, Dialog, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
+import { Box, Button, Container, Dialog, DialogContent, DialogTitle, Snackbar, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import SearchIcon from "@mui/icons-material/Search";
+import IconButton from "@mui/material/IconButton";
 
 
 
@@ -34,73 +36,111 @@ const columns: GridColDef<any>[] = [
     },
 
 ];
-let handleCitar = (_: string) => {};
+let handleCitar = (_: string) => { };
 
 export default function CitadosPS() {
-  const [rows, setRows] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+    const [rows, setRows] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
 
-  // Modal de éxito/error
-  const [openModal, setOpenModal] = useState(false);
-  const [modalType, setModalType] = useState<"success" | "error">("success");
-  const [errorMsg, setErrorMsg] = useState("");
+    // Modal de éxito/error
+    const [openModal, setOpenModal] = useState(false);
+    const [modalType, setModalType] = useState<"success" | "error">("success");
+    const [errorMsg, setErrorMsg] = useState("");
 
-  // Handler para citar
-  handleCitar = async (historiaClinicaId: string) => {
-    const fechaCita = new Date();
-    fechaCita.setDate(fechaCita.getDate() + 1);
+    // ...dentro del componente Prechequeo:
+    const [busquedaCI, setBusquedaCI] = useState("");
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
 
-    try {
-      await axios.patch(`http://localhost:3000/historia-clinica/${historiaClinicaId}`, {
-        citado: true,
-        fechaCita: fechaCita,
-      });
-      setModalType("success");
-      setOpenModal(true);
-      // Recargar la lista de donantes
-      fetchRows();
-    } catch (error) {
-      setErrorMsg("Ocurrió un error al citar al donante.");
-      setModalType("error");
-      setOpenModal(true);
-    }
-  };
+    // Validación de CI
+    const validarCI = (ci: string): string => {
+        if (!/^\d{11}$/.test(ci))
+            return "El CI debe tener exactamente 11 dígitos numéricos.";
+        const mes = parseInt(ci.slice(2, 4), 10);
+        const dia = parseInt(ci.slice(4, 6), 10);
+        if (mes < 1 || mes > 12) return "El mes en el CI no es válido.";
+        if (dia < 1 || dia > 31) return "El día en el CI no es válido.";
+        return "";
+    };
 
-  // Cargar los donantes que pueden donar y no están citados
-  const fetchRows = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get("http://localhost:3000/registro-donacion/pueden-donar");
-      const filtered = res.data.filter((reg: any) => reg.citado === false || reg.citado === undefined);
-      const mappedRows = filtered.map((reg: any, idx: number) => ({
-        id: reg._id || idx + 1,
-        historiaClinicaId: reg.historiaClinicaId,
-        ci: reg.ci || "",
-        nombre: reg.nombre || "",
-        primer_apellido: reg.primer_apellido || "",
-        segundo_apellido: reg.segundo_apellido || "",
-        componente: reg.componente || "",
-        fechaC: reg.fechaPermitida ? new Date(reg.fechaPermitida).toLocaleDateString() : "",
-      }));
-      setRows(mappedRows);
-    } catch (error) {
-      setRows([]);
-    }
-    setLoading(false);
-  };
+    // Función para buscar por CI
+    const handleBuscarPorCI = () => {
+        const errorMsg = validarCI(busquedaCI);
+        if (errorMsg) {
+            setSnackbarMessage(errorMsg);
+            setSnackbarOpen(true);
+            return;
+        }
 
-  useEffect(() => {
-    fetchRows();
-    // eslint-disable-next-line
-  }, []);
+        if (!busquedaCI.trim()) return;
+        const encontrado = rows.find(r => r.ci === busquedaCI.trim());
+        if (encontrado) {
+            setRows(prev => [encontrado, ...prev.filter(r => r.id !== encontrado.id)]);
+            setSnackbarMessage("Donante encontrado y movido al inicio");
+            setSnackbarOpen(true);
+        } else {
+            setSnackbarMessage("No existe un donante con ese CI en prechequeo pendiente");
+            setSnackbarOpen(true);
+        }
+        setBusquedaCI("");
+    };
 
-  // Cierra el modal automáticamente tras el éxito
-  useEffect(() => {
-    if (openModal && modalType === "success") {
-      const timer = setTimeout(() => setOpenModal(false), 1200);
-      return () => clearTimeout(timer);
-    }
-  }, [openModal, modalType]);
+    // Handler para citar
+    handleCitar = async (historiaClinicaId: string) => {
+        const fechaCita = new Date();
+        fechaCita.setDate(fechaCita.getDate() + 1);
+
+        try {
+            await axios.patch(`http://localhost:3000/historia-clinica/${historiaClinicaId}`, {
+                citado: true,
+                fechaCita: fechaCita,
+            });
+            setModalType("success");
+            setOpenModal(true);
+            // Recargar la lista de donantes
+            fetchRows();
+        } catch (error) {
+            setErrorMsg("Ocurrió un error al citar al donante.");
+            setModalType("error");
+            setOpenModal(true);
+        }
+    };
+
+    // Cargar los donantes que pueden donar y no están citados
+    const fetchRows = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get("http://localhost:3000/registro-donacion/pueden-donar");
+            const filtered = res.data.filter((reg: any) => reg.citado === false || reg.citado === undefined);
+            const mappedRows = filtered.map((reg: any, idx: number) => ({
+                id: reg._id || idx + 1,
+                historiaClinicaId: reg.historiaClinicaId,
+                ci: reg.ci || "",
+                nombre: reg.nombre || "",
+                primer_apellido: reg.primer_apellido || "",
+                segundo_apellido: reg.segundo_apellido || "",
+                componente: reg.componente || "",
+                fechaC: reg.fechaPermitida ? new Date(reg.fechaPermitida).toLocaleDateString() : "",
+            }));
+            setRows(mappedRows);
+        } catch (error) {
+            setRows([]);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchRows();
+        // eslint-disable-next-line
+    }, []);
+
+    // Cierra el modal automáticamente tras el éxito
+    useEffect(() => {
+        if (openModal && modalType === "success") {
+            const timer = setTimeout(() => setOpenModal(false), 1200);
+            return () => clearTimeout(timer);
+        }
+    }, [openModal, modalType]);
 
     return (
         <>
@@ -115,6 +155,56 @@ export default function CitadosPS() {
                 Listado de Donantes a Citar
             </Typography>
             <Container>
+                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                    <TextField
+                        label="Buscar por CI"
+                        value={busquedaCI}
+                        onChange={e => setBusquedaCI(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                const errorMsg = validarCI(busquedaCI);
+                                if (errorMsg) {
+                                    setSnackbarMessage(errorMsg);
+                                    setSnackbarOpen(true);
+                                } else {
+                                    handleBuscarPorCI();
+                                }
+                            }
+                        }}
+                        sx={{ width: 250, mr: 2 }}
+                        inputProps={{ maxLength: 11 }}
+                        error={!!validarCI(busquedaCI) && busquedaCI.length > 0}
+                        helperText={busquedaCI.length > 0 ? validarCI(busquedaCI) : ''}
+                    />
+                    <IconButton
+                        onClick={handleBuscarPorCI}
+                        sx={{
+                            color: '#009688',
+                            ml: 1,
+                            '&:hover': {
+                                backgroundColor: '#e0f2f1',
+                            }
+                        }}
+                    >
+                        <SearchIcon />
+                    </IconButton>
+                </Box>
+                <Snackbar
+                    open={snackbarOpen}
+                    autoHideDuration={2500}
+                    onClose={() => setSnackbarOpen(false)}
+                    message={snackbarMessage}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    sx={{
+                        '& .MuiSnackbarContent-root': {
+                            backgroundColor: '#009688',
+                            color: 'white',
+                            fontSize: '1.1rem',
+                            fontWeight: 'bold',
+                            borderRadius: 2
+                        }
+                    }}
+                />
                 <Box sx={{ marginTop: "20px", marginBlockEnd: 1, marginLeft: 7 }}>
                     <DataGrid
                         sx={{

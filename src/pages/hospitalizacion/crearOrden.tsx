@@ -9,6 +9,7 @@ import axios from "axios";
 
 export default function CrearOrdenTransfusion() {
     const [id_orden, setId_Orden] = React.useState('');
+    const [ci, setCI] = React.useState('');
     const [nombre, setNombre] = React.useState('');
     const [primerApellido, setPrimerApellido] = React.useState('');
     const [segundoApellido, setSegundoApellido] = React.useState('');
@@ -16,6 +17,8 @@ export default function CrearOrdenTransfusion() {
     const [sala, setSala] = React.useState('');
     const [sexo, setSexo] = React.useState('');
     const [edad, setEdad] = React.useState('');
+    const [peso, setPeso] = React.useState('');
+    const [talla, setTalla] = React.useState('');
     const [fecha_orden, setFechaOrden] = React.useState('');
     const [hora_orden, setHoraOrden] = React.useState('');
     const [tipo_paciente, setTipoPaciente] = React.useState('');
@@ -52,9 +55,12 @@ export default function CrearOrdenTransfusion() {
         try {
             await axios.post("http://localhost:3000/transfusiones", {
                 id_orden,
+                ci,
                 nombre,
                 primerApellido,
                 segundoApellido,
+                peso: Number(peso),
+                talla: Number(talla),
                 cama: Number(cama),
                 sala,
                 sexo,
@@ -117,7 +123,17 @@ export default function CrearOrdenTransfusion() {
                         setId_Orden(value);
                     }}
                 />
-                <TextField sx={{ ml: "10px" }}
+                <TextField sx={{ width: "10%", ml: "10px" }}
+                    label="CI"
+                    value={ci}
+                    inputProps={{ min: 1 }}
+                    onChange={e => {
+                        // Permite solo números
+                        const value = e.target.value.replace(/\D/g, '');
+                        setCI(value);
+                    }}
+                />
+                <TextField sx={{ width: "10%", ml: "10px" }}
                     label="Nombre"
                     value={nombre}
                     onChange={e => {
@@ -126,7 +142,7 @@ export default function CrearOrdenTransfusion() {
                         setNombre(value);
                     }}
                 />
-                <TextField sx={{ ml: "10px" }}
+                <TextField sx={{ width: "11%", ml: "10px" }}
                     label="Primer Apellido"
                     value={primerApellido}
                     onChange={e => {
@@ -135,13 +151,37 @@ export default function CrearOrdenTransfusion() {
                         setPrimerApellido(value);
                     }}
                 />
-                <TextField sx={{ ml: "10px" }}
+                <TextField sx={{ width: "12%", ml: "10px" }}
                     label="Segundo Apellido"
                     value={segundoApellido}
                     onChange={e => {
                         // Permite solo letras (mayúsculas y minúsculas) y espacios
                         const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
                         setSegundoApellido(value);
+                    }}
+                />
+                <TextField sx={{ width: "5%", ml: "10px" }}
+                    label="Peso"
+                    type="number"
+                    value={peso}
+                    inputProps={{ min: 1 }}
+                    onChange={e => setPeso(e.target.value)}
+                    onKeyDown={e => {
+                        if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                            e.preventDefault();
+                        }
+                    }}
+                />
+                <TextField sx={{ width: "5%", ml: "10px" }}
+                    label="Talla"
+                    type="number"
+                    value={talla}
+                    inputProps={{ min: 1 }}
+                    onChange={e => setTalla(e.target.value)}
+                    onKeyDown={e => {
+                        if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                            e.preventDefault();
+                        }
                     }}
                 />
                 <TextField sx={{ width: "5%", ml: "10px" }}
