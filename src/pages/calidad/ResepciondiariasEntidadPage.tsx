@@ -343,12 +343,12 @@ export default function RecepciondiariasEntidad() {
                     value={motivoDesecho}
                     onChange={e => setMotivoDesecho(e.target.value)}
                   >
-                    <FormControlLabel value="Lipemia" control={<Radio />} label="Lipemia" />
-                    <FormControlLabel value="Hemolisis" control={<Radio />} label="Hemolisis" />
+                    <FormControlLabel value="Lipémia" control={<Radio />} label="Lipemia" />
+                    <FormControlLabel value="Hemólisis" control={<Radio />} label="Hemolisis" />
                     <FormControlLabel value="Bajo Volumen" control={<Radio />} label="Bajo Volumen" />
                     <FormControlLabel value="Sobre Volumen" control={<Radio />} label="Sobre Volumen" />
                     <FormControlLabel value="Venipunción" control={<Radio />} label="Venipunción" />
-                    <FormControlLabel value="Return" control={<Radio />} label="Return" />
+                    <FormControlLabel value="Rotura" control={<Radio />} label="Rotura" />
                     <FormControlLabel value="No tener muestra(los dos tubos del laboratorio)" control={<Radio />} label="No tener muestra(los dos tubos del laboratorio)" />
                   </RadioGroup>
                 </FormControl>

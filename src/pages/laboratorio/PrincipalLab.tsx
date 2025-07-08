@@ -1,5 +1,4 @@
 import { DataGrid, GridColDef, GridRowParams } from "@mui/x-data-grid";
-import BotonPersonalizado from "../../components/Button";
 import Box from "@mui/material/Box";
 import Navbar from "../../components/navbar/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +6,9 @@ import { useEffect, useState } from "react";
 import { Tooltip, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import axios from "axios";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import SearchIcon from '@mui/icons-material/Search';
 
 const API_URL = 'http://localhost:3000/registro-donacion';
 
@@ -27,133 +28,86 @@ const analizarColumns: GridColDef[] = [
     field: "resultado_VIH",
     headerName: "HIV",
     width: 180,
-    editable: true,
-    type: "singleSelect",
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
+
 
   },
-  {
-    field: "fecha_VIH",
-    headerName: "Fecha HIV",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-
 
   {
     field: "resultado_hepatitisB",
     headerName: "HBsAg",
-    type: "singleSelect",
+
     width: 120,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
-  },
-  {
-    field: "fecha_hepatitisB",
-    headerName: "Fecha HBsAg",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
+    editable: false,
+
   },
 
   {
     field: "resultado_hepatitisC",
     headerName: "HCV ",
-    type: "singleSelect",
+
     width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
+
   },
   {
-    field: "fecha_hepatitisC",
-    headerName: "Fecha HCV",
+    field: "fecha_suma",
+    headerName: "Fecha ",
     type: "date",
     width: 120,
-    editable: true,
+    editable: false,
     valueGetter: (params) => new Date(params),
   },
   {
     field: "resultado_serologia",
     headerName: "VDRL",
-    type: "singleSelect",
+
     width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
+
   },
-  {
-    field: "fecha_serologia",
-    headerName: "Fecha VDRL",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_tipage",
     headerName: "Grupo Sanguíneo",
     width: 180,
-    editable: true,
-    type: "singleSelect",
-    valueOptions: ["A", "B", "AB", "O"],
+    editable: false,
+
 
   },
+
   {
-    field: "fecha_tipage",
-    headerName: "Fecha Grupo",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-  {
-    field: "factor",
+    field: "resultado_rh",
     headerName: "Rh",
-    type: "singleSelect",
+
     width: 120,
-    editable: true,
-    valueOptions: ["+", "-"],
+    editable: false,
+
   },
-  {
-    field: "fecha_rh",
-    headerName: "Fecha Rh",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_contratipaje",
     headerName: "Contratipaje",
-    type: "singleSelect",
+
     width: 140,
-    editable: true,
-    valueOptions: ["A", "B", "AB", "O"],
+    editable: false,
+
   },
-  {
-    field: "fecha_contratipaje",
-    headerName: "Fecha Contratipaje",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_DU",
     headerName: "DU",
-    type: "singleSelect",
+
     width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
+
   },
   {
-    field: "fecha_DU",
-    headerName: "Fecha DU",
+    field: "fecha_inmuno",
+    headerName: "Fecha ",
     type: "date",
     width: 120,
-    editable: true,
+    editable: false,
     valueGetter: (params) => new Date(params),
   },
 
@@ -175,148 +129,96 @@ const REanalizarColumns: GridColDef[] = [
     field: "resultado_VIH1",
     headerName: "HIV (R)",
     width: 180,
-    editable: true,
-    type: "singleSelect",
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
+
 
   },
   {
-    field: "fecha_VIH1",
-    headerName: "Fecha VIH R",
+    field: "resultado_hepatitisB1",
+    headerName: "HBsAg (R)",
+
+    width: 120,
+    editable: false,
+  },
+
+  {
+    field: "resultado_hepatitisC1",
+    headerName: "HCV (R)",
+
+    width: 140,
+    editable: false,
+
+  },
+  {
+    field: "fecha_suma",
+    headerName: "Fecha R",
     type: "date",
     width: 120,
-    editable: true,
+    editable: false,
     valueGetter: (params) => new Date(params),
   },
+
   {
     field: "resultado_VIH2",
     headerName: "HIV (RR)",
     width: 180,
-    editable: true,
-    type: "singleSelect",
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
 
-  },
-  {
-    field: "fecha_VIH2",
-    headerName: "Fecha VIH RR",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-  {
-    field: "resultado_VIH3",
-    headerName: "HIV (RRB)",
-    width: 180,
-    editable: true,
-    type: "singleSelect",
-    valueOptions: ["Positivo", "Negativo"],
 
-  },
-  {
-    field: "fecha_VIH3",
-    headerName: "Fecha VIH RRB",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-
-  {
-    field: "resultado_hepatitisB1",
-    headerName: "HBsAg (R)",
-    type: "singleSelect",
-    width: 120,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
-  },
-  {
-    field: "fecha_hepatitisB1",
-    headerName: "Fecha HBsAg R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
   },
   {
     field: "resultado_hepatitisB2",
     headerName: "HBsAg (RR)",
-    type: "singleSelect",
+
     width: 120,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
-  },
-  {
-    field: "fecha_hepatitisB2",
-    headerName: "Fecha HBsAg RR",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-  {
-    field: "resultado_hepatitisB3",
-    headerName: "HBsAg (RRB)",
-    type: "singleSelect",
-    width: 120,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
-  },
-  {
-    field: "fecha_hepatitisB3",
-    headerName: "Fecha HBsAg RRB",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-  {
-    field: "resultado_hepatitisC1",
-    headerName: "HCV (R)",
-    type: "singleSelect",
-    width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
-  },
-  {
-    field: "fecha_hepatitisC1",
-    headerName: "Fecha HCV R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
+    editable: false,
   },
   {
     field: "resultado_hepatitisC2",
     headerName: "HCV (RR)",
-    type: "singleSelect",
+
     width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
+
   },
   {
-    field: "fecha_hepatitisC2",
-    headerName: "Fecha HCV RR",
+    field: "fecha_suma1",
+    headerName: "Fecha RR",
     type: "date",
     width: 120,
-    editable: true,
+    editable: false,
     valueGetter: (params) => new Date(params),
+  },
+
+
+  {
+    field: "resultado_VIH3",
+    headerName: "HIV (RRB)",
+    width: 180,
+    editable: false,
+
+
+  },
+  {
+    field: "resultado_hepatitisB3",
+    headerName: "HBsAg (RRB)",
+
+    width: 120,
+    editable: false,
   },
   {
     field: "resultado_hepatitisC3",
     headerName: "HCV (RRB) ",
-    type: "singleSelect",
+
     width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
   },
   {
-    field: "fecha_hepatitisC3",
-    headerName: "Fecha HCV RRB",
+    field: "fecha_suma2",
+    headerName: "Fecha RRB",
     type: "date",
     width: 120,
-    editable: true,
+    editable: false,
     valueGetter: (params) => new Date(params),
   }
 
@@ -339,197 +241,141 @@ const ReanalizarColumnsInmuno: GridColDef[] = [
   {
     field: "resultado_serologia1",
     headerName: "VDRL (R)",
-    type: "singleSelect",
+
     width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
-  },
-  {
-    field: "fecha_serologia1",
-    headerName: "Fecha VDRL R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-  {
-    field: "resultado_serologia2",
-    headerName: "VDRL (RR)",
-    type: "singleSelect",
-    width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
-  },
-  {
-    field: "fecha_serologia2",
-    headerName: "Fecha VDRL RR",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-  {
-    field: "resultado_serologia3",
-    headerName: "VDRL (RRB)",
-    type: "singleSelect",
-    width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
-  },
-  {
-    field: "fecha_serologia3",
-    headerName: "Fecha VDRL RRB",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
+    editable: false,
   },
   {
     field: "resultado_tipage1",
     headerName: "Grupo Sanguíneo",
     width: 180,
-    editable: true,
-    type: "singleSelect",
-    valueOptions: ["A", "B", "AB", "O"],
+    editable: false,
+
 
   },
   {
-    field: "fecha_tipage1",
-    headerName: "Fecha Grupo R",
+    field: "resultado_rh1",
+    headerName: "Rh",
+
+    width: 120,
+    editable: false,
+
+  },
+  {
+    field: "resultado_contratipaje1",
+    headerName: "Contratipaje",
+
+    width: 140,
+    editable: false,
+  },
+  {
+    field: "resultado_DU1",
+    headerName: "DU (R)",
+
+    width: 140,
+    editable: false,
+  },
+  {
+    field: "fecha_inmuno",
+    headerName: "Fecha R",
     type: "date",
     width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
+    editable: false,
+    valueGetter: (params) => new Date(params)
+  },
+
+
+  {
+    field: "resultado_serologia2",
+    headerName: "VDRL (RR)",
+
+    width: 140,
+    editable: false,
+
   },
   {
     field: "resultado_tipage2",
     headerName: "Grupo Sanguíneo R",
     width: 180,
-    editable: true,
-    type: "singleSelect",
-    valueOptions: ["A", "B", "AB", "O"],
+    editable: false,
 
-  },
-  {
-    field: "fecha_tipage2",
-    headerName: "Fecha Grupo RR",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-  {
-    field: "resultado_rh1",
-    headerName: "Rh",
-    type: "singleSelect",
-    width: 120,
-    editable: true,
-    valueOptions: ["+", "-"],
-  },
-  {
-    field: "fecha_rh1",
-    headerName: "Fecha Rh R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
+
   },
   {
     field: "resultado_rh2",
     headerName: "Rh R",
-    type: "singleSelect",
+
     width: 120,
-    editable: true,
-    valueOptions: ["+", "-"],
-  },
-  {
-    field: "fecha_rh2",
-    headerName: "Fecha Rh RR",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
-  {
-    field: "resultado_contratipaje1",
-    headerName: "Contratipaje",
-    type: "singleSelect",
-    width: 140,
-    editable: true,
-    valueOptions: ["A", "B", "AB", "O"],
-  },
-  {
-    field: "fecha_contratipaje1",
-    headerName: "Fecha Contratipaje R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
+    editable: false,
   },
   {
     field: "resultado_contratipaje2",
     headerName: "Contratipaje R",
-    type: "singleSelect",
-    width: 140,
-    editable: true,
-    valueOptions: ["A", "B", "AB", "O"],
-  },
-  {
-    field: "fecha_contratipaje2",
-    headerName: "Fecha Contratipaje RR",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
 
-  {
-    field: "resultado_DU1",
-    headerName: "DU (R)",
-    type: "singleSelect",
     width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
-  },
-  {
-    field: "fecha_DU1",
-    headerName: "Fecha DU R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
+    editable: false,
+
   },
   {
     field: "resultado_DU2",
     headerName: "DU (RR)",
-    type: "singleSelect",
+
     width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
   },
   {
-    field: "fecha_DU2",
-    headerName: "Fecha DU RR",
+    field: "fecha_inmuno1",
+    headerName: "Fecha RR",
     type: "date",
     width: 120,
-    editable: true,
+    editable: false,
     valueGetter: (params) => new Date(params),
+  },
+  {
+    field: "resultado_serologia3",
+    headerName: "VDRL (RRB)",
+
+    width: 140,
+    editable: false,
+
+  },
+  {
+    field: "resultado_tipage3",
+    headerName: "Grupo Sanguíneo RRB",
+    width: 180,
+    editable: false,
+
+
+  },
+  {
+    field: "resultado_rh3",
+    headerName: "Rh RRB",
+
+    width: 120,
+    editable: false,
+
+  },
+  {
+    field: "resultado_contratipaje3",
+    headerName: "Contratipaje RRB",
+
+    width: 140,
+    editable: false,
   },
 
   {
     field: "resultado_DU3",
     headerName: "DU (RRB)",
-    type: "singleSelect",
+
     width: 140,
-    editable: true,
-    valueOptions: ["Positivo", "Negativo"],
+    editable: false,
   },
   {
-    field: "fecha_DU3",
-    headerName: "Fecha DU RRB",
+    field: "fecha_inmuno2",
+    headerName: "Fecha RRB",
     type: "date",
     width: 120,
-    editable: true,
+    editable: false,
     valueGetter: (params) => new Date(params),
   },
 
@@ -553,70 +399,42 @@ const calidadColumns: GridColDef[] = [
     field: "resultado_hemoglobina",
     headerName: "Hemoglobina",
     width: 150,
-    editable: true,
+    editable: false,
   },
-  {
-    field: "fecha_hemoglobina",
-    headerName: "Fecha Hb",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_hematocrito",
     headerName: "Hematocrito",
     width: 150,
-    editable: true,
+    editable: false,
   },
-  {
-    field: "fecha_hematocrito",
-    headerName: "Fecha Hto",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_eritro",
     headerName: "Eritro",
     width: 150,
-    editable: true,
+    editable: false,
   },
-  {
-    field: "fecha_eritro",
-    headerName: "Fecha Eritro",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_TGP",
     headerName: "TGP",
     width: 150,
-    editable: true,
+    editable: false,
   },
-  {
-    field: "fecha_TGP",
-    headerName: "Fecha TGP",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_proteinas_totales",
     headerName: "Proteínas Totales",
     width: 150,
-    editable: true,
+    editable: false,
   },
   {
-    field: "fecha_proteinas_totales",
-    headerName: "Fecha PT",
+    field: "fecha_calidad",
+    headerName: "Fecha ",
     type: "date",
     width: 120,
-    editable: true,
+    editable: false,
     valueGetter: (params) => new Date(params),
   },
 ]
@@ -639,95 +457,135 @@ const calidadRepeticionColumns: GridColDef[] = [
     field: "resultado_hemoglobina1",
     headerName: "Hemoglobina R",
     width: 150,
-    editable: true,
+    editable: false,
   },
-  {
-    field: "fecha_hemoglobina1",
-    headerName: "Fecha Hb R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_hematocrito1",
     headerName: "Hematocrito R",
     width: 150,
-    editable: true,
+    editable: false,
   },
-  {
-    field: "fecha_hematocrito1",
-    headerName: "Fecha Hto R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_eritro1",
     headerName: "Eritro R",
     width: 150,
-    editable: true,
+    editable: false,
   },
-  {
-    field: "fecha_eritro1",
-    headerName: "Fecha Eritro R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_TGP1",
     headerName: "TGP R",
     width: 150,
-    editable: true,
+    editable: false,
   },
-  {
-    field: "fecha_TGP1",
-    headerName: "Fecha TGP R",
-    type: "date",
-    width: 120,
-    editable: true,
-    valueGetter: (params) => new Date(params),
-  },
+
   {
     field: "resultado_proteinas_totales1",
     headerName: "Proteínas Totales R",
     width: 150,
-    editable: true,
+    editable: false,
   },
   {
-    field: "fecha_proteinas_totales1",
-    headerName: "Fecha PT R",
+    field: "fecha_calidad",
+    headerName: "Fecha R",
     type: "date",
     width: 120,
-    editable: true,
+    editable: false,
     valueGetter: (params) => new Date(params),
   },
 ]
 
 export default function PrincipalLab() {
+
   const [analizar, setAnalizar] = useState([]);
   const [REanalizarSuma, setReanalizarSuma] = useState([]);
   const [REanalizarInmuno, setReanalizarInmuno] = useState([]);
   const [calidad, setCalidad] = useState([]);
   const [calidadRepeticion, setCalidadRepeticion] = useState([]);
   const [expanded, setExpanded] = useState<string | false>('panel1');
-  const [selectedRow, setSelectedRow] = useState(null);
-  const navigate = useNavigate();
+  const [setSelectedRow] = useState(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  const [analizarSearch, setAnalizarSearch] = useState("");
+  const [reanalizarSumaSearch, setReanalizarSumaSearch] = useState("");
+  const [reanalizarInmunoSearch, setReanalizarInmunoSearch] = useState("");
+  const [calidadSearch, setCalidadSearch] = useState("");
+  const [calidadRepeticionSearch, setCalidadRepeticionSearch] = useState("");
+
+
+  useEffect(() => {
+    const role = localStorage.getItem("userRole");
+    setUserRole(role);
+  }, [])
+
+  const allowedFieldsSuma = [
+    "numero_consecutivo",
+    "no_hc",
+    "resultado_VIH",
+    "resultado_hepatitisB",
+    "resultado_hepatitisC",
+    "fecha_suma"
+  ];
+
+
+  const allowedFieldsInmuno = [
+    "numero_consecutivo",
+    "no_hc",
+    "resultado_serologia",
+    "resultado_tipage",
+    "resultado_contratipaje",
+    "resultado_rh",
+    "resultado_DU",
+    "fecha_inmuno"
+  ]
+
+  const analizarResultFields = [
+    "resultado_VIH",
+    "resultado_hepatitisB",
+    "resultado_hepatitisC",
+    "fecha_suma",
+    "resultado_serologia",
+    "resultado_tipage",
+    "resultado_rh",
+    "resultado_contratipaje",
+    "resultado_DU",
+    "fecha_inmuno"
+  ];
+
+
+
+  let filteredAnalizarColumns = analizarColumns;
+
+  if (userRole === "Técnico de laboratorio suma") {
+    filteredAnalizarColumns = analizarColumns.filter(col => allowedFieldsSuma.includes(col.field));
+  } else if (userRole === "Técnico de laboratorio inmuno") {
+    filteredAnalizarColumns = analizarColumns.filter(col => allowedFieldsInmuno.includes(col.field));
+  }
+
 
   const handleAccordionChange =
     (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
       setExpanded(isExpanded ? panel : false);
     }
 
+  // Metodo para cargar muestras que ya fueron analizadas por primera vez
   const fetchAnalizarData = async () => {
     try {
       const response = await axios.get(`${API_URL}/analizadas`);
       const data = response.data;
 
-      setAnalizar(data); // Carga los datos en la tabla analizarColumns
+      // Filtra solo las muestras que tengan al menos un resultado en los arrays
+      const filtrado = data.filter(row =>
+        analizarResultFields.some(
+          field =>
+            Array.isArray(row[field]) ? row[field].length > 0 :
+              row[field] !== undefined && row[field] !== null && row[field] !== ""
+        )
+      );
+
+      setAnalizar(filtrado);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -891,6 +749,19 @@ export default function PrincipalLab() {
     fetchReanalizarSumaData();
   }, []);
 
+  function filterAndPrioritize(data, search, field = "no_hc") {
+    if (!search) return data;
+    const searchLower = search.toLowerCase();
+    const matches = data.filter(row => row[field]?.toLowerCase().includes(searchLower));
+    const nonMatches = data.filter(row => !row[field]?.toLowerCase().includes(searchLower));
+    return [...matches, ...nonMatches];
+  }
+
+  const filteredAnalizar = filterAndPrioritize(analizar, analizarSearch, "no_hc");
+  const filteredReanalizarSuma = filterAndPrioritize(REanalizarSuma, reanalizarSumaSearch, "no_hc");
+  const filteredReanalizarInmuno = filterAndPrioritize(REanalizarInmuno, reanalizarInmunoSearch, "no_hc");
+  const filteredCalidad = filterAndPrioritize(calidad, calidadSearch, "no_hc");
+  const filteredCalidadRepeticion = filterAndPrioritize(calidadRepeticion, calidadRepeticionSearch, "no_hc");
 
   return (
     <>
@@ -899,144 +770,270 @@ export default function PrincipalLab() {
         <Typography
           variant="h4"
           gutterBottom
-          sx={{ fontSize: { xs: "2 rem", md: "3rem" }, textAlign: "center", color: "primary.main" }} >
+          sx={{ fontSize: { xs: "2 rem", md: "3rem" }, textAlign: "center", color: "white", backgroundColor: "primary.dark" }} >
           Laboratorio
         </Typography>
 
-        {/* Acordeón para Analizar */}
-        <Accordion expanded={expanded === 'panel1'} onChange={handleAccordionChange('panel1')} sx={{ marginBottom: 1 }}>
-          <AccordionSummary
-            sx={{ display: "flex", backgroundColor: "primary.dark", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" } }}
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel3-content"
-            id="panel1-header"
-          >
-            <Typography variant="h6" sx={{ color: "white" }}>
-              Muestras Analizadas
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ height: 400, width: "100%", mb: 4 }}>
-              <DataGrid
-                rows={analizar}
-                columns={analizarColumns}
-                processRowUpdate={handleAnalizarRowUpdate}
-                onRowClick={handleRowClick}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 10 } },
-                }}
-                pageSizeOptions={[10]}
-                editMode="row"
-              />
-            </Box>
-          </AccordionDetails>
-        </Accordion>
+        {(userRole === "Técnico de laboratorio suma" || userRole === "Técnico de laboratorio inmuno") && (
+          <>
+           
+                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2, mt: 1 }}>
+                  <TextField
+                    label="Buscar por Historia Clínica"
+                    value={analizarSearch}
+                    onChange={e => setAnalizarSearch(e.target.value)}
+                    size="small"
+                    sx={{
+                      width: 250,
+                      
+                      mr: 2,
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'primary.dark',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <SearchIcon color="primary" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+                <Box sx={{ height: 400, width: "100%", mb: 4 }}>
+                  <DataGrid
+                    rows={filteredAnalizar}
+                    columns={filteredAnalizarColumns}
+                    processRowUpdate={handleAnalizarRowUpdate}
+                    onRowClick={handleRowClick}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                    }}
+                    pageSizeOptions={[10]}
+                    editMode="row"
+                  />
+                </Box>
+             
 
-        {/* Acordeón para Resultados de Calidad */}
-        <Accordion expanded={expanded === 'panel2'} onChange={handleAccordionChange('panel2')} sx={{ marginBottom: 1 }}>
-          <AccordionSummary sx={{ display: "flex", backgroundColor: "primary.dark", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" } }}
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel2-content"
-            id="panel2-header">
-            <Typography variant="h6" sx={{ color: "white" }}>
-              Resultados de Calidad
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ height: 400, width: "100%", mb: 4 }}>
-              <DataGrid
-                rows={calidad}
-                columns={calidadColumns}
-                processRowUpdate={handleCalidadRowUpdate}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 10 } },
-                }}
-                pageSizeOptions={[10]}
-                editMode="row"
-              />
-            </Box>
-          </AccordionDetails>
-        </Accordion>
+          </>
+        )}
+
+        {userRole === "Técnico de laboratorio suma" && (
+          <>
+
+           
+              <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2, mt: 1 }}>
+                  <TextField
+                    label="Buscar por Historia Clínica"
+                    value={reanalizarSumaSearch}
+                    onChange={e => setReanalizarSumaSearch(e.target.value)}
+                    size="small"
+                    sx={{
+                      width: 250,
+                      
+                      mr: 2,
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'primary.dark',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <SearchIcon color="primary" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+                
+                <Box sx={{ height: 400, width: "100%", mb: 4 }}>
+                  <DataGrid
+                    rows={filteredReanalizarSuma}
+                    columns={REanalizarColumns}
+                    processRowUpdate={handleReanalizarSumaRowUpdate}
+                    onRowClick={handleRowClick}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                    }}
+                    pageSizeOptions={[10]}
+                    editMode="row"
+                  />
+                </Box>
+            
+
+          </>
 
 
-        {/* Acordeón para Reanalizar */}
-        <Accordion expanded={expanded === 'panel3'} onChange={handleAccordionChange('panel3')} sx={{ marginBottom: 1 }}>
-          <AccordionSummary sx={{ display: "flex", backgroundColor: "primary.dark", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" } }}
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel3-content"
-            id="panel3-header">
-            <Typography variant="h6" sx={{ color: "white" }}>
-              Muestras Reanalizadas de Suma
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ height: 400, width: "100%", mb: 4 }}>
-              <DataGrid
-                rows={REanalizarSuma}
-                columns={REanalizarColumns}
-                processRowUpdate={handleReanalizarSumaRowUpdate}
-                onRowClick={handleRowClick}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 10 } },
-                }}
-                pageSizeOptions={[10]}
-                editMode="row"
-              />
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-        {/* Acordeón para Resultados de Calidad Repetidos */}
-        <Accordion expanded={expanded === 'panel4'} onChange={handleAccordionChange('panel4')} sx={{ marginBottom: 1 }}>
-          <AccordionSummary sx={{ display: "flex", backgroundColor: "primary.dark", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" } }}
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel4-content"
-            id="panel4-header">
-            <Typography variant="h6" sx={{ color: "white" }}>
-              Muestras Reanalizadas de Calidad
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ height: 400, width: "100%", mb: 4 }}>
-              <DataGrid
-                rows={calidadRepeticion}
-                columns={calidadRepeticionColumns}
-                processRowUpdate={handleReanalizarCalidadRowUpdate}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 10 } },
-                }}
-                pageSizeOptions={[10]}
-                editMode="row"
-              />
-            </Box>
-          </AccordionDetails>
-        </Accordion>
+        )
+        }
+        {userRole === "Técnico de laboratorio calidad" && (
+          <>
+            
+              <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2, mt: 1 }}>
+                  <TextField
+                    label="Buscar por Historia Clínica"
+                    value={calidadSearch}
+                    onChange={e => setCalidadSearch(e.target.value)}
+                    size="small"
+                    sx={{
+                      width: 250,
+                      
+                      mr: 2,
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'primary.dark',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <SearchIcon color="primary" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+                
+                <Box sx={{ height: 400, width: "100%", mb: 4 }}>
+                  <DataGrid
+                    rows={filteredCalidad}
+                    columns={calidadColumns}
+                    processRowUpdate={handleCalidadRowUpdate}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                    }}
+                    pageSizeOptions={[10]}
+                    editMode="row"
+                  />
+                </Box>
+             
 
-        {/* Acordeón para Resultados de Inmuno */}
-        <Accordion expanded={expanded === 'panel5'} onChange={handleAccordionChange('panel5')}>
-          <AccordionSummary sx={{ display: "flex", backgroundColor: "primary.dark", alignItems: "center", "& .MuiAccordionSummary-content": { justifyContent: "center" } }}
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel5-content"
-            id="panel5-header">
-            <Typography variant="h6" sx={{ color: "white" }}>
-              Muestras Reanalizadas de Inmunohematología
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ height: 400, width: "100%", mb: 4 }}>
-              <DataGrid
-                rows={REanalizarInmuno}
-                columns={ReanalizarColumnsInmuno}
-                processRowUpdate={handleReanalizarInmunoRowUpdate}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 10 } },
-                }}
-                pageSizeOptions={[10]}
-                editMode="row"
-              />
-            </Box>
-          </AccordionDetails>
-        </Accordion>
+          
+              <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2, mt: 1 }}>
+                  <TextField
+                    label="Buscar por Historia Clínica"
+                    value={calidadRepeticion}
+                    onChange={e => setCalidadRepeticionSearch(e.target.value)}
+                    size="small"
+                    sx={{
+                      width: 250,
+                      
+                      mr: 2,
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'primary.dark',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <SearchIcon color="primary" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+                
+                <Box sx={{ height: 400, width: "100%", mb: 4 }}>
+                  <DataGrid
+                    rows={filteredCalidadRepeticion}
+                    columns={calidadRepeticionColumns}
+                    processRowUpdate={handleReanalizarCalidadRowUpdate}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                    }}
+                    pageSizeOptions={[10]}
+                    editMode="row"
+                  />
+                </Box>
+             
 
+          </>
+        )
+        }
+
+
+        {userRole === "Técnico de laboratorio inmuno" && (
+          <>
+           
+              <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2, mt: 1 }}>
+                  <TextField
+                    label="Buscar por Historia Clínica"
+                    value={reanalizarInmunoSearch}
+                    onChange={e => setReanalizarInmunoSearch(e.target.value)}
+                    size="small"
+                    sx={{
+                      width: 250,
+                      
+                      mr: 2,
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'primary.dark',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <SearchIcon color="primary" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+                
+                <Box sx={{ height: 400, width: "100%", mb: 4 }}>
+                  <DataGrid
+                    rows={filteredReanalizarInmuno}
+                    columns={ReanalizarColumnsInmuno}
+                    processRowUpdate={handleReanalizarInmunoRowUpdate}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                    }}
+                    pageSizeOptions={[10]}
+                    editMode="row"
+                  />
+                </Box>
+             
+          </>
+        )
+        }
 
       </Box>
     </>

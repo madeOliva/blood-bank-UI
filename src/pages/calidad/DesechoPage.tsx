@@ -22,49 +22,58 @@ export default function Desechos() {
   const [isSearchActive, setIsSearchActive] = useState(false);
 
   useEffect(() => {
-    axios.get("http://localhost:3000/registro-donacion/donaciones-diarias")
-      .then(response => {
-        const desechadas = response.data
-          .filter((item: any) => item.estado === "desechada")
-          .map((item: any, idx: number) => ({
-            id: item.id || item._id || item.no_consecutivo || idx,
-            no: item.no_consecutivo ?? idx + 1,
-            hc: item.hc,
-            desecho: item.desecho,
-            motivo: item.motivo_desecho || "Sin motivo"
-          }));
-        setRows(desechadas);
-        setFilteredRows(desechadas);
-      })
-      .catch(error => {
-        setRows([]);
-        setFilteredRows([]);
-      });
-  }, []);
+  axios.get("http://localhost:3000/registro-donacion/donaciones-diarias")
+    .then(response => {
+      const desechadas = Array.isArray(response.data)
+        ? response.data
+            .filter((item: any) => item.estado === "desechada")
+            .map((item: any, idx: number) => ({
+              id: item.id || item._id || item.no_consecutivo || idx,
+              no: item.no || item.no_consecutivo || idx + 1,
+              hc: item.hc ?? "", // <-- usa el campo hc que ya viene del backend
+              desecho: item.desecho,
+              motivo: item.motivo_desecho || "Sin motivo"
+            }))
+        : [];
+      setRows(desechadas);
+      setFilteredRows(desechadas);
+    })
+    .catch(error => {
+      setRows([]);
+      setFilteredRows([]);
+    });
+}, []);
 
-  // Buscador por historia clínica
-  const handleSearch = () => {
-    if (!searchHC) {
-      setFilteredRows(rows);
-      setIsSearchActive(false);
-      setSearchOpen(false);
-      return;
-    }
-    const data = rows.filter((row) =>
-      row.hc?.toString().toLowerCase().includes(searchHC.trim().toLowerCase())
-    );
-    setFilteredRows(data);
-    setIsSearchActive(true);
-    setSearchOpen(false);
-  };
-
-  // Restablecer filtro
-  const handleClearSearch = () => {
-    setSearchHC("");
+// Buscador por número de historia clínica
+const handleSearch = () => {
+  if (!searchHC) {
     setFilteredRows(rows);
     setIsSearchActive(false);
     setSearchOpen(false);
-  };
+    return;
+  }
+  const search = searchHC.trim().replace(/\s+/g, '').toLowerCase();
+ 
+ const data = rows.filter((row) =>
+  String(row.hc).replace(/\s+/g, '').toLowerCase() === search
+);
+  setFilteredRows(data);
+  setIsSearchActive(true);
+  setSearchOpen(false);
+  setTimeout(() => {
+    if (document && document.body) document.body.focus();
+  }, 0);
+};
+
+const handleClearSearch = () => {
+  setSearchHC("");
+  setFilteredRows(rows);
+  setIsSearchActive(false);
+  setSearchOpen(false);
+  setTimeout(() => {
+    if (document && document.body) document.body.focus();
+  }, 0);
+};
 
   return (
     <>
