@@ -470,7 +470,6 @@ export default function ListadoHospital() {
             },
           }}
           pageSizeOptions={[10]}
-          checkboxSelection
           disableRowSelectionOnClick
           loading={loading}
         />
