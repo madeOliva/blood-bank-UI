@@ -192,11 +192,18 @@ export default function CrearOrdenTransfusion() {
                 caracter,
                 lugar_transf,
             });
+            // Actualizar localStorage
+            const savedOrders = JSON.parse(localStorage.getItem('ordenesCreadas') || '{}');
+            savedOrders[ci] = true;
+            localStorage.setItem('ordenesCreadas', JSON.stringify(savedOrders));
+
+            // Disparar evento para notificar a otros tabs
+            window.dispatchEvent(new Event('storage'));
+
             setNotifType('success');
             setNotifTitle('Éxito');
             setNotifMessage('Orden guardada');
             setModalNotifOpen(true);
-            localStorage.setItem('ordenCreada', 'true');
         } catch (error: any) {
             setNotifType('error');
             setNotifTitle('Error');
@@ -217,7 +224,7 @@ export default function CrearOrdenTransfusion() {
             </Typography>
             <Box sx={{ mt: "10px" }}>
                 <Card variant='elevation' sx={{ m: 1, p: 1, display: 'flex' }}>
-                    <TextField sx={{ width: "10%"}}
+                    <TextField sx={{ width: "10%" }}
                         label="No.Orden"
                         value={id_orden}
                         inputProps={{ min: 1 }}
@@ -391,9 +398,9 @@ export default function CrearOrdenTransfusion() {
                                     sexo === "Masculino" ||
                                     sexo === "masculino"
                                 } />
-                            <FormControlLabel value="Neonato" control={<Radio />} label="Neonato" disabled={Number(edad) > 1}/>
-                            <FormControlLabel value="Pediatrico" control={<Radio />} label="Pediatrico" disabled={Number(edad) > 18}/>
-                            <FormControlLabel value="Adulto" control={<Radio />} label="Adulto" disabled={Number(edad) < 18}/>
+                            <FormControlLabel value="Neonato" control={<Radio />} label="Neonato" disabled={Number(edad) > 1} />
+                            <FormControlLabel value="Pediatrico" control={<Radio />} label="Pediatrico" disabled={Number(edad) > 18} />
+                            <FormControlLabel value="Adulto" control={<Radio />} label="Adulto" disabled={Number(edad) < 18} />
                         </RadioGroup>
                     </FormControl>
                 </Card>

@@ -17,9 +17,10 @@ function AccionesCell(props: {
   row: any;
   onAdd: () => void;
   onDelete: (id: number) => void;
-  ordenCreada: boolean; // <-- aquí lo recibes
+  ordenCreada: boolean;
+  setOrdenCreada: (ci: string, value: boolean) => void; // Cambiado para usar CI
 }) {
-  const { id, row, onDelete, ordenCreada } = props;
+  const { id, row, onDelete } = props;
   const navigate = useNavigate();
   const [showModal, setShowModal] = React.useState(false);
 
@@ -41,7 +42,7 @@ function AccionesCell(props: {
             }
           });
         }}
-        disabled={ordenCreada}
+        disabled={props.ordenCreada}
       >
         Crear Orden
       </Button>
@@ -117,7 +118,7 @@ export default function ListadoHospital() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [openModal, setOpenModal] = useState<boolean>(false);
-  const [ordenCreada, setOrdenCreada] = React.useState(false);
+  const [ordenesCreadas, setOrdenesCreadas] = React.useState<Record<string, boolean>>({});
   const [pacienteData, setPacienteData] = useState<PacienteModalData>({
     CI: '',
     NoHClinica: '',
@@ -221,7 +222,22 @@ export default function ListadoHospital() {
   }, []);
 
   React.useEffect(() => {
-    setOrdenCreada(localStorage.getItem('ordenCreada') === 'true');
+    const handleStorageChange = () => {
+      const savedOrders = localStorage.getItem('ordenesCreadas');
+      if (savedOrders) {
+        setOrdenesCreadas(JSON.parse(savedOrders));
+      }
+    };
+
+    // Escuchar cambios en el localStorage
+    window.addEventListener('storage', handleStorageChange);
+
+    // Cargar estado inicial
+    handleStorageChange();
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const handleModalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -301,9 +317,16 @@ export default function ListadoHospital() {
       // 3. Actualizar el estado local (eliminar la fila)
       setRows(prevRows => prevRows.filter(row => row.id !== rowId));
 
-      // Habilitar el botón Crear Orden
-      localStorage.removeItem('ordenCreada');
-      setOrdenCreada(false);
+      // Actualizar estado de órdenes creadas
+      setOrdenesCreadas(prev => {
+        const newState = { ...prev };
+        delete newState[rowToDelete.CI];
+
+        // Actualizar localStorage
+        localStorage.setItem('ordenesCreadas', JSON.stringify(newState));
+
+        return newState;
+      });
 
       // Mostrar modal de éxito
       setModalConfig({
@@ -360,7 +383,14 @@ export default function ListadoHospital() {
           row={params.row}
           onAdd={handleAddRow}
           onDelete={handleDeleteRow}
-          ordenCreada={ordenCreada} // <-- aquí lo pasas como prop
+          ordenCreada={ordenesCreadas[params.row.CI] || false}
+          setOrdenCreada={(ci, value) => {
+            setOrdenesCreadas(prev => {
+              const newState = { ...prev, [ci]: value };
+              localStorage.setItem('ordenesCreadas', JSON.stringify(newState));
+              return newState;
+            });
+          }}
         />
       ),
     },
