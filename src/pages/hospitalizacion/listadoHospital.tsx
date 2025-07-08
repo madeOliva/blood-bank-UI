@@ -183,6 +183,9 @@ export default function ListadoHospital() {
       await axios.post('http://localhost:3000/listado-pacientes', payload);
       fetchAndDisplayPacientes();
 
+      // 3. Limpiar el input del CI después de guardar
+      setCi(''); // <-- Esto limpia el campo de entrada
+
       setOpenModal(false);
     } catch (error) {
       console.error('Error al guardar paciente:', error);
