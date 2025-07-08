@@ -1,42 +1,32 @@
 import * as React from 'react';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Alert, Box, Button, Card, CardActions, CardContent, CardMedia, Checkbox, FormControl, FormControlLabel, FormLabel, InputAdornment, InputLabel, MenuItem, Radio, RadioGroup, Select, TextField } from '@mui/material';
+import { Box, Button, Card, CardActions, CardContent, CardMedia, Checkbox, FormControl, FormControlLabel, FormLabel, InputAdornment, InputLabel, MenuItem, Radio, RadioGroup, Select, TextField } from '@mui/material';
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from 'react-router-dom';
+import ModalPersonalizado from '../../components/ModalPersonalizado';
 
-interface LocationState {
-    nombre?: string;
-    primerApellido?: string;
-    segundoApellido?: string;
-}
-
-export default function ModficarOrdenTransfusion() {
+export default function ModificarOrdenTransfusion() {
     const location = useLocation();
-    const { nombre: nombreParam, primerApellido: primerApellidoParam, segundoApellido: segundoApellidoParam } = (location.state || {}) as LocationState;
+    const ci = location.state?.ci; // Obtiene los datos pasados por navigate
+    const navigate = useNavigate();
 
-    // Si no hay datos, muestra mensaje y no renderiza el formulario
-    if (!nombreParam || !primerApellidoParam || !segundoApellidoParam) {
-        return <Alert severity="info" sx={{ mt: 4 }}>No hay datos insertados para modificar la orden.</Alert>;
-    }
+    // Estados iniciales
     const [id_orden, setId_Orden] = React.useState('');
     const [nombre, setNombre] = React.useState('');
     const [primerApellido, setPrimerApellido] = React.useState('');
     const [segundoApellido, setSegundoApellido] = React.useState('');
-    const [cama, setCama] = React.useState('');
-    const [sala, setSala] = React.useState('');
     const [sexo, setSexo] = React.useState('');
     const [edad, setEdad] = React.useState('');
+    const [cama, setCama] = React.useState('');
+    const [sala, setSala] = React.useState('');
+    const [peso, setPeso] = React.useState('');
+    const [talla, setTalla] = React.useState('');
     const [fecha_orden, setFechaOrden] = React.useState('');
     const [hora_orden, setHoraOrden] = React.useState('');
     const [tipo_paciente, setTipoPaciente] = React.useState('');
     const [diagnostico_principal, setDiagnosticoPrincipal] = React.useState('');
     const [grupo, setGrupo] = React.useState('');
     const [factor, setFactor] = React.useState('');
-    const [observacion_error, setObservacionError] = React.useState('');
     const [hb, setHb] = React.useState('');
     const [hto, setHto] = React.useState('');
     const [irn, setIrn] = React.useState('');
@@ -61,29 +51,173 @@ export default function ModficarOrdenTransfusion() {
     const [caracter, setCaracter] = React.useState(false);
     const [lugar_transf, setLugarTransf] = React.useState('');
 
+    const [modalNotifOpen, setModalNotifOpen] = React.useState(false);
+    const [notifType, setNotifType] = React.useState<'success' | 'error' | 'info' | 'warning'>('success');
+    const [notifTitle, setNotifTitle] = React.useState('');
+    const [notifMessage, setNotifMessage] = React.useState('');
 
-    // Estado para mostrar alertas
-    const [alert, setAlert] = React.useState<{ type: 'success' | 'error', message: string } | null>(null);
+    React.useEffect(() => {
+        const fetchOrdenTransfusion = async () => {
+            if (ci) {
+                try {
+                    // Obtener la orden de transfusión por CI
+                    const response = await axios.get(`http://localhost:3000/transfusiones/ci/${ci}`);
+                    const ordenData = response.data;
+
+                    // Formatear fechas para los inputs de tipo date
+                    const formatDateForInput = (dateString: string) => {
+                        if (!dateString) return '';
+                        const date = new Date(dateString);
+                        return date.toISOString().split('T')[0];
+                    };
+
+                    // Formatear horas para los inputs de tipo time
+                    const formatTimeForInput = (dateString: string) => {
+                        if (!dateString) return '';
+                        const date = new Date(dateString);
+                        return date.toTimeString().substring(0, 5);
+                    };
+
+                    // Actualizar todos los estados con los datos de la orden
+                    if (ordenData) {
+                        setId_Orden(ordenData.id_orden || '');
+                        setNombre(ordenData.nombre || '');
+                        setPrimerApellido(ordenData.primerApellido || '');
+                        setSegundoApellido(ordenData.segundoApellido || '');
+                        setSexo(ordenData.sexo || '');
+                        setEdad(ordenData.edad || '');
+                        setPeso(ordenData.peso?.toString() || '');
+                        setTalla(ordenData.talla?.toString() || '');
+                        setCama(ordenData.cama?.toString() || '');
+                        setSala(ordenData.sala || '');
+                        setFechaOrden(formatDateForInput(ordenData.fecha_orden));
+                        setHoraOrden(formatTimeForInput(ordenData.hora_orden));
+                        setTipoPaciente(ordenData.tipo_paciente || '');
+                        setDiagnosticoPrincipal(ordenData.diagnostico_principal || '');
+                        setGrupo(ordenData.grupo || '');
+                        setFactor(ordenData.factor || '');
+                        setHb(ordenData.hb?.toString() || '');
+                        setHto(ordenData.hto?.toString() || '');
+                        setIrn(ordenData.irn?.toString() || '');
+                        setContPlaqueta(ordenData.cont_plaqueta?.toString() || '');
+                        setGlobuloRojo(ordenData.globulo_rojo || false);
+                        setPrioridadGr(ordenData.prioridad_gr?.toString() || '');
+                        setComponentes(ordenData.componentes || '');
+                        setUrgenciaGr(ordenData.urgencia_gr || false);
+                        setUrgenciaCp(ordenData.urgencia_cp || false);
+                        setCantGr(ordenData.cant_gr?.toString() || '');
+                        setReservaGr(ordenData.reserva_gr || false);
+                        setFechaGr(formatDateForInput(ordenData.fecha_gr));
+                        setHoraGr(formatTimeForInput(ordenData.hora_gr));
+                        setCompPlasmtico(ordenData.comp_plasmtico || false);
+                        setPrioridadCp(ordenData.prioridad_cp?.toString() || '');
+                        setCantCp(ordenData.cant_cp?.toString() || '');
+                        setFrecuenciaCp(ordenData.frecuencia_cp?.toString() || '');
+                        setReservaCp(ordenData.reserva_cp || false);
+                        setFechaCp(formatDateForInput(ordenData.fecha_cp));
+                        setFechaTransf(formatDateForInput(ordenData.fecha_transf));
+                        setHoraTransf(formatTimeForInput(ordenData.hora_transf));
+                        setCaracter(ordenData.caracter || false);
+                        setLugarTransf(ordenData.lugar_transf || '');
+                    }
+
+                } catch (error) {
+                    console.error('Error al cargar la orden de transfusión:', error);
+                    setNotifType('error');
+                    setNotifTitle('Error');
+                    setNotifMessage('No se pudo cargar la orden de transfusión');
+                    setModalNotifOpen(true);
+                }
+            }
+        };
+
+        fetchOrdenTransfusion();
+    }, [ci]);
+
 
     // Ejemplo de handleGuardar
     const handleGuardar = async () => {
+        // Lista de campos requeridos (mantiene la misma lógica de validación)
+        const camposRequeridos = [
+            { campo: id_orden, nombre: "Número de Orden" },
+            { campo: peso, nombre: "Peso" },
+            { campo: talla, nombre: "Talla" },
+            { campo: sala, nombre: "Sala" },
+            { campo: cama, nombre: "Cama" },
+            { campo: fecha_orden, nombre: "Fecha de Orden" },
+            { campo: hora_orden, nombre: "Hora de Orden" },
+            { campo: diagnostico_principal, nombre: "Diagnóstico Principal" },
+            { campo: tipo_paciente, nombre: "Tipo de Paciente" },
+            { campo: hb, nombre: "HB" },
+            { campo: hto, nombre: "HTO" },
+            { campo: cont_plaqueta, nombre: "Conteo de Plaquetas" },
+            { campo: irn, nombre: "IRN" },
+            { campo: lugar_transf, nombre: "Lugar de Transfusión" },
+            { campo: fecha_transf, nombre: "Fecha de Transfusión" },
+            { campo: hora_transf, nombre: "Hora de Transfusión" },
+        ];
+
+        // Verificación de componentes seleccionados (igual que antes)
+        const componenteSeleccionado = globulo_rojo || comp_plasmtico;
+
+        if (globulo_rojo) {
+            camposRequeridos.push(
+                { campo: prioridad_gr, nombre: "Prioridad Globulos Rojos" },
+                { campo: componentes, nombre: "Componente Globulos Rojos" },
+                { campo: cant_gr, nombre: "Cantidad Globulos Rojos" },
+                { campo: fecha_gr, nombre: "Fecha Globulos Rojos" },
+                { campo: hora_gr, nombre: "Hora Globulos Rojos" }
+            );
+        }
+
+        if (comp_plasmtico) {
+            camposRequeridos.push(
+                { campo: prioridad_cp, nombre: "Prioridad Componente Plasmático" },
+                { campo: componentes, nombre: "Componente Plasmático" },
+                { campo: cant_cp, nombre: "Cantidad Componente Plasmático" },
+                { campo: frecuencia_cp, nombre: "Frecuencia Componente Plasmático" },
+                { campo: fecha_cp, nombre: "Fecha Componente Plasmático" }
+            );
+        }
+
+        // Validación de campos vacíos (igual que antes)
+        const camposVacios = camposRequeridos
+            .filter(item => item.campo === '' || item.campo === null || item.campo === undefined)
+            .map(item => item.nombre);
+
+        if (!componenteSeleccionado) {
+            setNotifType('warning');
+            setNotifTitle('Advertencia');
+            setNotifMessage('Debe seleccionar al menos un componente (Glóbulos Rojos o Componente Plasmático)');
+            setModalNotifOpen(true);
+            return;
+        }
+
+        if (camposVacios.length > 0) {
+            setNotifType('warning');
+            setNotifTitle('Campos Vacíos');
+            setNotifMessage(`Por favor rellene los siguientes campos: ${camposVacios.join(', ')}`);
+            setModalNotifOpen(true);
+            return;
+        }
+
         try {
-            await axios.patch("http://localhost:3000/transfusiones", {
-                id_orden,
+            const payload = {
+                // Elimina id_orden del payload ya que va en la URL
+                ci,
                 nombre,
                 primerApellido,
                 segundoApellido,
+                peso: Number(peso),
+                talla: Number(talla),
                 cama: Number(cama),
                 sala,
                 sexo,
                 edad,
-                fecha_orden: new Date(fecha_orden),
-                hora_orden: new Date(`${fecha_orden}T${hora_orden}`),
                 tipo_paciente,
                 diagnostico_principal,
                 grupo,
                 factor,
-                observacion_error,
                 hb: Number(hb),
                 hto: Number(hto),
                 irn: Number(irn),
@@ -95,83 +229,33 @@ export default function ModficarOrdenTransfusion() {
                 urgencia_cp,
                 cant_gr: Number(cant_gr),
                 reserva_gr,
-                fecha_gr: new Date(fecha_gr),
-                hora_gr: new Date(`${fecha_gr}T${hora_gr}`),
                 comp_plasmtico,
                 prioridad_cp: Number(prioridad_cp),
                 cant_cp: Number(cant_cp),
                 frecuencia_cp: Number(frecuencia_cp),
                 reserva_cp,
-                fecha_cp: new Date(fecha_cp),
-                fecha_transf: new Date(fecha_transf),
-                hora_transf: new Date(`${fecha_transf}T${hora_transf}`),
+                fecha_cp: fecha_cp,
                 caracter,
                 lugar_transf,
-            });
-            setAlert({ type: 'success', message: 'Orden de Transfusión Actualizada' });
-        } catch (error) {
-            setAlert({ type: 'error', message: 'Actualización Fallida' });
+                hora_orden: `${fecha_orden}T${hora_orden}:00`, // Combina fecha y hora
+                hora_gr: `${fecha_gr}T${hora_gr}:00`,
+                hora_transf: `${fecha_transf}T${hora_transf}:00`
+            };
+
+            await axios.patch(`http://localhost:3000/transfusiones/by-orden/${id_orden}`, payload);
+
+            setNotifType('success');
+            setNotifTitle('Éxito');
+            setNotifMessage('Orden actualizada correctamente'); // Cambiamos el mensaje
+            setModalNotifOpen(true);
+        } catch (error: any) {
+            console.error('Error al actualizar la orden:', error);
+            setNotifType('error');
+            setNotifTitle('Error');
+            setNotifMessage(error.response?.data?.message || 'Error al actualizar la orden de transfusión');
+            setModalNotifOpen(true);
         }
     };
-
-    React.useEffect(() => {
-        const fetchOrden = async () => {
-            if (nombreParam && primerApellidoParam && segundoApellidoParam) {
-                try {
-                    const res = await axios.get("http://localhost:3000/transfusiones/buscar", {
-                        params: {
-                            nombre,
-                            primerApellido,
-                            segundoApellido
-                        }
-                    });
-                    const orden = res.data;
-                    setId_Orden(orden.id_orden || '');
-                    setNombre(orden.Nombre || '');
-                    setPrimerApellido(orden.PApellido || '');
-                    setSegundoApellido(orden.SApellido || '');
-                    setCama(orden.Cama || '');
-                    setSala(orden.Sala || '');
-                    setSexo(orden.Sexo || '');
-                    setEdad(orden.Edad || '');
-                    setFechaOrden(orden.fecha_orden ? orden.fecha_orden.slice(0, 10) : '');
-                    setHoraOrden(orden.hora_orden ? orden.hora_orden.slice(11, 16) : '');
-                    setTipoPaciente(orden.tipo_paciente || '');
-                    setDiagnosticoPrincipal(orden.diagnostico_principal || '');
-                    setGrupo(orden.Grupo || '');
-                    setFactor(orden.Factor || '');
-                    setObservacionError(orden.observacion_error || '');
-                    setHb(orden.hb || '');
-                    setHto(orden.hto || '');
-                    setIrn(orden.irn || '');
-                    setContPlaqueta(orden.cont_plaqueta || '');
-                    setGlobuloRojo(!!orden.globulo_rojo);
-                    setPrioridadGr(orden.prioridad_gr || '');
-                    setComponentes(orden.componentes || '');
-                    setUrgenciaGr(!!orden.urgencia_gr);
-                    setUrgenciaCp(!!orden.urgencia_cp);
-                    setCantGr(orden.cant_gr || '');
-                    setReservaGr(!!orden.reserva_gr);
-                    setFechaGr(orden.fecha_gr ? orden.fecha_gr.slice(0, 10) : '');
-                    setHoraGr(orden.hora_gr ? orden.hora_gr.slice(11, 16) : '');
-                    setCompPlasmtico(!!orden.comp_plasmtico);
-                    setPrioridadCp(orden.prioridad_cp || '');
-                    setCantCp(orden.cant_cp || '');
-                    setFrecuenciaCp(orden.frecuencia_cp || '');
-                    setReservaCp(!!orden.reserva_cp);
-                    setFechaCp(orden.fecha_cp ? orden.fecha_cp.slice(0, 10) : '');
-                    setFechaTransf(orden.fecha_transf ? orden.fecha_transf.slice(0, 10) : '');
-                    setHoraTransf(orden.hora_transf ? orden.hora_transf.slice(11, 16) : '');
-                    setCaracter(!!orden.caracter);
-                    setLugarTransf(orden.lugar_transf || '');
-
-                } catch (error) {
-                    setAlert({ type: 'error', message: 'No se pudo cargar la orden.' });
-                }
-            }
-        };
-        fetchOrden();
-    }, [nombreParam, primerApellidoParam, segundoApellidoParam]);
 
     return (
         <>
@@ -183,148 +267,128 @@ export default function ModficarOrdenTransfusion() {
             >
                 Orden de Transfusion
             </Typography>
-            {alert && <Alert severity={alert.type} sx={{ mt: 2 }}>{alert.message}</Alert>}
             <Box sx={{ mt: "10px" }}>
-                <TextField sx={{ width: "10%", ml: "10px" }}
-                    label="No.Orden"
-                    value={id_orden}
-                    inputProps={{ min: 1 }}
-                    onChange={e => {
-                        // Permite solo números
-                        const value = e.target.value.replace(/\D/g, '');
-                        setId_Orden(value);
-                    }}
-                />
-                <TextField sx={{ ml: "10px" }}
-                    label="Nombre"
-                    value={nombre}
-                    onChange={e => {
-                        // Permite solo letras (mayúsculas y minúsculas) y espacios
-                        const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
-                        setNombre(value);
-                    }}
-                />
-                <TextField sx={{ ml: "10px" }}
-                    label="Primer Apellido"
-                    value={primerApellido}
-                    onChange={e => {
-                        // Permite solo letras (mayúsculas y minúsculas) y espacios
-                        const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
-                        setPrimerApellido(value);
-                    }}
-                />
-                <TextField sx={{ ml: "10px" }}
-                    label="Segundo Apellido"
-                    value={segundoApellido}
-                    onChange={e => {
-                        // Permite solo letras (mayúsculas y minúsculas) y espacios
-                        const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
-                        setSegundoApellido(value);
-                    }}
-                />
-                <TextField sx={{ width: "5%", ml: "10px" }}
-                    label="Cama"
-                    type="number"
-                    value={cama}
-                    inputProps={{ min: 1 }}
-                    onChange={e => setCama(e.target.value)}
-                    onKeyDown={e => {
-                        if (e.key === '-' || e.key === 'e' || e.key === '+') {
-                            e.preventDefault();
-                        }
-                    }}
-                />
-                <FormControl sx={{ ml: "10px", minWidth: 80 }}>
-                    <InputLabel id="demo-simple-select-label">Sexo</InputLabel>
-                    <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
+                <Card variant='elevation' sx={{ m: 1, p: 1, display: 'flex' }}>
+                    <TextField sx={{ width: "10%" }}
+                        label="No.Orden"
+                        value={id_orden}
+                        inputProps={{ min: 1 }}
+                        onChange={e => {
+                            // Permite solo números
+                            const value = e.target.value.replace(/\D/g, '');
+                            setId_Orden(value);
+                        }}
+                    />
+                    <TextField
+                        sx={{ width: "10%", ml: "10px" }}
+                        label="CI"
+                        value={ci}
+                        InputProps={{ readOnly: true }}
+                    />
+                    <TextField
+                        sx={{ width: "6%", ml: "10px" }}
+                        label="Nombre"
+                        value={nombre}
+                        InputProps={{ readOnly: true }}
+                        onChange={e => { setNombre(e.target.value); }}
+                    />
+                    <TextField
+                        sx={{ width: "10%", ml: "10px" }}
+                        label="Primer Apellido"
+                        value={primerApellido}
+                        InputProps={{ readOnly: true }}
+                        onChange={e => { setPrimerApellido(e.target.value); }}
+                    />
+                    <TextField
+                        sx={{ width: "11%", ml: "10px" }}
+                        label="Segundo Apellido"
+                        value={segundoApellido}
+                        InputProps={{ readOnly: true }}
+                        onChange={e => { setSegundoApellido(e.target.value); }}
+                    />
+                    <TextField
+                        sx={{ ml: "10px", width: "4%" }}
+                        label="Sexo"
                         value={sexo}
-                        label="sexo"
-                        onChange={e => {
-                            // Permite solo letras (mayúsculas y minúsculas) y espacios
-                            const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
-                            setSexo(value);
-                        }}
-                    >
-                        <MenuItem value=""><em>None</em></MenuItem>
-                        <MenuItem value={"F"}>F</MenuItem>
-                        <MenuItem value={"M"}>M</MenuItem>
-
-                    </Select>
-                </FormControl>
-                <TextField sx={{ width: "6%", ml: "10px" }}
-                    label="Edad"
-                    type="number"
-                    value={edad}
-                    inputProps={{ min: 1 }}
-                    onChange={e => setEdad(e.target.value)}
-                    onKeyDown={e => {
-                        if (e.key === '-' || e.key === 'e' || e.key === '+') {
-                            e.preventDefault();
-                        }
-                    }}
-                />
-                <TextField sx={{ width: "5%", ml: "10px" }}
-                    label="Sala"
-                    value={sala}
-                    onChange={e => {
-                        // Permite solo letras (mayúsculas y minúsculas) y espacios
-                        const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
-                        setSala(value);
-                    }}
-                />
-                <FormControl sx={{ ml: "10px", minWidth: 90 }}>
-                    <InputLabel id="demo-simple-select-label">Grupo</InputLabel>
-                    <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
+                        InputProps={{ readOnly: true }}
+                        onChange={e => { setSexo(e.target.value); }}
+                    />
+                    <TextField
+                        sx={{ width: "5%", ml: "10px" }}
+                        label="Edad"
+                        value={edad}
+                        InputProps={{ readOnly: true }}
+                        onChange={e => { setEdad(e.target.value); }}
+                    />
+                    <TextField
+                        sx={{ ml: "10px", width: "5%" }}
+                        label="Grupo"
                         value={grupo}
-                        label="grupo"
-                        onChange={e => {
-                            // Permite solo letras (mayúsculas y minúsculas) y espacios
-                            const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
-                            setGrupo(value);
-                        }}
-                    >
-                        <MenuItem value=""><em>None</em></MenuItem>
-                        <MenuItem value={"A"}>A</MenuItem>
-                        <MenuItem value={"B"}>B</MenuItem>
-                        <MenuItem value={"AB"}>AB</MenuItem>
-                        <MenuItem value={"O"}>O</MenuItem>
-                    </Select>
-                </FormControl>
-                <FormControl sx={{ ml: "10px", minWidth: 90 }}>
-                    <InputLabel id="demo-simple-select-label">Factor</InputLabel>
-                    <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
+                        InputProps={{ readOnly: true }}
+                        onChange={e => { setGrupo(e.target.value); }}
+                    />
+                    <TextField
+                        sx={{ ml: "10px", width: "5%" }}
+                        label="Factor"
                         value={factor}
-                        label="factor"
+                        InputProps={{ readOnly: true }}
                         onChange={e => setFactor(e.target.value)}
+                    />
+                    <TextField
+                        sx={{ width: "7%", ml: "10px" }}
+                        label="Peso(kg)"
+                        value={peso}
+                        onChange={e => {
+                            let value = e.target.value.replace(/\D/g, '');
+                            if (value === "0") value = "";
+                            setPeso(value);
+                        }}
                         onKeyDown={e => {
-                            if (e.key >= '0' && e.key <= '9' || e.key === 'e') {
+                            if (e.key === '-' || e.key === 'e' || e.key === '+') {
                                 e.preventDefault();
                             }
                         }}
-                    >
-                        <MenuItem value=""><em>None</em></MenuItem>
-                        <MenuItem value={"+"}>+</MenuItem>
-                        <MenuItem value={"-"}>-</MenuItem>
-                    </Select>
-                </FormControl>
+                    />
+                    <TextField
+                        sx={{ width: "7%", ml: "10px" }}
+                        label="Talla(cm)"
+                        value={talla}
+                        onChange={e => {
+                            let value = e.target.value.replace(/\D/g, '');
+                            if (value === "0") value = "";
+                            setTalla(value);
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                                e.preventDefault();
+                            }
+                        }}
+                    />
+                    <TextField
+                        sx={{ width: "5%", ml: "10px" }}
+                        label="Sala"
+                        value={sala}
+                        onChange={e => {
+                            const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
+                            setSala(value);
+                        }}
+                    />
+                    <TextField
+                        sx={{ width: "6%", ml: "10px" }}
+                        label="Cama"
+                        value={cama}
+                        onChange={e => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            setCama(value);
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                                e.preventDefault();
+                            }
+                        }}
+                    />
+                </Card>
             </Box>
-            <Accordion sx={{ mt: "10px" }}>
-                <AccordionSummary sx={{ width: "100%", fontSize: { xs: "1rem", md: "2rem" }, textAlign: "center", bgcolor: "primary.dark", color: "white" }}
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1-content"
-                    id="panel1-header"
-                >
-                    <Typography sx={{ width: "100%", fontSize: "16px", textAlign: "center" }} component="span">Historia Clinica</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                </AccordionDetails>
-            </Accordion>
             <Box sx={{ mt: "10px", display: "flex", alignItems: "center" }}>
                 <TextField sx={{ width: "11%", ml: "10px" }}
                     label="Fecha"
@@ -344,24 +408,6 @@ export default function ModficarOrdenTransfusion() {
                         shrink: true,
                     }}
                 />
-
-
-                <FormControl sx={{ ml: "20px" }}>
-                    <FormLabel id="demo-row-radio-buttons-group-label">Tipo de Paciente</FormLabel>
-                    <RadioGroup
-                        row
-                        aria-labelledby="demo-row-radio-buttons-group-label"
-                        name="row-radio-buttons-group"
-                        value={tipo_paciente}
-                        onChange={e => setTipoPaciente(e.target.value)}
-                    >
-                        <FormControlLabel value="Embarazada" control={<Radio />} label="Embarazada" />
-                        <FormControlLabel value="Neonato" control={<Radio />} label="Neonato" />
-                        <FormControlLabel value="Pediatrico" control={<Radio />} label="Pediatrico" />
-                    </RadioGroup>
-                </FormControl>
-
-
                 <TextField sx={{ width: "40%", ml: "10px" }}
                     label="Diagnostico Principal"
                     value={diagnostico_principal}
@@ -372,8 +418,38 @@ export default function ModficarOrdenTransfusion() {
                     }}
                 />
             </Box>
-
-
+            <Box sx={{ justifyItems: "center" }}>
+                <Typography
+                    padding={1}
+                    color='primary'
+                    sx={{ width: "100%", fontSize: "16px", textAlign: "center" }}
+                >
+                    Tipo de Paciente:
+                </Typography>
+                <Card variant='elevation' sx={{ p: 1 }}>
+                    <FormControl sx={{ ml: "20px" }}>
+                        <FormLabel id="demo-row-radio-buttons-group-label"></FormLabel>
+                        <RadioGroup
+                            row
+                            aria-labelledby="demo-row-radio-buttons-group-label"
+                            name="row-radio-buttons-group"
+                            value={tipo_paciente}
+                            onChange={e => setTipoPaciente(e.target.value)}
+                        >
+                            <FormControlLabel value="Embarazada" control={<Radio />} label="Embarazada"
+                                disabled={
+                                    sexo === "M" ||
+                                    sexo === "m" ||
+                                    sexo === "Masculino" ||
+                                    sexo === "masculino"
+                                } />
+                            <FormControlLabel value="Neonato" control={<Radio />} label="Neonato" disabled={Number(edad) > 1} />
+                            <FormControlLabel value="Pediatrico" control={<Radio />} label="Pediatrico" disabled={Number(edad) > 18} />
+                            <FormControlLabel value="Adulto" control={<Radio />} label="Adulto" disabled={Number(edad) < 18} />
+                        </RadioGroup>
+                    </FormControl>
+                </Card>
+            </Box>
             <Box sx={{ mt: "10px", justifyItems: "center" }}>
                 <Typography
                     padding={1}
@@ -382,70 +458,72 @@ export default function ModficarOrdenTransfusion() {
                 >
                     Resultado de Examenes Complementarios
                 </Typography>
-                <TextField
-                    label="HB"
-                    id="outlined-start-adornment"
-                    sx={{ m: 1, width: '25ch' }}
-                    value={hb}
-                    onChange={e => {
-                        // Permite solo números
-                        const value = e.target.value.replace(/\D/g, '');
-                        setHb(value);
-                    }}
-                    slotProps={{
-                        input: {
-                            endAdornment: <InputAdornment position="start">um</InputAdornment>,
-                        },
-                    }}
-                />
-                <TextField
-                    label="HTO"
-                    id="outlined-start-adornment"
-                    sx={{ m: 1, width: '25ch' }}
-                    value={hto}
-                    onChange={e => {
-                        // Permite solo números
-                        const value = e.target.value.replace(/\D/g, '');
-                        setHto(value);
-                    }}
-                    slotProps={{
-                        input: {
-                            endAdornment: <InputAdornment position="start">um</InputAdornment>,
-                        },
-                    }}
-                />
-                <TextField
-                    label="Conteo de Plaquetas"
-                    id="outlined-start-adornment"
-                    sx={{ m: 1, width: '25ch' }}
-                    value={cont_plaqueta}
-                    onChange={e => {
-                        // Permite solo números
-                        const value = e.target.value.replace(/\D/g, '');
-                        setContPlaqueta(value);
-                    }}
-                    slotProps={{
-                        input: {
-                            endAdornment: <InputAdornment position="start">um</InputAdornment>,
-                        },
-                    }}
-                />
-                <TextField
-                    label="IRN"
-                    id="outlined-start-adornment"
-                    sx={{ m: 1, width: '25ch' }}
-                    value={irn}
-                    onChange={e => {
-                        // Permite solo números
-                        const value = e.target.value.replace(/\D/g, '');
-                        setIrn(value);
-                    }}
-                    slotProps={{
-                        input: {
-                            endAdornment: <InputAdornment position="start">um</InputAdornment>,
-                        },
-                    }}
-                />
+                <Card variant='elevation'>
+                    <TextField
+                        label="HB"
+                        id="outlined-start-adornment"
+                        sx={{ m: 1, width: '25ch' }}
+                        value={hb}
+                        onChange={e => {
+                            // Permite solo números
+                            const value = e.target.value.replace(/\D/g, '');
+                            setHb(value);
+                        }}
+                        slotProps={{
+                            input: {
+                                endAdornment: <InputAdornment position="start">G/dl</InputAdornment>,
+                            },
+                        }}
+                    />
+                    <TextField
+                        label="HTO"
+                        id="outlined-start-adornment"
+                        sx={{ m: 1, width: '25ch' }}
+                        value={hto}
+                        onChange={e => {
+                            // Permite solo números
+                            const value = e.target.value.replace(/\D/g, '');
+                            setHto(value);
+                        }}
+                        slotProps={{
+                            input: {
+                                endAdornment: <InputAdornment position="start">L/L</InputAdornment>,
+                            },
+                        }}
+                    />
+                    <TextField
+                        label="Conteo de Plaquetas"
+                        id="outlined-start-adornment"
+                        sx={{ m: 1, width: '25ch' }}
+                        value={cont_plaqueta}
+                        onChange={e => {
+                            // Permite solo números
+                            const value = e.target.value.replace(/\D/g, '');
+                            setContPlaqueta(value);
+                        }}
+                        slotProps={{
+                            input: {
+                                endAdornment: <InputAdornment position="start">10<sup>9</sup>/L</InputAdornment>,
+                            },
+                        }}
+                    />
+                    <TextField
+                        label="IRN"
+                        id="outlined-start-adornment"
+                        sx={{ m: 1, width: '25ch' }}
+                        value={irn}
+                        onChange={e => {
+                            // Permite solo números
+                            const value = e.target.value.replace(/\D/g, '');
+                            setIrn(value);
+                        }}
+                        slotProps={{
+                            input: {
+                                endAdornment: <InputAdornment position="start">s</InputAdornment>,
+                            },
+                        }}
+                    />
+                </Card>
             </Box>
 
 
@@ -472,10 +550,18 @@ export default function ModficarOrdenTransfusion() {
                                 aria-labelledby="demo-row-radio-buttons-group-label"
                                 name="row-radio-buttons-group"
                                 value={prioridad_gr}
-                                onChange={e => setPrioridadGr(e.target.value)}
+                                onChange={e => {
+                                    setPrioridadGr(e.target.value);
+                                    if (e.target.value === "1") {
+                                        setPrioridadCp("2");
+                                    }
+                                    else if (e.target.value === "2") {
+                                        setPrioridadCp("1");
+                                    }
+                                }}
                             >
-                                <FormControlLabel value={1} control={<Radio size="small" />} label="1" />
-                                <FormControlLabel value={2} control={<Radio size="small" />} label="2" />
+                                <FormControlLabel value="1" control={<Radio size="small" disabled={!globulo_rojo} />} label="1" disabled={!globulo_rojo} />
+                                <FormControlLabel value="2" control={<Radio size="small" disabled={!globulo_rojo} />} label="2" disabled={!globulo_rojo} />
                             </RadioGroup>
                         </CardMedia>
                         <CardContent>
@@ -488,11 +574,11 @@ export default function ModficarOrdenTransfusion() {
                                 onChange={e => setComponentes(e.target.value)}
                                 sx={{ height: 36, width: 250 }}
                                 onKeyDown={e => {
-                                    // Previene la escritura de números directamente
                                     if (e.key >= '0' && e.key <= '9' || e.key === '-' || e.key === '+') {
                                         e.preventDefault();
                                     }
                                 }}
+                                disabled={!globulo_rojo} // Deshabilitado si el checkbox no está marcado
                             >
                                 <MenuItem value=""><em>None</em></MenuItem>
                                 <MenuItem value={"CE"}>CE</MenuItem>
@@ -506,19 +592,29 @@ export default function ModficarOrdenTransfusion() {
                                 value={urgencia_gr}
                                 onChange={e => setUrgenciaGr(e.target.value === "true")}
                             >
-                                <FormControlLabel value={true} control={<Radio size="small" />} label="Urgente" />
-                                <FormControlLabel value={false} control={<Radio size="small" />} label="No Urgente" />
+                                <FormControlLabel
+                                    value={true}
+                                    control={<Radio size="small" disabled={!globulo_rojo} />}
+                                    label="Urgente"
+                                    disabled={!globulo_rojo}
+                                />
+                                <FormControlLabel
+                                    value={false}
+                                    control={<Radio size="small" disabled={!globulo_rojo} />}
+                                    label="No Urgente"
+                                    disabled={!globulo_rojo}
+                                />
                             </RadioGroup>
                             <TextField
                                 label="Cantidad"
                                 value={cant_gr}
                                 onChange={e => {
-                                    // Permite solo números
                                     const value = e.target.value.replace(/\D/g, '');
                                     setCantGr(value);
                                 }}
                                 id="outlined-start-adornment"
                                 sx={{ width: 250 }}
+                                disabled={!globulo_rojo} // Deshabilitado si el checkbox no está marcado
                                 slotProps={{
                                     input: {
                                         endAdornment: <InputAdornment position="start">ml</InputAdornment>,
@@ -531,8 +627,11 @@ export default function ModficarOrdenTransfusion() {
                                 <FormControlLabel sx={{ ml: "2px" }}
                                     control={<Checkbox
                                         checked={reserva_gr}
-                                        onChange={e => setReservaGr(e.target.checked)} />}
-                                    label="Reserva" />
+                                        onChange={e => setReservaGr(e.target.checked)}
+                                        disabled={!globulo_rojo} // Deshabilitado si el checkbox no está marcado
+                                    />}
+                                    label="Reserva"
+                                />
                             </Box>
                             <Box>
                                 <TextField sx={{ width: "50%" }}
@@ -541,8 +640,9 @@ export default function ModficarOrdenTransfusion() {
                                     value={fecha_gr}
                                     onChange={e => setFechaGr(e.target.value)}
                                     InputLabelProps={{
-                                        shrink: true, // Para que el label no se superponga al valor
+                                        shrink: true,
                                     }}
+                                    disabled={!globulo_rojo} // Deshabilitado si el checkbox no está marcado
                                 />
                                 <TextField sx={{ width: "50%" }}
                                     label="Hora"
@@ -552,6 +652,7 @@ export default function ModficarOrdenTransfusion() {
                                     InputLabelProps={{
                                         shrink: true,
                                     }}
+                                    disabled={!globulo_rojo} // Deshabilitado si el checkbox no está marcado
                                 />
                             </Box>
                         </CardActions>
@@ -567,10 +668,28 @@ export default function ModficarOrdenTransfusion() {
                                 aria-labelledby="demo-row-radio-buttons-group-label"
                                 name="row-radio-buttons-group"
                                 value={prioridad_cp}
-                                onChange={e => setPrioridadCp(e.target.value)}
+                                onChange={e => {
+                                    setPrioridadCp(e.target.value);
+                                    if (e.target.value === "1") {
+                                        setPrioridadGr("2");
+                                    }
+                                    else if (e.target.value === "2") {
+                                        setPrioridadGr("1");
+                                    }
+                                }}
                             >
-                                <FormControlLabel value={1} control={<Radio size="small" />} label="1" />
-                                <FormControlLabel value={2} control={<Radio size="small" />} label="2" />
+                                <FormControlLabel
+                                    value="1"
+                                    control={<Radio size="small" />}
+                                    label="1"
+                                    disabled={prioridad_gr === "1" || !comp_plasmtico} // Doble condición
+                                />
+                                <FormControlLabel
+                                    value="2"
+                                    control={<Radio size="small" />}
+                                    label="2"
+                                    disabled={prioridad_gr === "2" || !comp_plasmtico} // Doble condición
+                                />
                             </RadioGroup>
                         </CardMedia>
                         <CardContent>
@@ -583,11 +702,11 @@ export default function ModficarOrdenTransfusion() {
                                 onChange={e => setComponentes(e.target.value)}
                                 sx={{ height: 36, width: 250 }}
                                 onKeyDown={e => {
-                                    // Previene la escritura de números directamente
                                     if (e.key >= '0' && e.key <= '9' || e.key === '-' || e.key === '+') {
                                         e.preventDefault();
                                     }
                                 }}
+                                disabled={!comp_plasmtico} // Deshabilitado si el checkbox no está marcado
                             >
                                 <MenuItem value=""><em>None</em></MenuItem>
                                 <MenuItem value={"CP"}>CP</MenuItem>
@@ -601,19 +720,19 @@ export default function ModficarOrdenTransfusion() {
                                 value={urgencia_cp}
                                 onChange={e => setUrgenciaCp(e.target.value === "true")}
                             >
-                                <FormControlLabel value={true} control={<Radio size="small" />} label="Urgente" />
-                                <FormControlLabel value={false} control={<Radio size="small" />} label="No Urgente" />
+                                <FormControlLabel value={true} control={<Radio size="small" disabled={!comp_plasmtico} />} label="Urgente" disabled={!comp_plasmtico} />
+                                <FormControlLabel value={false} control={<Radio size="small" disabled={!comp_plasmtico} />} label="No Urgente" disabled={!comp_plasmtico} />
                             </RadioGroup>
                             <TextField
                                 label="Cantidad"
                                 id="outlined-start-adornment"
                                 value={cant_cp}
                                 onChange={e => {
-                                    // Permite solo números
                                     const value = e.target.value.replace(/\D/g, '');
                                     setCantCp(value);
                                 }}
                                 sx={{ width: 250 }}
+                                disabled={!comp_plasmtico} // Deshabilitado si el checkbox no está marcado
                                 slotProps={{
                                     input: {
                                         endAdornment: <InputAdornment position="start">ml</InputAdornment>,
@@ -627,7 +746,10 @@ export default function ModficarOrdenTransfusion() {
                                     control={<Checkbox
                                         checked={reserva_cp}
                                         onChange={e => setReservaCp(e.target.checked)}
-                                    />} label="Reserva" />
+                                        disabled={!comp_plasmtico} // Deshabilitado si el checkbox no está marcado
+                                    />}
+                                    label="Reserva"
+                                />
                             </Box>
                             <Box>
                                 <TextField sx={{ width: "50%" }}
@@ -636,8 +758,9 @@ export default function ModficarOrdenTransfusion() {
                                     value={fecha_cp}
                                     onChange={e => setFechaCp(e.target.value)}
                                     InputLabelProps={{
-                                        shrink: true, // Para que el label no se superponga al valor
+                                        shrink: true,
                                     }}
+                                    disabled={!comp_plasmtico} // Deshabilitado si el checkbox no está marcado
                                 />
                                 <InputLabel id="demo-simple-select-label">Frecuencia</InputLabel>
                                 <Select
@@ -648,11 +771,11 @@ export default function ModficarOrdenTransfusion() {
                                     onChange={e => setFrecuenciaCp(e.target.value)}
                                     sx={{ height: 36, width: 250 }}
                                     onKeyDown={e => {
-                                        // Previene la escritura de números directamente
                                         if (e.key >= 'e' || e.key === '-' || e.key === '+') {
                                             e.preventDefault();
                                         }
                                     }}
+                                    disabled={!comp_plasmtico} // Deshabilitado si el checkbox no está marcado
                                 >
                                     <MenuItem value=""><em>None</em></MenuItem>
                                     <MenuItem value={1}>1</MenuItem>
@@ -665,14 +788,6 @@ export default function ModficarOrdenTransfusion() {
                 </Box>
             </Box>
             <Box sx={{ display: "flex", mt: "20px", justifyContent: "space-between", padding: 2 }}>
-                <TextField
-                    id="outlined-multiline-static"
-                    label="Observaciones"
-                    value={observacion_error}
-                    onChange={e => setObservacionError(e.target.value)}
-                    multiline
-                    rows={4}
-                />
                 <Card sx={{ maxWidth: 450 }}>
                     <CardMedia>
                         <Typography
@@ -742,6 +857,20 @@ export default function ModficarOrdenTransfusion() {
                         >
                             Aceptar
                         </Button>
+
+                        <ModalPersonalizado
+                            open={modalNotifOpen}
+                            onClose={() => {
+                                setModalNotifOpen(false);
+                                // Solo navegar si fue éxito
+                                if (notifType === 'success') {
+                                    navigate('/listadoPacientes');
+                                }
+                            }}
+                            title={notifTitle}
+                            message={notifMessage}
+                            type={notifType}
+                        />
                     </CardActions>
                 </Card>
             </Box>

@@ -690,6 +690,11 @@ export default function TransfusionPage() {
     setTab(newValue);
   };
 
+  const [modalNotifOpen, setModalNotifOpen] = useState(false);
+  const [notifType, setNotifType] = useState<'success' | 'error' | 'info'>('info');
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifMessage, setNotifMessage] = useState('');
+
   return (
     <>
       <Navbar />
@@ -857,7 +862,7 @@ export default function TransfusionPage() {
                 label="Grupo"
                 onChange={handleChange2}
               >
-                <MenuItem value=""><em>None</em></MenuItem>
+                <MenuItem value=""><em>Nada</em></MenuItem>
                 <MenuItem value={"A"}>A</MenuItem>
                 <MenuItem value={"B"}>B</MenuItem>
                 <MenuItem value={"AB"}>AB</MenuItem>
@@ -873,7 +878,7 @@ export default function TransfusionPage() {
                 label="factor"
                 onChange={handleChange3}
               >
-                <MenuItem value=""><em>None</em></MenuItem>
+                <MenuItem value=""><em>Nada</em></MenuItem>
                 <MenuItem value={"+"}>+</MenuItem>
                 <MenuItem value={"-"}>-</MenuItem>
               </Select>
@@ -885,12 +890,26 @@ export default function TransfusionPage() {
               sx={{ mt: "20px", ml: "10px", }}
               endIcon={<EditSquareIcon sx={{ marginLeft: 0, fontSize: "large" }} />}
               onClick={async () => {
+                if (!grupo || !factor) {
+                  setNotifType('info');
+                  setNotifTitle('Campos requeridos');
+                  setNotifMessage('Debe seleccionar un Grupo y un Factor antes de modificar.');
+                  setModalNotifOpen(true);
+                  return;
+                }
                 await handleModificar();
-                fetchData(); // <-- Recarga los datos
+                fetchData();
               }}
             >
               Modificar
             </Button>
+            <ModalPersonalizado
+              open={modalNotifOpen}
+              onClose={() => setModalNotifOpen(false)}
+              title={notifTitle}
+              message={notifMessage}
+              type={notifType}
+            />
             <Button
               variant="contained"
               size="small"

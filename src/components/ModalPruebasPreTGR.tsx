@@ -120,7 +120,7 @@ export function ModalPruebasPreTransfusionalesGr({ open, onClose, codigoBolsa, r
                                         setPruebaregrupo(value);
                                     }}
                                 >
-                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value=""><em>Nada</em></MenuItem>
                                     <MenuItem value={"A"}>A</MenuItem>
                                     <MenuItem value={"B"}>B</MenuItem>
                                     <MenuItem value={"AB"}>AB</MenuItem>
@@ -141,7 +141,7 @@ export function ModalPruebasPreTransfusionalesGr({ open, onClose, codigoBolsa, r
                                         }
                                     }}
                                 >
-                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value=""><em>Nada</em></MenuItem>
                                     <MenuItem value={"+"}>+</MenuItem>
                                     <MenuItem value={"-"}>-</MenuItem>
                                 </Select>
@@ -160,7 +160,7 @@ export function ModalPruebasPreTransfusionalesGr({ open, onClose, codigoBolsa, r
                                         }
                                     }}
                                 >
-                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value=""><em>Nada</em></MenuItem>
                                     <MenuItem value={"Positiva"}>Positiva</MenuItem>
                                     <MenuItem value={"Negativa"}>Negativa</MenuItem>
                                 </Select>
@@ -178,7 +178,7 @@ export function ModalPruebasPreTransfusionalesGr({ open, onClose, codigoBolsa, r
                                         setPruebaprecruzadamayor(value);
                                     }}
                                 >
-                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value=""><em>Nada</em></MenuItem>
                                     <MenuItem value={"Compatible"}>Compatible</MenuItem>
                                     <MenuItem value={"Incompatible"}>Incompatible</MenuItem>
                                 </Select>
@@ -196,7 +196,7 @@ export function ModalPruebasPreTransfusionalesGr({ open, onClose, codigoBolsa, r
                                         setPruebaprecruzadamenor(value);
                                     }}
                                 >
-                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value=""><em>Nada</em></MenuItem>
                                     <MenuItem value={"Compatible"}>Compatible</MenuItem>
                                     <MenuItem value={"Incompatible"}>Incompatible</MenuItem>
                                 </Select>
@@ -340,7 +340,7 @@ export function ModalPruebasPreTransfusionalesPCP({ open, onClose, codigoBolsa, 
                                         setPruebaregrupo(value);
                                     }}
                                 >
-                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value=""><em>Nada</em></MenuItem>
                                     <MenuItem value={"A"}>A</MenuItem>
                                     <MenuItem value={"B"}>B</MenuItem>
                                     <MenuItem value={"AB"}>AB</MenuItem>
@@ -361,7 +361,7 @@ export function ModalPruebasPreTransfusionalesPCP({ open, onClose, codigoBolsa, 
                                         }
                                     }}
                                 >
-                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value=""><em>Nada</em></MenuItem>
                                     <MenuItem value={"+"}>+</MenuItem>
                                     <MenuItem value={"-"}>-</MenuItem>
                                 </Select>
@@ -379,7 +379,7 @@ export function ModalPruebasPreTransfusionalesPCP({ open, onClose, codigoBolsa, 
                                         setPruebaprecruzadamayor(value);
                                     }}
                                 >
-                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value=""><em>Nada</em></MenuItem>
                                     <MenuItem value={"Compatible"}>Compatible</MenuItem>
                                     <MenuItem value={"Incompatible"}>Incompatible</MenuItem>
                                 </Select>
@@ -397,7 +397,7 @@ export function ModalPruebasPreTransfusionalesPCP({ open, onClose, codigoBolsa, 
                                         setPruebaprecruzadamenor(value);
                                     }}
                                 >
-                                    <MenuItem value=""><em>None</em></MenuItem>
+                                    <MenuItem value=""><em>Nada</em></MenuItem>
                                     <MenuItem value={"Compatible"}>Compatible</MenuItem>
                                     <MenuItem value={"Incompatible"}>Incompatible</MenuItem>
                                 </Select>
